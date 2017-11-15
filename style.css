@@ -1,0 +1,49 @@
+/* Top banner style */
+#navigation_bar {
+    position:fixed; /*so that it follows when you scroll*/
+    bottom:0;
+    left:0;
+    width:100%;
+    font-size:4vmax;
+	padding:4vmin;
+	background-color:black;
+	z-index:1; /*on top of other layers*/
+	transition:all 0.4s;
+    -webkit-transition:all 0.4s;
+    -moz-transition:all 0.4s;
+    -o-transition:all 0.4s;
+    -ms-transition:all 0.4s;
+    /*opacity is in script.js*/
+}
+.banner_bottom_button{
+    margin-right:5%;
+    color:white;
+    text-decoration:none; /*No links decoration*/
+	transition:all 0.8s;
+    -webkit-transition:all 0.8s;
+    -moz-transition:all 0.8s;
+    -o-transition:all 0.8s;
+    -ms-transition:all 0.8s;
+}
+.banner_bottom_button:hover {
+	background-color:gray;
+    color:black;
+}
+
+#camera {
+    position: absolute;
+    width: 70%;
+    left: 15%;
+    top: 5%;
+    height: 60%;
+    background: black;
+}
+
+#scan_button {
+    position: absolute;
+    width: 50%;
+    left: 25%;
+    top:70%;
+    height:10%;
+    background: black;
+}
