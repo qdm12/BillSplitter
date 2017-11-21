@@ -28,6 +28,21 @@
 .banner_bottom_button:hover {
 	background-color:gray;
     color:black;
+
+}
+
+.screen {
+    position: relative;
+    width:100%;
+    height:100%;
+}
+
+.hidden {
+    position: relative;
+    visibility: hidden;
+    overflow: hidden;
+    width: 0%;
+    height: 0%;
 }
 
 #camera {
@@ -39,7 +54,7 @@
     background: black;
 }
 
-#scan_button {
+#scan {
     position: absolute;
     width: 50%;
     left: 25%;
