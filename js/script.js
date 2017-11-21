@@ -1,31 +1,64 @@
-var isMobile = false;
+/* var isMobile = false;
 if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
 	isMobile = true;
 }
+if(isMobile){
+    console.log('Mobile detected');
+} else {
+    console.log('Desktop detected.');
+} */
 
-function hideScreen(id) {
-	$("#" + id).removeClass("screen")
-	$("#" + id).addClass("hidden")
+var currentScreen = "bill"; // that depends if user is logged in
+
+function hideAllScreens() {
+    $("#identification").hide();
+    $("#bill").hide();
+    $("#history").hide();
+    $("#profile").hide();
+    $("#settings").hide();
 }
 
-function showScreen(id) {
-	$("#" + id).removeClass("hidden")
-	$("#" + id).addClass("screen")
+function setNavigationBarClick() {
+    $("#billButton").click(function(){
+        if (currentScreen != "bill") {
+            currentScreen = "bill";
+            hideAllScreens();
+            $("#bill").show();
+        }
+    });
+    $("#historyButton").click(function(){
+        if (currentScreen != "history") {
+            currentScreen = "history";
+            hideAllScreens();
+            $("#history").show();
+        }
+    });
+    $("#profileButton").click(function(){
+        if (currentScreen != "profile") {
+            currentScreen = "profile";
+            hideAllScreens();
+            $("#profile").show();
+        }
+    });
+    $("#settingsButton").click(function(){
+        if (currentScreen != "settings") {
+            currentScreen = "settings";
+            hideAllScreens();
+            $("#settings").show();
+        }
+    });
+    console.log("Current screen is now", currentScreen);
 }
 
-$(document).ready( function() { /* executes first */
-	console.log('document is ready');
-	//showScreen("bill");
-	//hideScreen("bill");
-    if(isMobile){
-        console.log('Mobile detected');
-    } else {
-		console.log('Desktop detected.');
-	}
+$(document).ready(function() { // Executes first
+    console.log('document is ready');
+    hideAllScreens();
+    $('#' + currentScreen).show();
 });
 
-window.onload = function(){ /* executes secondly */
-	console.log('window is loaded');
+window.onload = function(){ // Executes secondly
+    console.log('window is loaded');
+    setNavigationBarClick();
 };
 
 $(window).resize(function() {

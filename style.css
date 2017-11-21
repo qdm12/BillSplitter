@@ -17,6 +17,7 @@
 }
 .banner_bottom_button{
     margin-right:5%;
+    float:left;
     color:white;
     text-decoration:none; /*No links decoration*/
 	transition:all 0.8s;
@@ -25,24 +26,15 @@
     -o-transition:all 0.8s;
     -ms-transition:all 0.8s;
 }
-.banner_bottom_button:hover {
-	background-color:gray;
-    color:black;
 
-}
 
-.screen {
-    position: relative;
-    width:100%;
-    height:100%;
-}
-
-.hidden {
-    position: relative;
-    visibility: hidden;
-    overflow: hidden;
-    width: 0%;
-    height: 0%;
+#test {
+    position: absolute;
+    width: 70%;
+    left: 15%;
+    top: 2%;
+    height: 60%;
+    background: rgb(255, 0, 0);
 }
 
 #camera {
