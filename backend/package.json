@@ -1,0 +1,30 @@
+{
+  "name": "billsplitter",
+  "version": "1.0.0",
+  "description": "Backend server for the mobile app billsplitter",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qdm12/BillSplitter.git"
+  },
+  "keywords": [
+    "nodejs",
+    "mysql",
+    "restful",
+    "API"
+  ],
+  "author": "Quentin McGaw, Ben Alpert, Gleb, Divisha, David",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/qdm12/BillSplitter/issues"
+  },
+  "homepage": "https://github.com/qdm12/BillSplitter#readme",
+  "devDependencies": {},
+  "dependencies": {
+    "express": "^4.16.2"
+  }
+}
