@@ -36,28 +36,30 @@ html, body {margin:0;padding:0;height:100%;}
     100%{background-position:7% 70%}
 }
 #identification {
-    width: 100%;
+    width:100%;
     height:100%;
     background: linear-gradient(280deg, #b0ffe9, #a9caff, #ffd2bf);
-    background-size:250%;  animation: background_animation 9s ease-in-out infinite;
+    background-size:250%;
+    animation: background_animation 9s ease-in-out infinite;
 }
 #identification #identificationBox {
     position: relative;
     width:80%;
     height:70%;
-    top:15%;
+    top:10%;
     margin:auto;
     background: rgba(190, 190, 190, 0.295)
 }
 
 #identification #identificationBox #switch {
+    position: absolute;
     width:98%;
-    top: 0%;
+    top:0%;
     height:10%;
     padding:1%;
     background: rgba(0, 255, 221, 0.192);
 }
-#identification #switch .switchTab {
+#identification #identificationBox #switch .switchTab {
     width:48%;
     height:100%;
     background: rgba(0, 153, 255, 0.315);
@@ -72,18 +74,18 @@ html, body {margin:0;padding:0;height:100%;}
     -o-transition:all 0.5s;
     -ms-transition:all 0.5s;
 }
-#identification #switch #signupTab {
+#identification #identificationBox #switch #signupTab {
     float:left;
 }
-#identification #switch #loginTab {
+#identification #identificationBox #switch #loginTab {
     float:right;
 }
 
-#identification input {
+#identification #identificationBox input {
+    position:absolute;
     width:80%;
     margin-left:7%;
-    margin-top:5%; /* TODO in jquery */
-    padding:2%;
+    padding:1.4%;
     font-size:1.8vmax;
     color:white;
     background: rgba(65, 179, 255, 0.096);
@@ -94,12 +96,12 @@ html, body {margin:0;padding:0;height:100%;}
     -o-transition:all 0.5s;
     -ms-transition:all 0.5s;
 }
-#identification input:focus {
+#identification #identificationBox input:focus {
     background: rgba(65, 255, 176, 0.438);
     border: 3px solid rgba(86, 255, 120, 0.63);
 }
-#identification button {
-    margin-top:8%;
+#identification #identificationBox button {
+    position: absolute;
     width:40%;
     margin-left:30%;
     padding:2%;
@@ -113,10 +115,40 @@ html, body {margin:0;padding:0;height:100%;}
     -o-transition:all 0.5s;
     -ms-transition:all 0.5s;
 }
-#identification button:active {
+#identification #identificationBox button:active {
     color: rgb(0, 0, 0);
     background: rgba(0, 255, 76, 0.116);
     border: 4px solid rgb(69, 255, 106);
+}
+#identification #identificationBox #signup #signupEmail {
+    top: 15%;
+}
+#identification #identificationBox #signup #signupUsername {
+    top: 30%;
+}
+#identification #identificationBox #signup #signupPassword1 {
+    top: 45%;
+}
+#identification #identificationBox #signup #signupPassword2 {
+    top: 60%;
+}
+#identification #identificationBox #signup #signupSubmit {
+    top: 80%;
+}
+#identification #identificationBox #login #loginEmail {
+    top: 25%;
+}
+#identification #identificationBox #login #loginPassword {
+    top: 40%;
+}
+#identification #identificationBox #login #loginSubmit {
+    top: 75%;
+}
+#identification #identificationBox #login #loginForgot {
+    position:absolute;
+    top:85%;
+    right:5%;
+    font-size:1.7vw;
 }
 
 

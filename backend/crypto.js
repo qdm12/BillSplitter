@@ -9,10 +9,10 @@ function scryptHash(input) {
 }
 
 function randomString(length) {
-    var string = "";
+    var s = "";
     var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_-+=[{]}\|~/?.>,<;:";
     for (var i = 0; i < length; i++) {
-        string += possible.charAt(Math.floor(Math.random() * possible.length));
+        s += possible.charAt(Math.floor(Math.random() * possible.length));
     }
-    return string;
+    return s;
 }
