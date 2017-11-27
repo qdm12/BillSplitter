@@ -15,13 +15,35 @@
 </div>
 <body>
     <div id="identification">
-
+        <div id="identificationBox">
+            <div id="switch">
+                <div id="signupTab" class="switchTab">Sign up</div>
+                <div id="loginTab" class="switchTab">Log in</div>
+            </div>
+            <div id="signup">
+                <input type="email" placeholder="Email address" name="email" required>
+                <input type="text" placeholder="Username" name="username" optional>
+                <input type="password" placeholder="Enter a password" name="password1" required>
+                <input type="password" placeholder="Enter the same password again" name="password2" required>
+                <button type="submit">Sign up</button>
+            </div>
+            <div id="login">
+                <input type="email" placeholder="Email address" name="email" required>
+                <input type="password" placeholder="Enter your password" name="password" required>
+                <button type="submit">Sign up</button>
+                <div id="forgotpassword">Reset your password</div>
+            </div>
+        </div> 
     </div>
 
     <div id="bill">
         <div id="camera"></div>
         <div id="scan"></div>
     </div>
+
+	<div class="itemizedBill">
+
+	</div>
 
     <div id="history">
 

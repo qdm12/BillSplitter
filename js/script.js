@@ -43,11 +43,44 @@ function setNavigationBarClick() {
     $("#settingsButton").click(function(){
         if (currentScreen != "settings") {
             currentScreen = "settings";
-            hideAllScreens();
+            hideAllScreens({duration:500, easing:"swing"});
             $("#settings").show({duration:500, easing:"swing"});
         }
     });
     console.log("Current screen is now", currentScreen);
+}
+
+function bindIdentificationButtons() {
+    $("#signupTab").click(function() {
+        $("#signupTab").css({
+            background: "rgba(0, 255, 200, 0.4)",
+        });
+        $("#loginTab").css({
+            background: "rgba(0, 153, 255, 0.315)",
+        });
+        $("#login").hide();
+        $("#signup").show({duration:500, easing:"swing"});
+    });
+    $("#loginTab").click(function() {
+        $("#loginTab").css({
+            background: "rgba(0, 255, 200, 0.4)",
+        });
+        $("#signupTab").css({
+            background: "rgba(0, 153, 255, 0.315)",
+        });
+        $("#signup").hide({duration:500, easing:"swing"});
+        $("#login").show({duration:500, easing:"swing"});
+    });
+}
+
+function identificationScreen() {
+    $(navigation_bar).hide();
+    // defaults to signup
+    $("#login").hide();
+    $("#signupTab").css({
+        background: "rgba(0, 255, 200, 0.4)",
+    });
+    bindIdentificationButtons();
 }
 
 $(document).ready(function() { // Executes first
@@ -59,6 +92,9 @@ $(document).ready(function() { // Executes first
 window.onload = function(){ // Executes secondly
     console.log('window is loaded');
     setNavigationBarClick();
+    if (currentScreen == "identification") {
+        identificationScreen();
+    }
 };
 
 $(window).resize(function() {
