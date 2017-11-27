@@ -23,28 +23,28 @@ function setNavigationBarClick() {
         if (currentScreen != "bill") {
             currentScreen = "bill";
             hideAllScreens();
-            $("#bill").show();
+            $("#bill").show({duration:500, easing:"swing"});
         }
     });
     $("#historyButton").click(function(){
         if (currentScreen != "history") {
             currentScreen = "history";
             hideAllScreens();
-            $("#history").show();
+            $("#history").show({duration:500, easing:"swing"});
         }
     });
     $("#profileButton").click(function(){
         if (currentScreen != "profile") {
             currentScreen = "profile";
             hideAllScreens();
-            $("#profile").show();
+            $("#profile").show({duration:500, easing:"swing"});
         }
     });
     $("#settingsButton").click(function(){
         if (currentScreen != "settings") {
             currentScreen = "settings";
             hideAllScreens();
-            $("#settings").show();
+            $("#settings").show({duration:500, easing:"swing"});
         }
     });
     console.log("Current screen is now", currentScreen);
@@ -53,7 +53,7 @@ function setNavigationBarClick() {
 $(document).ready(function() { // Executes first
     console.log('document is ready');
     hideAllScreens();
-    $('#' + currentScreen).show();
+    $('#' + currentScreen).show({duration:500, easing:"swing"});
 });
 
 window.onload = function(){ // Executes secondly

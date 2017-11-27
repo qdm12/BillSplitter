@@ -1,11 +1,14 @@
+html, body {margin:0;padding:0;height:100%;}
+
 /* Top banner style */
 #navigation_bar {
-    position:fixed; /*so that it follows when you scroll*/
+    position:absolute;
     bottom:0;
     left:0;
     width:100%;
-    font-size:4vmax;
-	padding:4vmin;
+    padding-top: 2vh;
+    padding-bottom: 2vh;
+    font-size:4vmin; /* TODO make it change if the device is mobile or not in Jquery */
 	background-color:black;
 	z-index:1; /*on top of other layers*/
 	transition:all 0.4s;
@@ -13,11 +16,11 @@
     -moz-transition:all 0.4s;
     -o-transition:all 0.4s;
     -ms-transition:all 0.4s;
-    /*opacity is in script.js*/
 }
-.banner_bottom_button{
-    margin-right:5%;
-    float:left;
+.banner_bottom_button {
+    position: relative;
+    display: inline-block;
+    margin-left:10%; /* TODO to adapt in Jquery */
     color:white;
     text-decoration:none; /*No links decoration*/
 	transition:all 0.8s;
@@ -27,30 +30,54 @@
     -ms-transition:all 0.8s;
 }
 
+#identification {
 
-#test {
-    position: absolute;
-    width: 70%;
-    left: 15%;
-    top: 2%;
-    height: 60%;
-    background: rgb(255, 0, 0);
 }
 
-#camera {
+#bill #camera {
     position: absolute;
     width: 70%;
     left: 15%;
     top: 5%;
     height: 60%;
-    background: black;
+    background: rgb(128, 128, 128);
+    border: 4px solid rgba(255, 244, 180, 0.795);
 }
 
-#scan {
+#bill #scan {
     position: absolute;
     width: 50%;
     left: 25%;
     top:70%;
     height:10%;
     background: black;
+    border: 5px solid rgba(73, 255, 112, 0.795);
+}
+
+#itemizedBill {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: red;
+}
+
+#history {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: green;
+}
+
+#profile {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: blue;
+}
+
+#settings {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: yellow;
 }
