@@ -7,14 +7,88 @@
     <script src="js/jquery-3.0.0.min.js" type="text/javascript"></script>
     <script src="js/script.js" type="text/javascript"></script>
 </head>
-<div id="navigation_bar">
-    <a class="banner_bottom_button" href="#Bill">Bill</a>
-	<a class="banner_bottom_button" href="#History">History</a>
-    <a class="banner_bottom_button" href="#Profile">Profile</a>
-	<a class="banner_bottom_button" href="#Settings">Settings</a>
-</div>
 <body>
-    <div id="camera"></div>
-    <div id="scan_button"></div>
+	<!-- Loading Screen -->
+	<div id="loadingScreen">
+	
+	</div>
+	
+	<!-- Navigation section -->
+	<div id="navigation_bar">
+    <div class="container">
+		
+	<span class="banner_bottom_button" id="nav_bill_button">Bill</span>
+	<span class="banner_bottom_button" id="nav_history_button">History</span>
+    <span class="banner_bottom_button" id="nav_profile_button">Profile</span>
+	<span class="banner_bottom_button" id="nav_settings_button">Settings</span>
+	</div>
+	</div>
+	
+	<!-- Splash Screen (to play on load) -->
+	<div class="splashScreen">
+	<div class="container">
+		<img src="images/SplashScreenLogo_v1.jpg" alt="Bill|Splitter">
+	</div>
+	</div>
+	
+	<!-- Section: welcome, registration and login -->
+	<div class="welcome" align="center">
+		<span class="loginButton">Login</span>
+		<span class="registerButton">Register</span>
+	</div>	
+	
+	<!-- Login Form -->
+		  <div class="loginInterface">
+			<div class="container">
+			  <form>
+				<h4>Phone Number</h4>
+				<input class="phoneNumber" />
+				<h4>Email</h4>
+				<input class="email" />
+				<h4>Password</h4>
+				<input type="password" />
+				<input class="sign-in-button" type="submit" value="Sign In" />
+			  </form>
+			</div>
+		  </div>
+	
+	<!-- Section: camera and scan button -->
+	<div class="cameraInterface">
+		<div class="container">
+		<div id="camera">[Camera]</div>
+		<div id="scan_button">Scan Bill [button]!</div>
+		</div>
+	</div>
+	
+	
+	<!-- Section: itemized group bill -->
+	<div class="itemizedBill">
+		<p>BILL HERE!</p>
+	</div>
+	
+	<!-- Section: Settings -->
+	<div class="userSettings">
+	<div class="container">
+		Settings!
+		</div>
+	</div>
+	
+	<!-- Section: User Profile -->
+	<div class="userProfile">
+	<div class="container">
+		<p>Phone number: </p>
+		<p>Email: </p>
+		
+		</div>
+	</div>
+	
+	<!-- Section: History -->
+	<div class="userHistory">
+	<div class="container">
+		Bill History
+		</div>
+	</div>
+	
+	
 </body>
 </html>

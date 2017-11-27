@@ -38,7 +38,9 @@ function banner_opacity() {
 	});
 }
 
-$(document).ready( function() { /* executes first */
+$(document).ready( function() { 
+	
+	/* executes first */
 	console.log('document is ready');
     banner_opacity();
     if(isMobile){
@@ -46,6 +48,24 @@ $(document).ready( function() { /* executes first */
     } else {
 		console.log('Desktop detected.');
 	}
+	
+	/* menu jquery */
+	$('#nav_bill_button').on('click',() => {
+    	$('.cameraInterface').slideToggle('slow');
+  	});
+	
+	$('#nav_profile_button').on('click',() => {
+    	$('.userProfile').slideToggle('slow');
+  	});
+	
+	$('#nav_settings_button').on('click',() => {
+    $('.userSettings').slideToggle('slow');
+  	});
+	
+	$('#nav_history_button').on('click',() => {
+    $('.userHistory').slideToggle('slow');
+  	});
+	
 });
 
 window.onload = function(){ /* executes secondly */

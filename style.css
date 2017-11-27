@@ -1,11 +1,13 @@
 /* Top banner style */
 #navigation_bar {
-    position:fixed; /*so that it follows when you scroll*/
-    bottom:0;
+	position:fixed; /*so that it follows when you scroll\*/
+    align-content: center;
+	text-align: center;
+	bottom:0;
     left:0;
     width:100%;
-    font-size:4vmax;
-	padding:4vmin;
+    /*font-size:4vmax;*/
+	/*padding:4vmin;*/
 	background-color:black;
 	z-index:1; /*on top of other layers*/
 	transition:all 0.4s;
@@ -30,20 +32,62 @@
     color:black;
 }
 
+.container {
+  max-width: 450px;
+  margin: 0 auto; }
+
+.splashScreen img{
+    max-width: 100%;
+    height: auto;
+	display: block;
+    margin: auto;
+    width: 50%;
+}
+
+.loginInterface{
+	display:none;
+}
+
+.welcome{
+	display:none;
+}
+
+.userSettings{
+	display:none;
+}
+
+.userHistory{display:none;}
+
 #camera {
+	align:center;
+	align-content:center;
     position: absolute;
     width: 70%;
     left: 15%;
     top: 5%;
     height: 60%;
-    background: black;
+    background: white;
+ 	border: 3px solid black;
 }
-
 #scan_button {
+	align-content:center;
     position: absolute;
     width: 50%;
     left: 25%;
     top:70%;
     height:10%;
-    background: black;
+    background: white;
+	border: 5px solid black;
+}
+
+.cameraInterface{
+	display:none;
+}
+
+.itemizedBill{
+	display:none;
+}
+
+.userProfile{
+	display:none;
 }
