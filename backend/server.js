@@ -16,8 +16,8 @@ app.get('/', function (req, res) {
 });
 
 // Sign in procedure
-app.get('/', function (req, res) {
-    var email = req.body.email;
+app.get('/users/:email', function (req, res) {
+    var email = req.email;
     var password = req.body.password;
     // see https://www.npmjs.com/package/validator
     // Escape inputs later
@@ -35,12 +35,13 @@ app.get('/', function (req, res) {
         return;
     }
     // check if email exists in database
-    if (false) {
+    /*
+    if (!emailExists) {
         console.log("Email does not exist in database: ", email);
         res.status(401).send('Incorrect email or password');
         return;
-    }
-    var salt = ""; //get from database
+    }*/
+    var salt = ""; // get from database
     var digest = crypto.scrypt(password, salt);
     var digestStored = ""; // get from database
     if (digest != digestStored) {
@@ -57,6 +58,7 @@ app.post('/users', function (req, res) {
     var email = req.body.email;
     var username = req.body.username;
     var password = req.body.password;
+    // Check for validity of inputs
     // see https://www.npmjs.com/package/validator
     // Escape inputs later
     email = validator.trim(email);
@@ -86,6 +88,20 @@ app.post('/users', function (req, res) {
         res.status(400).send('Password is too long');
         return;
     }
+
+    // Check if user does not exist already (check verified flag)
+    if (emailExists) {
+        console.log("Email already exists:", email);
+        res.status(409).send('Email is already registered');
+        return;
+    }
+    if (userExists) {
+        console.log("Username already exists:", username);
+        res.status(409).send('Username is already taken');
+        return;
+    }
+    
+    // Create the user (add email verification eventually)
     var salt = crypto.randomString(8);
     var digest = crypto.scrypt(password, salt);
     var token = crypto.randomString(40);
