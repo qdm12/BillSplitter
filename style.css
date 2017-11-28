@@ -172,30 +172,23 @@ html, body {margin:0;padding:0;height:100%;}
     border: 5px solid rgba(73, 255, 112, 0.795);
 }
 
-#itemizedBill {
-    position: absolute;
+.screen {
+    position: relative;
     width: 100%;
     height: 100%;
+}
+#itemizedBill {
     background: red;
 }
 
 #history {
-    position: absolute;
-    width: 100%;
-    height: 100%;
     background: green;
 }
 
 #profile {
-    position: absolute;
-    width: 100%;
-    height: 100%;
     background: blue;
 }
 
 #settings {
-    position: absolute;
-    width: 100%;
-    height: 100%;
     background: yellow;
 }
