@@ -72,6 +72,8 @@ function bindIdentificationButtons() {
         $("#signup").hide({duration:500, easing:"swing"});
         $("#login").show({duration:500, easing:"swing"});
     });
+
+    // Signup procedure
     $("#signupSubmit").click(function(){
         var EMAIL = $("#signupEmail").value,
         USER = $("#signupUsername").value,
@@ -88,8 +90,31 @@ function bindIdentificationButtons() {
                 password: PASS1,
             },
             function(data, status) {
-                console.log('Done');
-                alert("Data: " + data + "\nStatus: " + status);
+                console.log("Received data:", data);
+            }
+        );
+    });
+
+    // Login procedure
+    $("#loginSubmit").click(function(){
+        var EMAIL = $("#loginEmail").value,
+        PASS = $("#loginPassword").value;
+        EMAIL = validator.trim(EMAIL);
+        PASS = validator.trim(PASS);
+        /* TODO check inputs
+        if (!validator.isEmail(EMAIL)) {
+            // email is wrong
+            return;
+        }
+        */
+        $.post(
+            "http://localhost:8000/users/" + EMAIL,
+            {
+                email: EMAIL,
+                password: PASS,
+            },
+            function(data, status) {
+                console.log("Received data:", data);
             }
         );
     });
