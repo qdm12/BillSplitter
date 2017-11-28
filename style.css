@@ -28,6 +28,7 @@ html, body {margin:0;padding:0;height:100%;}
     -moz-transition:all 0.8s;
     -o-transition:all 0.8s;
     -ms-transition:all 0.8s;
+	cursor:pointer;
 }
 
 @keyframes background_animation { 
