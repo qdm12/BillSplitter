@@ -71,6 +71,27 @@ function bindIdentificationButtons() {
         $("#signup").hide({duration:500, easing:"swing"});
         $("#login").show({duration:500, easing:"swing"});
     });
+    $("#signupSubmit").click(function(){
+        var EMAIL = $("#signupEmail").value,
+        USER = $("#signupUsername").value,
+        PASS1 = $("#signupPassword1").value,
+        PASS2 = $("#signupPassword2").value;
+        // TODO check inputs
+        PASS1 = "test"
+
+        $.post(
+            "http://localhost:8000/users",
+            {
+                email: EMAIL,
+                username: USER,
+                password: PASS1,
+            },
+            function(data, status) {
+                console.log('Done');
+                alert("Data: " + data + "\nStatus: " + status);
+            }
+        );
+    });
 }
 
 function identificationScreen() {
