@@ -13,6 +13,7 @@ var currentScreen = "bill"; // that depends if user is logged in
 function hideAllScreens() {
     $("#identification").hide();
     $("#bill").hide();
+    $("#bill2").hide();
     $("#history").hide();
     $("#profile").hide();
     $("#settings").hide();
