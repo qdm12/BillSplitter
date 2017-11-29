@@ -31,6 +31,12 @@ html, body {margin:0;padding:0;height:100%;}
 	cursor:pointer;
 }
 
+.screen {
+    position:static;
+    width:100%;
+    height:100%;
+}
+
 @keyframes background_animation { 
     0%{background-position:0% 61%}
     50%{background-position:100% 50%}
@@ -169,7 +175,6 @@ html, body {margin:0;padding:0;height:100%;}
     border: 4px solid rgb(255, 0, 0);
 }
 
-
 #bill #camera {
     position: absolute;
     width: 70%;
@@ -179,7 +184,6 @@ html, body {margin:0;padding:0;height:100%;}
     background: rgb(128, 128, 128);
     border: 4px solid rgba(255, 244, 180, 0.795);
 }
-
 
 #bill #scan {
     position: absolute;
@@ -191,20 +195,20 @@ html, body {margin:0;padding:0;height:100%;}
     border: 5px solid rgba(73, 255, 112, 0.795);
 }
 
-.scanButton{
+#bill #scan {
 	position: absolute;
     width: 50%;
     left: 25%;
-    top:70%;
+    top:25%;
     height:20%;
     background: black;
     border: 5px solid rgba(73, 255, 112, 0.795);
-	color:aliceblue;
+    color:aliceblue;
     border-radius: #FFF;
     padding: 2.5%;
 }
 
-.scanButton [type=file] {
+#bill #scan [type=file] {
     cursor: pointer;
     display: block;
     filter: alpha(opacity=0);
@@ -217,28 +221,10 @@ html, body {margin:0;padding:0;height:100%;}
     top: 0;
 }
 
-
-.screen {
-<<<<<<< HEAD
-    position: absolute;
-=======
-    position: static;
->>>>>>> 9c124a3224f8841514e59b7eb45d7add1221699e
-    width: 100%;
-    height: 100%;
-}
-
-<<<<<<< HEAD
-/*
-#itemizedBill {
-    background: red;
-}*/
-
-=======
 #bill2 {
     background: red;
 }
->>>>>>> 9c124a3224f8841514e59b7eb45d7add1221699e
+
 #history {
     background: green;
 }
