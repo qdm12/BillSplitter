@@ -37,11 +37,23 @@ html, body {margin:0;padding:0;height:100%;}
     100%{background-position:7% 70%}
 }
 #identification {
-    width:100%;
-    height:100%;
     background: linear-gradient(280deg, #b0ffe9, #a9caff, #ffd2bf);
     background-size:250%;
     animation: background_animation 9s ease-in-out infinite;
+}
+#identification #identificationError {
+    position:absolute;
+    width:70%;
+    left:14%;
+    top:2%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:4vmin; /* TODO */
+    padding:0.6%;
+    color: white;
+    background:rgba(255, 67, 67, 0.322);
+    border-radius:5%;
 }
 #identification #identificationBox {
     position: relative;
@@ -49,7 +61,7 @@ html, body {margin:0;padding:0;height:100%;}
     height:70%;
     top:10%;
     margin:auto;
-    background: rgba(190, 190, 190, 0.295)
+    background: rgba(190, 190, 190, 0.295);
 }
 
 #identification #identificationBox #switch {
@@ -151,6 +163,11 @@ html, body {margin:0;padding:0;height:100%;}
     right:5%;
     font-size:1.7vw;
 }
+#identification #identificationBox .error {
+    color: rgba(255, 19, 19, 0.37);
+    background: rgba(224, 76, 7, 0.226);
+    border: 4px solid rgb(255, 0, 0);
+}
 
 
 #bill #camera {
@@ -202,16 +219,26 @@ html, body {margin:0;padding:0;height:100%;}
 
 
 .screen {
+<<<<<<< HEAD
     position: absolute;
+=======
+    position: static;
+>>>>>>> 9c124a3224f8841514e59b7eb45d7add1221699e
     width: 100%;
     height: 100%;
 }
 
+<<<<<<< HEAD
 /*
 #itemizedBill {
     background: red;
 }*/
 
+=======
+#bill2 {
+    background: red;
+}
+>>>>>>> 9c124a3224f8841514e59b7eb45d7add1221699e
 #history {
     background: green;
 }

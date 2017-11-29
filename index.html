@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <title>BillSplitter</title>
     <link rel="stylesheet" type="text/css" href="style.css">
-    <script src="js/jquery-3.0.0.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/validator/9.1.2/validator.min.js" type="text/javascript"></script>
     <script src="js/script.js" type="text/javascript"></script>
 </head>
 <div id="navigation_bar">
@@ -14,7 +15,8 @@
     <div id="settingsButton" class="banner_bottom_button">Settings</div>
 </div>
 <body>
-    <div id="identification">
+    <div id="identification" class="screen">
+        <div id="identificationError"></div>
         <div id="identificationBox">
             <div id="switch">
                 <div id="signupTab" class="switchTab">Sign up</div>
@@ -46,20 +48,16 @@
         <div id="scan"></div>
     </div>
 
-	<div id="itemizedBill" class="screen">
-
+	<div id="bill2" class="screen">
 	</div>
 
     <div id="history" class="screen">
-
     </div>
 
     <div id="profile" class="screen">
-
     </div>
     
     <div id="settings" class="screen">
-
     </div>
 </body>
 </html>
