@@ -15,12 +15,81 @@ app.get('/', function (req, res) {
     res.end("Your result");
 });
 
+// Upload picture of bill
+app.post('/users/:email/bills', function (req, res) {
+    var email = req.email;
+    var token = req.body.token;
+    var picture = req.body.picture;
+    // Check for validity of inputs
+    // see https://www.npmjs.com/package/validator
+    // TODO Escape inputs for database
+    email = validator.trim(email);
+    if (!validator.isEmail(email)) {
+        console.log("Invalid email address for /users/:email/bills:", email);
+        res.status(400).send('Your email address is invalid');
+        return;
+    }
+    email = validator.normalizeEmail(email);
+    // Check if user exists and is verified
+    if (!emailExists) {
+        console.log("Email does not exist:", email);
+        res.status(404).send('Email does not exist');
+        return;
+    }
+    // TODO Check token
+    // TODO
+    res.status(201).send("Bill created");
+});
+
+// Get bills of username
+app.get('/users/:email/bills', function (req, res) {
+    var email = req.email;
+    var token = req.body.token;
+    // see https://www.npmjs.com/package/validator
+    // TODO Escape inputs for database
+    email = validator.trim(email);
+    if (!validator.isEmail(email)) {
+        console.log("Invalid email address for /users/:email/bills:", email);
+        res.status(400).send('Your email address is invalid');
+        return;
+    }
+    email = validator.normalizeEmail(email);
+    // Check if user exists and is verified
+    if (!emailExists) {
+        console.log("Email does not exist:", email);
+        res.status(404).send('Email does not exist');
+        return;
+    }
+    // TODO Check token
+    // TODO
+});
+
+// Get bill details
+app.get('/bills/:billID', function (req, res) {
+    var username = req.body.username;
+    var token = req.body.token;
+    var picture = req.body.picture;
+    // Check for validity of inputs
+    // see https://www.npmjs.com/package/validator
+    // TODO Escape inputs for database
+    username = validator.trim(username);
+    token = validator.trim(token);
+    // Check if user exists and is verified
+    if (!userExists) {
+        console.log("Username does not exist:", username);
+        res.status(404).send('Username does not exist');
+        return;
+    }
+    // TODO
+    res.status(201).send(token);
+});
+
 // Sign in procedure
 app.get('/users/:email', function (req, res) {
     var email = req.email;
     var password = req.body.password;
     // see https://www.npmjs.com/package/validator
-    // Escape inputs later
+    // TODO Escape inputs for database
     email = validator.trim(email);
     password = validator.trim(password);    
     if (!validator.isEmail(email)) {
@@ -60,7 +129,7 @@ app.post('/users', function (req, res) {
     var password = req.body.password;
     // Check for validity of inputs
     // see https://www.npmjs.com/package/validator
-    // Escape inputs later
+    // TODO Escape inputs for database
     email = validator.trim(email);
     username = validator.trim(username);
     password = validator.trim(password);    
