@@ -4,6 +4,19 @@ var app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 var validator = require('validator');
+var mysql = require('mysql');
+var database = mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "password"
+});
+database.connect(function(err) {
+    if (err) {
+        throw err;
+    } else {
+        console.log("Database connected");
+    }
+});
 
 
 const crypto = require('./crypto.js');
@@ -17,71 +30,114 @@ app.get('/', function (req, res) {
 
 // Upload picture of bill
 app.post('/users/:email/bills', function (req, res) {
+    // Parses body of request
     var email = req.email;
     var token = req.body.token;
     var picture = req.body.picture;
-    // Check for validity of inputs
-    // see https://www.npmjs.com/package/validator
-    // TODO Escape inputs for database
+
+    // Check for validity of inputs (see https://www.npmjs.com/package/validator)
     email = validator.trim(email);
     if (!validator.isEmail(email)) {
-        console.log("Invalid email address for /users/:email/bills:", email);
-        res.status(400).send('Your email address is invalid');
+        console.log("Invalid email address: ", email);
+        res.status(400).send('Email address is invalid');
         return;
     }
     email = validator.normalizeEmail(email);
-    // Check if user exists and is verified
+
+    // Check in database
+    // TODO Escape email for database
+    // TODO Database: 
+    //          1. Check if email exists and is verified
+    //          2. Obtain corresponding token
     if (!emailExists) {
         console.log("Email does not exist:", email);
-        res.status(404).send('Email does not exist');
+        res.status(403).send('Email and token combination is invalid');
         return;
     }
-    // TODO Check token
-    // TODO
+    if (token != storedToken) {
+        console.log("Token is invalid for email:", email);
+        res.status(403).send('Email and token combination is invalid');
+        return;
+    }
+
+    // Perform action
+    // TODO escape picture and store it in database
     res.status(201).send("Bill created");
 });
 
 // Get bills of username
 app.get('/users/:email/bills', function (req, res) {
+    // Parses body of request
     var email = req.email;
     var token = req.body.token;
-    // see https://www.npmjs.com/package/validator
-    // TODO Escape inputs for database
+    
+    // Check for validity of inputs (see https://www.npmjs.com/package/validator)
     email = validator.trim(email);
     if (!validator.isEmail(email)) {
-        console.log("Invalid email address for /users/:email/bills:", email);
-        res.status(400).send('Your email address is invalid');
+        console.log("Invalid email address: ", email);
+        res.status(400).send('Email address is invalid');
         return;
     }
     email = validator.normalizeEmail(email);
-    // Check if user exists and is verified
+
+    // Check in database
+    // TODO Escape email for database
+    // TODO Database: 
+    //          1. Check if email exists and is verified
+    //          2. Obtain corresponding token
     if (!emailExists) {
         console.log("Email does not exist:", email);
-        res.status(404).send('Email does not exist');
+        res.status(403).send('Email and token combination is invalid');
         return;
     }
-    // TODO Check token
-    // TODO
+    if (token != storedToken) {
+        console.log("Token is invalid for email:", email);
+        res.status(403).send('Email and token combination is invalid');
+        return;
+    }
+
+    // Perform action
+    // TODO Return bills from database
+    res.status(200).send(bills);
 });
 
 // Get bill details
-app.get('/bills/:billID', function (req, res) {
-    var username = req.body.username;
+app.get('/users/:email/bills/:billID', function (req, res) {
+    // Parses body of request
+    var email = req.email;
+    var billID = req.billID;
     var token = req.body.token;
-    var picture = req.body.picture;
-    // Check for validity of inputs
-    // see https://www.npmjs.com/package/validator
-    // TODO Escape inputs for database
-    username = validator.trim(username);
-    token = validator.trim(token);
-    // Check if user exists and is verified
-    if (!userExists) {
-        console.log("Username does not exist:", username);
-        res.status(404).send('Username does not exist');
+
+    // Check for validity of inputs (see https://www.npmjs.com/package/validator)
+    email = validator.trim(email);
+    if (!validator.isEmail(email)) {
+        console.log("Invalid email address: ", email);
+        res.status(400).send('Email address is invalid');
         return;
     }
-    // TODO
-    res.status(201).send(token);
+    email = validator.normalizeEmail(email);
+
+    // Check in database
+    // TODO Escape email for database
+    // TODO Database: 
+    //          1. Check if email exists and is verified
+    //          2. Obtain corresponding token
+    if (!emailExists) {
+        console.log("Email does not exist:", email);
+        res.status(403).send('Email and token combination is invalid');
+        return;
+    }
+    if (token != storedToken) {
+        console.log("Token is invalid for email:", email);
+        res.status(403).send('Email and token combination is invalid');
+        return;
+    }
+
+    // Check for billID in database
+
+    // Perform action
+    // TODO Return bill details from database
+    res.status(200).send(bill);
 });
 
 // Sign in procedure
