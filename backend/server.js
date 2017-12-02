@@ -29,123 +29,127 @@ app.get('/', function (req, res) {
 });
 
 // Upload picture of bill
-app.post('/users/:email/bills', function (req, res) {
-    // Parses body of request
-    var email = req.email;
+app.post('/users/:userID/bills', function (req, res) {
+    // Parse body of request
+    var userID = req.userID;
     var token = req.body.token;
     var picture = req.body.picture;
 
     // Check for validity of inputs (see https://www.npmjs.com/package/validator)
-    email = validator.trim(email);
-    if (!validator.isEmail(email)) {
-        console.log("Invalid email address: ", email);
-        res.status(400).send('Email address is invalid');
+    if (!validator.isInt(userID)) {
+        console.log("Invalid user ID: ", userID);
+        res.status(400).send('User id is invalid');
         return;
     }
-    email = validator.normalizeEmail(email);
+    // TODO check for token and picture format
+
 
     // Check in database
-    // TODO Escape email for database
+    // TODO Escape userID for database
     // TODO Database: 
-    //          1. Check if email exists and is verified
-    //          2. Obtain corresponding token
-    if (!emailExists) {
-        console.log("Email does not exist:", email);
-        res.status(403).send('Email and token combination is invalid');
+    //          - Check userID exists
+    //          - Obtain token of user
+    if (!userIDExists) {
+        console.log("User ID ", userID, " does not exist");
+        res.status(401).send('User ID and token combination is invalid');
         return;
     }
     if (token != storedToken) {
-        console.log("Token is invalid for email:", email);
-        res.status(403).send('Email and token combination is invalid');
+        console.log("Token ",token," is invalid for userID ", userID);
+        res.status(401).send('User ID and token combination is invalid');
         return;
     }
 
     // Perform action
-    // TODO escape picture and store it in database
+    // TODO Send picture to Google Cloud OCR API
+    // TODO Store results in database
     res.status(201).send("Bill created");
 });
 
-// Get bills of username
-app.get('/users/:email/bills', function (req, res) {
-    // Parses body of request
-    var email = req.email;
+// Get bills where user is involved
+app.get('/users/:userID/bills', function (req, res) {
+    // Parse body of request
+    var userID = req.userID;
     var token = req.body.token;
     
     // Check for validity of inputs (see https://www.npmjs.com/package/validator)
-    email = validator.trim(email);
-    if (!validator.isEmail(email)) {
-        console.log("Invalid email address: ", email);
-        res.status(400).send('Email address is invalid');
+    if (!validator.isInt(userID)) {
+        console.log("Invalid user ID: ", userID);
+        res.status(400).send('User id is invalid');
         return;
     }
-    email = validator.normalizeEmail(email);
 
     // Check in database
-    // TODO Escape email for database
+    // TODO Escape userID for database
     // TODO Database: 
-    //          1. Check if email exists and is verified
-    //          2. Obtain corresponding token
-    if (!emailExists) {
-        console.log("Email does not exist:", email);
-        res.status(403).send('Email and token combination is invalid');
+    //          - Check userID exists
+    //          - Obtain token of user
+    if (!userIDExists) {
+        console.log("User ID ", userID, " does not exist");
+        res.status(401).send('User ID and token combination is invalid');
         return;
     }
     if (token != storedToken) {
-        console.log("Token is invalid for email:", email);
-        res.status(403).send('Email and token combination is invalid');
+        console.log("Token ",token," is invalid for userID ", userID);
+        res.status(401).send('User ID and token combination is invalid');
         return;
     }
 
     // Perform action
-    // TODO Return bills from database
+    // TODO Return all bills from database
     res.status(200).send(bills);
 });
 
 // Get bill details
-app.get('/users/:email/bills/:billID', function (req, res) {
-    // Parses body of request
-    var email = req.email;
+app.get('/users/:userID/bills/:billID', function (req, res) {
+    // Parse body of request
+    var userID = req.userID;
     var billID = req.billID;
     var token = req.body.token;
 
     // Check for validity of inputs (see https://www.npmjs.com/package/validator)
-    email = validator.trim(email);
-    if (!validator.isEmail(email)) {
-        console.log("Invalid email address: ", email);
-        res.status(400).send('Email address is invalid');
+    if (!validator.isInt(userID)) {
+        console.log("Invalid user ID: ", userID);
+        res.status(400).send('User id is invalid');
         return;
     }
-    email = validator.normalizeEmail(email);
 
     // Check in database
-    // TODO Escape email for database
+    // TODO Escape userID for database
     // TODO Database: 
-    //          1. Check if email exists and is verified
-    //          2. Obtain corresponding token
-    if (!emailExists) {
-        console.log("Email does not exist:", email);
-        res.status(403).send('Email and token combination is invalid');
+    //          - Check userID exists
+    //          - Obtain token of user
+    if (!userIDExists) {
+        console.log("User ID ", userID, " does not exist");
+        res.status(401).send('User ID and token combination is invalid');
         return;
     }
     if (token != storedToken) {
-        console.log("Token is invalid for email:", email);
-        res.status(403).send('Email and token combination is invalid');
+        console.log("Token ",token," is invalid for userID ", userID);
+        res.status(401).send('User ID and token combination is invalid');
+        return;
+    }
+    // TODO Databse:
+    //          - Check for billID in database
+    //          - Obtain bill details from database if it exists
+    if (!billIDExists) {
+        console.log("User ID ", userID, " does not have bill ID ", billID);
+        res.status(204).send('User does not have such bill');
         return;
     }
 
-    // Check for billID in database
-
     // Perform action
-    // TODO Return bill details from database
+    // TODO Return bill details
     res.status(200).send(bill);
 });
 
 // Sign in procedure
-app.get('/users/:email', function (req, res) {
-    var email = req.email;
+app.get('/users', function (req, res) {
+    // Parse body of request
+    var email = req.body.email;
     var password = req.body.password;
-    // see https://www.npmjs.com/package/validator
-    // TODO Escape inputs for database
+    
+    // Check for validity of inputs (see https://www.npmjs.com/package/validator)
     email = validator.trim(email);
     password = validator.trim(password);    
     if (!validator.isEmail(email)) {
@@ -154,38 +158,36 @@ app.get('/users/:email', function (req, res) {
         return;
     }
     email = validator.normalizeEmail(email);
-    if (password.length > 100) {
-        console.log("Password is too long: ", password);
+
+    // TODO Escape email for database
+    // TODO Database: 
+    //          - Check email exists
+    //          - Obtain salt and digest of user
+    //          - Obtain userID of user
+    //          - Obtain token of user
+    if (!emailExists) {
+        console.log("Email does not exist: ", email);
         res.status(401).send('Incorrect email or password');
         return;
     }
-    // check if email exists in database
-    /*
-    if (!emailExists) {
-        console.log("Email does not exist in database: ", email);
-        res.status(401).send('Incorrect email or password');
-        return;
-    }*/
-    var salt = ""; // get from database
     var digest = crypto.scrypt(password, salt);
-    var digestStored = ""; // get from database
     if (digest != digestStored) {
         console.log("Password is incorrect: ", password);
         res.status(401).send('Incorrect email or password');
         return;
     }
-    var token = ""; // get token from database
-    res.status(200).send(token);
+    var result = {userID:userID, token:token};
+    res.status(200).send(result);
 });
 
-// Signup procedure
+// Sign up procedure
 app.post('/users', function (req, res) {
+    // Parses body of request
     var email = req.body.email;
     var username = req.body.username;
     var password = req.body.password;
-    // Check for validity of inputs
-    // see https://www.npmjs.com/package/validator
-    // TODO Escape inputs for database
+
+    // Check for validity of inputs (see https://www.npmjs.com/package/validator)
     email = validator.trim(email);
     username = validator.trim(username);
     password = validator.trim(password);    
@@ -214,23 +216,31 @@ app.post('/users', function (req, res) {
         return;
     }
 
-    // Check if user does not exist already (check verified flag)
+    // TODO Escape email for database
+    // TODO Database: 
+    //          - Check email exists
     if (emailExists) {
         console.log("Email already exists:", email);
         res.status(409).send('Email is already registered');
         return;
     }
+    // TODO Escape username for database
+    // TODO Database: 
+    //          - Check username exists
     if (userExists) {
         console.log("Username already exists:", username);
         res.status(409).send('Username is already taken');
         return;
     }
     
-    // Create the user (add email verification eventually)
+    // Create the user
+    // TODO Add email verification
     var salt = crypto.randomString(8);
     var digest = crypto.scrypt(password, salt);
     var token = crypto.randomString(40);
-    // store that in the SQL database
+    // TODO Escape salt, digest and token for database
+    // TODO Database: 
+    //          - Store email, username, salt, digest and token
     res.status(201).send(token);
 });
 
