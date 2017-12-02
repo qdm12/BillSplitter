@@ -4,23 +4,9 @@ var app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 var validator = require('validator');
-var mysql = require('mysql');
-var database = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "password"
-});
-database.connect(function(err) {
-    if (err) {
-        throw err;
-    } else {
-        console.log("Database connected");
-    }
-});
-
 
 const crypto = require('./crypto.js');
-
+const database = require('./database.js');
 
 // All body of HTTP requests must be encoded in x-www-form-urlencoded
 
@@ -45,15 +31,13 @@ app.post('/users/:userID/bills', function (req, res) {
 
 
     // Check in database
-    // TODO Escape userID for database
-    // TODO Database: 
-    //          - Check userID exists
-    //          - Obtain token of user
+    var userIDExists = database.userIDExists(userID);
     if (!userIDExists) {
         console.log("User ID ", userID, " does not exist");
         res.status(401).send('User ID and token combination is invalid');
         return;
     }
+    var storedToken = database.getToken(userID);
     if (token != storedToken) {
         console.log("Token ",token," is invalid for userID ", userID);
         res.status(401).send('User ID and token combination is invalid');
@@ -80,15 +64,13 @@ app.get('/users/:userID/bills', function (req, res) {
     }
 
     // Check in database
-    // TODO Escape userID for database
-    // TODO Database: 
-    //          - Check userID exists
-    //          - Obtain token of user
+    var userIDExists = database.userIDExists(userID);
     if (!userIDExists) {
         console.log("User ID ", userID, " does not exist");
         res.status(401).send('User ID and token combination is invalid');
         return;
     }
+    var storedToken = database.getToken(userID);
     if (token != storedToken) {
         console.log("Token ",token," is invalid for userID ", userID);
         res.status(401).send('User ID and token combination is invalid');
@@ -115,31 +97,27 @@ app.get('/users/:userID/bills/:billID', function (req, res) {
     }
 
     // Check in database
-    // TODO Escape userID for database
-    // TODO Database: 
-    //          - Check userID exists
-    //          - Obtain token of user
+    var userIDExists = database.userIDExists(userID);
     if (!userIDExists) {
         console.log("User ID ", userID, " does not exist");
         res.status(401).send('User ID and token combination is invalid');
         return;
     }
+    var storedToken = database.getToken(userID);
     if (token != storedToken) {
         console.log("Token ",token," is invalid for userID ", userID);
         res.status(401).send('User ID and token combination is invalid');
         return;
     }
-    // TODO Databse:
-    //          - Check for billID in database
-    //          - Obtain bill details from database if it exists
+    var billIDExists = database.billIDExists(userID, billID);
     if (!billIDExists) {
         console.log("User ID ", userID, " does not have bill ID ", billID);
         res.status(204).send('User does not have such bill');
         return;
     }
-
+    
     // Perform action
-    // TODO Return bill details
+    var bill = database.getBill(userID, billID);
     res.status(200).send(bill);
 });
 
@@ -159,25 +137,29 @@ app.get('/users', function (req, res) {
     }
     email = validator.normalizeEmail(email);
 
-    // TODO Escape email for database
+    
     // TODO Database: 
     //          - Check email exists
     //          - Obtain salt and digest of user
     //          - Obtain userID of user
     //          - Obtain token of user
+    var emailExists = database.emailExists(email);
     if (!emailExists) {
         console.log("Email does not exist: ", email);
         res.status(401).send('Incorrect email or password');
         return;
     }
+    var userID = database.getUserID(email);
+    var salt = database.getSalt(userID);
+    var storedDigest = database.getDigest(userID);
     var digest = crypto.scrypt(password, salt);
-    if (digest != digestStored) {
+    if (digest != storedDigest) {
         console.log("Password is incorrect: ", password);
         res.status(401).send('Incorrect email or password');
         return;
     }
-    var result = {userID:userID, token:token};
-    res.status(200).send(result);
+    var token = database.getToken(userID);
+    res.status(200).send({userID:userID, token:token});
 });
 
 // Sign up procedure
@@ -190,7 +172,7 @@ app.post('/users', function (req, res) {
     // Check for validity of inputs (see https://www.npmjs.com/package/validator)
     email = validator.trim(email);
     username = validator.trim(username);
-    password = validator.trim(password);    
+    password = validator.trim(password);
     if (!validator.isEmail(email)) {
         console.log("Invalid email address for signup:", email);
         res.status(400).send('Your email is invalid');
@@ -216,18 +198,14 @@ app.post('/users', function (req, res) {
         return;
     }
 
-    // TODO Escape email for database
-    // TODO Database: 
-    //          - Check email exists
+    var emailExists = database.emailExists(email);
     if (emailExists) {
         console.log("Email already exists:", email);
         res.status(409).send('Email is already registered');
         return;
     }
-    // TODO Escape username for database
-    // TODO Database: 
-    //          - Check username exists
-    if (userExists) {
+    var usernameExists = database.usernameExists(username);
+    if (usernameExists) {
         console.log("Username already exists:", username);
         res.status(409).send('Username is already taken');
         return;
@@ -238,7 +216,7 @@ app.post('/users', function (req, res) {
     var salt = crypto.randomString(8);
     var digest = crypto.scrypt(password, salt);
     var token = crypto.randomString(40);
-    // TODO Escape salt, digest and token for database
+    database.createUser(email, username, digest, salt, token);
     // TODO Database: 
     //          - Store email, username, salt, digest and token
     res.status(201).send(token);
