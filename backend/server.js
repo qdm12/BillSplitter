@@ -8,33 +8,13 @@ var mysql = require("mysql");
 
 var crypto = require('./crypto.js');
 
-var pool  = mysql.createPool({
+var pool = mysql.createPool({
     connectionLimit : 10,
     host            : "localhost",
     user            : "root",
     password        : "password",
     database        : "billsplitter"
 });
-
-// TODO https://stackoverflow.com/questions/41628900/nested-query-in-nodejs-mysql
-function getResult(sql, values) {
-    return new Promise(
-        function(resolve,reject) {
-            pool.query(
-                sql,
-                values,
-                function(err, result) {
-                    if(err) {
-                        reject(err);
-                    } else {
-                        resolve(result);
-                    }
-                }
-            );
-        }
-    );
-}
-
 
 // All body of HTTP requests must be encoded in x-www-form-urlencoded
 
@@ -70,14 +50,30 @@ app.post('/users/:userID/bills', function (req, res) {
                 console.log("User ID", userID, "with token", token, "does not exit");
                 res.status(401).send('User ID and token combination is invalid');
             } else {
-                // TODO Send picture to Google Cloud OCR API
-                // TODO Store results in database
-                // OCR HERE
-                //
-                link = crypto.randomString(40); // ~zero chance it already exists
+                // START OCR
+                // ************************************************
+                var address = "50 W 4TH ST NEW YORK";
+                var restaurant = "McDonald's";
+                var tax = 19.5;
+                var time = 1512428638; // epoch time obtained from bill
+
+                var items = [
+                    {
+                        name: "Cheeseburger",
+                        amount: 3.67 // tax not included ?
+                    },
+                    {
+                        name: "Fries",
+                        amount: 1.7
+                    }
+                ]; // XXX
+                // ************************************************
+                // END OCR
+                var name = restaurant; // could be changed later
+                var link = crypto.randomString(40); // ~zero chance it already exists
                 pool.query(
-                    "INSERT INTO bills (tax, time, locationX, locationY, name, link) VALUES ?",
-                    [tax, time, locationX, locationY, name, link],
+                    "INSERT INTO bills (time, address, restaurant, name, tax, link) VALUES ?",
+                    [time, address, restaurant, name, tax, link],
                     function (error, result, fields) {
                         console.log(result); // TODO to remove
                         if (error) {
@@ -94,12 +90,13 @@ app.post('/users/:userID/bills', function (req, res) {
                                         res.status(500).send("Our database is having troubles");
                                     } else {
                                         var billID = result[0].lastid;
+                                        var values = [];
+                                        items.forEach(function (item) {
+                                            values.push([billID, item.name, item.amount]);
+                                        });
                                         pool.query(
                                             "INSERT INTO items (bill_id, name, amount) VALUES ?",
-                                            [
-                                                [billID, "tomatoes", 16.5],
-                                                [billID, "garlic", 5.5] // TODO
-                                            ],
+                                            values,
                                             function (error, result, fields) {
                                                 console.log(result); // TODO to remove
                                                 if (error) {
