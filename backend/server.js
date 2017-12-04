@@ -55,9 +55,10 @@ app.post('/users/:userID/bills', function (req, res) {
                 // TODO Store results in database
                 // OCR HERE
                 //
+                link = crypto.randomString(40); // ~zero chance it already exists
                 pool.query(
-                    "INSERT INTO bills (tax, time, locationX, locationY, name) VALUES ?",
-                    [tax, time, locationX, locationY, name],
+                    "INSERT INTO bills (tax, time, locationX, locationY, name, link) VALUES ?",
+                    [tax, time, locationX, locationY, name, link],
                     function (error, result, fields) {
                         console.log(result); // TODO to remove
                         if (error) {
@@ -189,6 +190,7 @@ app.get('/users/:userID/bills/:billID', function (req, res) {
                         } else {
                             // TODO send the bills details, we already have bills.*
                             // just query bills_users, items and items_consumers tables
+                            // Dynamic link is in bills.link
                             res.status(200).send(bill);
                         }
                     }
@@ -306,6 +308,16 @@ app.post('/users', function (req, res) {
         }
     );
 });
+
+/*
+TODO
+- Add user to bill
+- Add temp user to bill
+- Add user to an item, in items_consumers
+- Add temp user to an item, in items_consumers
+- Change paid status in items_consumers
+- Specific information on one item of bill
+*/
 
 var server = app.listen(8000, function () {
     console.log("Server listening at localhost:%s", server.address().port);

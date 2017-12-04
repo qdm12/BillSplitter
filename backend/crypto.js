@@ -11,7 +11,7 @@ function scryptHash(input, salt) {
 
 function randomString(length) {
     var s = "";
-    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_-+=[{]}\|~/?.>,<;:";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789^*()_-+[{]}>,<;";
     for (var i = 0; i < length; i++) {
         s += possible.charAt(Math.floor(Math.random() * possible.length));
     }

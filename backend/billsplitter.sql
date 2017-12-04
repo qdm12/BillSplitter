@@ -30,7 +30,8 @@ CREATE TABLE bills (
 	time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	locationX FLOAT, -- longitude
     locationY FLOAT, -- latitude
-    name VARCHAR(30) -- optional name for the bill
+    name VARCHAR(30), -- optional name for the bill
+    link CHARACTER(40)
 	-- users are in bills_users
 	-- items are in items
 );

@@ -37,12 +37,3 @@
     ```
 
 ### Further changes
-
-1. In [database.js](database.js), you may want to change the connection parameters:
-    ```javascript
-    var database = mysql.createConnection({
-        host: "localhost",
-        user: "root",
-        password: "password"
-    });
-    ```
