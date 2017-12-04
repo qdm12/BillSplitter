@@ -42,7 +42,9 @@ CREATE TABLE bills_users (
     temp_user_id INTEGER, -- or this one for non registered users
     FOREIGN KEY(bill_id) REFERENCES bills(id),
     FOREIGN KEY(user_id) REFERENCES users(id),    
-    FOREIGN KEY(temp_user_id) REFERENCES temp_users(id)
+    FOREIGN KEY(temp_user_id) REFERENCES temp_users(id),
+    UNIQUE KEY (bill_id, user_id),
+    UNIQUE KEY (bill_id, temp_user_id)
 );
 
 CREATE TABLE items (

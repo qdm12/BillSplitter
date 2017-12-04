@@ -103,7 +103,19 @@ app.post('/users/:userID/bills', function (req, res) {
                                                     console.warn("The items could not be created:", error);
                                                     res.status(500).send("Our database is having troubles");
                                                 } else {
-                                                    res.status(200).send("Bill created");
+                                                    pool.query(
+                                                        "INSERT INTO bills_users (bill_id, user_id) VALUES ?",
+                                                        [billID, userID],
+                                                        function (error, result, fields) {
+                                                            console.log(result); // TODO to remove
+                                                            if (error) {
+                                                                console.warn("The bill - user could not be created:", error);
+                                                                res.status(500).send("Our database is having troubles");
+                                                            } else {
+                                                                res.status(200).send("Bill created");
+                                                            }
+                                                        }
+                                                    );
                                                 }
                                             }
                                         );
