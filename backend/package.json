@@ -4,7 +4,7 @@
   "description": "Backend server for the mobile app billsplitter",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node node_modules/mocha/bin/mocha.js",
     "start": "nodemon server.js"
   },
   "repository": {
@@ -23,7 +23,10 @@
     "url": "https://github.com/qdm12/BillSplitter/issues"
   },
   "homepage": "https://github.com/qdm12/BillSplitter#readme",
-  "devDependencies": {},
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^4.0.1"
+  },
   "dependencies": {
     "body-parser": "^1.18.2",
     "express": "^4.16.2",

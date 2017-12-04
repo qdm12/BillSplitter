@@ -1,10 +1,12 @@
-exports.scrypt = scryptHash;
-
-var scrypt = require('scryptsy')
+module.exports = {
+    scrypt: scryptHash,
+    randomString: randomString,
+};
+var scrypt = require('scryptsy');
 
 function scryptHash(input, salt) {
     var digest = scrypt(input, salt, 16384, 8, 1, 64);
-    return digest.toString('base64'); // bytes, string
+    return digest.toString('base64'); // string in base64
 }
 
 function randomString(length) {

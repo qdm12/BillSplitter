@@ -5,8 +5,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 var validator = require('validator');
 
-const crypto = require('./crypto.js');
-const database = require('./database.js');
+var crypto = require('./crypto.js');
+var database = require('./database.js');
+database.connectToDatabase("billsplitter", true);
 
 // All body of HTTP requests must be encoded in x-www-form-urlencoded
 
@@ -217,8 +218,6 @@ app.post('/users', function (req, res) {
     var digest = crypto.scrypt(password, salt);
     var token = crypto.randomString(40);
     database.createUser(email, username, digest, salt, token);
-    // TODO Database: 
-    //          - Store email, username, salt, digest and token
     res.status(201).send(token);
 });
 
