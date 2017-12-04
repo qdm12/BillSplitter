@@ -4,10 +4,18 @@ var app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 var validator = require('validator');
+var mysql = require("mysql");
 
 var crypto = require('./crypto.js');
-var database = require('./database.js');
-database.connectToDatabase("billsplitter", true);
+
+var pool  = mysql.createPool({
+    connectionLimit : 10,
+    host            : "localhost",
+    user            : "root",
+    password        : "password",
+    database        : "billsplitter"
+});
+
 
 // All body of HTTP requests must be encoded in x-www-form-urlencoded
 
@@ -30,25 +38,67 @@ app.post('/users/:userID/bills', function (req, res) {
     }
     // TODO check for token and picture format
 
-
     // Check in database
-    var userIDExists = database.userIDExists(userID);
-    if (!userIDExists) {
-        console.log("User ID ", userID, " does not exist");
-        res.status(401).send('User ID and token combination is invalid');
-        return;
-    }
-    var storedToken = database.getToken(userID);
-    if (token != storedToken) {
-        console.log("Token ",token," is invalid for userID ", userID);
-        res.status(401).send('User ID and token combination is invalid');
-        return;
-    }
-
-    // Perform action
-    // TODO Send picture to Google Cloud OCR API
-    // TODO Store results in database
-    res.status(201).send("Bill created");
+    pool.query(
+        "SELECT (id, token) FROM users WHERE id = ? AND token = ? LIMIT 1",
+        [userID, token],
+        function (error, result, fields) {
+            console.log(result); // TODO to remove
+            if (error) {
+                console.warn("The users table can't be searched:", error);
+                res.status(500).send("Our database is having troubles");
+            } else if (result == []) { // Wrong userID or token
+                console.log("User ID", userID, "with token", token, "does not exit");
+                res.status(401).send('User ID and token combination is invalid');
+            } else {
+                // TODO Send picture to Google Cloud OCR API
+                // TODO Store results in database
+                // OCR HERE
+                //
+                pool.query(
+                    "INSERT INTO bills (tax, time, locationX, locationY, name) VALUES ?",
+                    [tax, time, locationX, locationY, name],
+                    function (error, result, fields) {
+                        console.log(result); // TODO to remove
+                        if (error) {
+                            console.warn("The new bill could not be created:", error);
+                            res.status(500).send("Our database is having troubles");
+                        } else {
+                            pool.query(
+                                "SELECT MAX(id) AS lastid FROM bills",
+                                [],
+                                function (error, result, fields) {
+                                    console.log(result); // TODO to remove
+                                    if (error) {
+                                        console.warn("The bills table could not be searched:", error);
+                                        res.status(500).send("Our database is having troubles");
+                                    } else {
+                                        var billID = result[0].lastid;
+                                        pool.query(
+                                            "INSERT INTO items (bill_id, name, amount) VALUES ?",
+                                            [
+                                                [billID, "tomatoes", 16.5],
+                                                [billID, "garlic", 5.5] // TODO
+                                            ],
+                                            function (error, result, fields) {
+                                                console.log(result); // TODO to remove
+                                                if (error) {
+                                                    console.warn("The items could not be created:", error);
+                                                    res.status(500).send("Our database is having troubles");
+                                                } else {
+                                                    res.status(200).send("Bill created");
+                                                }
+                                            }
+                                        );
+                                    }
+                                }
+                            );
+                        }
+                    }
+                );
+            }
+        }
+    );
 });
 
 // Get bills where user is involved
@@ -65,22 +115,37 @@ app.get('/users/:userID/bills', function (req, res) {
     }
 
     // Check in database
-    var userIDExists = database.userIDExists(userID);
-    if (!userIDExists) {
-        console.log("User ID ", userID, " does not exist");
-        res.status(401).send('User ID and token combination is invalid');
-        return;
-    }
-    var storedToken = database.getToken(userID);
-    if (token != storedToken) {
-        console.log("Token ",token," is invalid for userID ", userID);
-        res.status(401).send('User ID and token combination is invalid');
-        return;
-    }
-
-    // Perform action
-    // TODO Return all bills from database
-    res.status(200).send(bills);
+    pool.query(
+        "SELECT (id, token) FROM users WHERE id = ? AND token = ? LIMIT 1",
+        [userID, token],
+        function (error, result, fields) {
+            console.log(result); // TODO to remove
+            if (error) {
+                console.warn("The users table can't be searched:", error);
+                res.status(500).send("Our database is having troubles");
+            } else if (result == []) { // Wrong userID or token
+                console.log("User ID", userID, "with token", token, "does not exit");
+                res.status(401).send('User ID and token combination is invalid');
+            } else {
+                pool.query(
+                    "SELECT bill_id FROM bills_users WHERE user_id = ?",
+                    [billID],
+                    function (error, result, fields) {
+                        console.log(result); // TODO to remove
+                        if (error) {
+                            console.warn("The bills_users table can't be searched:", error);
+                            res.status(500).send("Our database is having troubles");
+                        } else {
+                            console.log("User ID", userID, "has", result.length, "bills");
+                            // TODO send the all the bills details
+                            // just query bills_users, items and items_consumers tables
+                            res.status(200).send(bills);
+                        }
+                    }
+                );
+            }
+        }
+    );
 });
 
 // Get bill details
@@ -98,28 +163,39 @@ app.get('/users/:userID/bills/:billID', function (req, res) {
     }
 
     // Check in database
-    var userIDExists = database.userIDExists(userID);
-    if (!userIDExists) {
-        console.log("User ID ", userID, " does not exist");
-        res.status(401).send('User ID and token combination is invalid');
-        return;
-    }
-    var storedToken = database.getToken(userID);
-    if (token != storedToken) {
-        console.log("Token ",token," is invalid for userID ", userID);
-        res.status(401).send('User ID and token combination is invalid');
-        return;
-    }
-    var billIDExists = database.billIDExists(userID, billID);
-    if (!billIDExists) {
-        console.log("User ID ", userID, " does not have bill ID ", billID);
-        res.status(204).send('User does not have such bill');
-        return;
-    }
-    
-    // Perform action
-    var bill = database.getBill(userID, billID);
-    res.status(200).send(bill);
+    pool.query(
+        "SELECT (id, token) FROM users WHERE id = ? AND token = ? LIMIT 1",
+        [userID, token],
+        function (error, result, fields) {
+            console.log(result); // TODO to remove
+            if (error) {
+                console.warn("The users table can't be searched:", error);
+                res.status(500).send("Our database is having troubles");
+            } else if (result == []) { // Wrong userID or token
+                console.log("User ID", userID, "with token", token, "does not exit");
+                res.status(401).send('User ID and token combination is invalid');
+            } else {
+                pool.query(
+                    "SELECT bills.* FROM bills, bills_users WHERE bills.id = ? AND bills_users.id = ? AND bills_users.user_id = ? LIMIT 1",
+                    [billID, billID, userID],
+                    function (error, result, fields) {
+                        console.log(result); // TODO to remove
+                        if (error) {
+                            console.warn("The bills table can't be searched:", error);
+                            res.status(500).send("Our database is having troubles");
+                        } else if (result == []) {
+                            console.log("User ID", userID, "does not have bill with id", billID);
+                            res.status(204).send('User ID has no such bill');
+                        } else {
+                            // TODO send the bills details, we already have bills.*
+                            // just query bills_users, items and items_consumers tables
+                            res.status(200).send(bill);
+                        }
+                    }
+                );
+            }
+        }
+    );
 });
 
 // Sign in procedure
@@ -138,29 +214,28 @@ app.get('/users', function (req, res) {
     }
     email = validator.normalizeEmail(email);
 
-    
-    // TODO Database: 
-    //          - Check email exists
-    //          - Obtain salt and digest of user
-    //          - Obtain userID of user
-    //          - Obtain token of user
-    var emailExists = database.emailExists(email);
-    if (!emailExists) {
-        console.log("Email does not exist: ", email);
-        res.status(401).send('Incorrect email or password');
-        return;
-    }
-    var userID = database.getUserID(email);
-    var salt = database.getSalt(userID);
-    var storedDigest = database.getDigest(userID);
-    var digest = crypto.scrypt(password, salt);
-    if (digest != storedDigest) {
-        console.log("Password is incorrect: ", password);
-        res.status(401).send('Incorrect email or password');
-        return;
-    }
-    var token = database.getToken(userID);
-    res.status(200).send({userID:userID, token:token});
+    pool.query(
+        "SELECT (id, digest, salt, token) FROM users WHERE email = ? LIMIT 1",
+        [email],
+        function (error, result, fields) {
+            console.log(result); // TODO to remove
+            if (error) {
+                console.warn("The users table can't be searched:", error);
+                res.status(500).send("Our database is having troubles");
+            } else if (result == []) { // email does not exist
+                console.log("Email does not exist: ", email);
+                res.status(401).send('Incorrect email or password');
+            } else {
+                var digest = crypto.scrypt(password, result[0].salt);
+                if (digest != result[0].digest) {
+                    console.log("Password is incorrect: ", password);
+                    res.status(401).send('Incorrect email or password');
+                } else {
+                    res.status(200).send({userID:result[0].id, token:result[0].token});
+                }
+            }
+        }
+    );
 });
 
 // Sign up procedure
@@ -217,8 +292,19 @@ app.post('/users', function (req, res) {
     var salt = crypto.randomString(8);
     var digest = crypto.scrypt(password, salt);
     var token = crypto.randomString(40);
-    database.createUser(email, username, digest, salt, token);
-    res.status(201).send(token);
+    pool.query(
+        "INSERT INTO users (email, username, digest, salt, token) VALUES ?",
+        [email, username, digest, salt, token],
+        function (error, result, fields) {
+            if (error) {
+                console.warn("The user can't be created:", error);
+                res.status(500).send("Our database is having troubles");
+            } else {
+                console.log("User", username, "created");
+                res.status(201).send(token);
+            }
+        }
+    );
 });
 
 var server = app.listen(8000, function () {
