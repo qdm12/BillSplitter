@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html>
 <head>
@@ -35,11 +34,11 @@ crossorigin="anonymous">
 		 if ( key === "items") {
 			console.log(key)
 			$('.wrapper').append($('<div />', {class: 'items'}));
-			$('.items').css({"float":"left","width":"50%"});
+			$('.items').css({"float":"right","width":"50%"});
 			 // should be style="width: 50%, float:left
 			$.each(data["items"], function(i, val){
 				console.log("items")
-				$('<div />', { id: val, class: "item", text: val, width: "100px"}).appendTo('.items');
+				$('<div />', { id: val, class: "item", text: val, width: "100px", align: "right"}).appendTo('.items');
 				$("#"+val).after("<br>")
 				$(".item").css({"background-Color":"grey","padding":"1px","border-style":"solid","border-size":"1px"});
 				$('.item').droppable({accept: ".person"})
@@ -49,7 +48,7 @@ crossorigin="anonymous">
 		if ( key === "otherpeople") {
 			console.log(key)
 			$('.wrapper').append($('<div />', {class: 'people'}));
-			$('.people').css({"float":"right","width":"50%"})
+			$('.people').css({"float":"left","width":"50%"})
 
 			$.each(data["otherpeople"], function(i, val){
 				console.log("otherpeople")
