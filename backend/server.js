@@ -16,6 +16,25 @@ var pool  = mysql.createPool({
     database        : "billsplitter"
 });
 
+// TODO https://stackoverflow.com/questions/41628900/nested-query-in-nodejs-mysql
+function getResult(sql, values) {
+    return new Promise(
+        function(resolve,reject) {
+            pool.query(
+                sql,
+                values,
+                function(err, result) {
+                    if(err) {
+                        reject(err);
+                    } else {
+                        resolve(result);
+                    }
+                }
+            );
+        }
+    );
+}
+
 
 // All body of HTTP requests must be encoded in x-www-form-urlencoded
 
