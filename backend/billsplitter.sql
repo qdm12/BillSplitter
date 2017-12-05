@@ -1,5 +1,5 @@
--- CREATE DATABASE IF NOT EXISTS billsplitter;
--- USE billsplitter;
+CREATE DATABASE IF NOT EXISTS billsplitter;
+USE billsplitter;
 
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS temp_users;
@@ -30,8 +30,9 @@ CREATE TABLE bills (
     address VARCHAR(100) NOT NULL,
     restaurant VARCHAR(50) NOT NULL,
     name VARCHAR(50) NOT NULL, -- Name for the bill, defaults to restaurant
-    tax FLOAT NOT NULL, -- from 0 to 100 (%)
-    link CHARACTER(40)
+    tax FLOAT NOT NULL DEFAULT 0, -- from 0 to 100 (%)
+	tip FLOAT NOT NULL DEFAULT 0, -- from 0 to 100 (%)
+    link CHARACTER(40) NOT NULL UNIQUE,
     -- users are in bills_users
     -- items are in items
 );

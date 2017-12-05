@@ -9,11 +9,11 @@ var mysql = require("mysql");
 var crypto = require('./crypto.js');
 
 var pool = mysql.createPool({
-    connectionLimit : 10,
-    host            : "localhost",
-    user            : "root",
-    password        : "password",
-    database        : "billsplitter"
+    connectionLimit: 10,
+    host: "localhost",
+    user: "root",
+    password: "password",
+    database: "billsplitter"
 });
 
 // All body of HTTP requests must be encoded in x-www-form-urlencoded
@@ -23,11 +23,11 @@ app.get('/', function (req, res) {
 });
 
 // Upload picture of bill
-app.post('/users/:userID/bills', function (req, res) {
+app.post('/bills', function (req, res) {
     // Parse body of request
-    var userID = req.userID;
+    var userID = req.body.userID;
     var token = req.body.token;
-    var picture = req.body.picture;
+    var picture = req.body.picture; // TODO see how to transport picture
 
     // Check for validity of inputs (see https://www.npmjs.com/package/validator)
     if (!validator.isInt(userID)) {
@@ -42,15 +42,15 @@ app.post('/users/:userID/bills', function (req, res) {
         "SELECT (id, token) FROM users WHERE id = ? AND token = ? LIMIT 1",
         [userID, token],
         function (error, result, fields) {
-            console.log(result); // TODO to remove
+            console.log("POST /bills DB 1:", result); // TODO to remove
             if (error) {
                 console.warn("The users table can't be searched:", error);
                 res.status(500).send("Our database is having troubles");
-            } else if (result == []) { // Wrong userID or token
+            } else if (result.length === 0) { // Wrong userID or token
                 console.log("User ID", userID, "with token", token, "does not exit");
-                res.status(401).send('User ID and token combination is invalid');
+                res.status(401).send("User ID and token combination is invalid");
             } else {
-                // START OCR
+                // START OCR TODO TODO TODO
                 // ************************************************
                 var address = "50 W 4TH ST NEW YORK";
                 var restaurant = "McDonald's";
@@ -66,16 +66,16 @@ app.post('/users/:userID/bills', function (req, res) {
                         name: "Fries",
                         amount: 1.7
                     }
-                ]; // XXX
+                ];
                 // ************************************************
                 // END OCR
-                var name = restaurant; // could be changed later
+                var name = restaurant; // TODO can be changed later
                 var link = crypto.randomString(40); // ~zero chance it already exists
                 pool.query(
                     "INSERT INTO bills (time, address, restaurant, name, tax, link) VALUES ?",
                     [time, address, restaurant, name, tax, link],
-                    function (error, result, fields) {
-                        console.log(result); // TODO to remove
+                    function (error, result) {
+                        console.log("POST /bills DB 2:", result); // TODO to remove
                         if (error) {
                             console.warn("The new bill could not be created:", error);
                             res.status(500).send("Our database is having troubles");
@@ -84,7 +84,7 @@ app.post('/users/:userID/bills', function (req, res) {
                                 "SELECT MAX(id) AS lastid FROM bills",
                                 [],
                                 function (error, result, fields) {
-                                    console.log(result); // TODO to remove
+                                    console.log("POST /bills DB 3:", result); // TODO to remove
                                     if (error) {
                                         console.warn("The bills table could not be searched:", error);
                                         res.status(500).send("Our database is having troubles");
@@ -98,7 +98,7 @@ app.post('/users/:userID/bills', function (req, res) {
                                             "INSERT INTO items (bill_id, name, amount) VALUES ?",
                                             values,
                                             function (error, result, fields) {
-                                                console.log(result); // TODO to remove
+                                                console.log("POST /bills DB 4:", result); // TODO to remove
                                                 if (error) {
                                                     console.warn("The items could not be created:", error);
                                                     res.status(500).send("Our database is having troubles");
@@ -107,7 +107,7 @@ app.post('/users/:userID/bills', function (req, res) {
                                                         "INSERT INTO bills_users (bill_id, user_id) VALUES ?",
                                                         [billID, userID],
                                                         function (error, result, fields) {
-                                                            console.log(result); // TODO to remove
+                                                            console.log("POST /bills DB 5:", result); // TODO to remove
                                                             if (error) {
                                                                 console.warn("The bill - user could not be created:", error);
                                                                 res.status(500).send("Our database is having troubles");
@@ -147,20 +147,20 @@ app.get('/users/:userID/bills', function (req, res) {
     pool.query(
         "SELECT (id, token) FROM users WHERE id = ? AND token = ? LIMIT 1",
         [userID, token],
-        function (error, result, fields) {
-            console.log(result); // TODO to remove
+        function (error, result) {
+            console.log("GET /users/:userID/bills 1:", result); // TODO to remove
             if (error) {
                 console.warn("The users table can't be searched:", error);
                 res.status(500).send("Our database is having troubles");
-            } else if (result == []) { // Wrong userID or token
+            } else if (result.length === 0) { // Wrong userID or token
                 console.log("User ID", userID, "with token", token, "does not exit");
                 res.status(401).send('User ID and token combination is invalid');
             } else {
                 pool.query(
                     "SELECT bill_id FROM bills_users WHERE user_id = ?",
                     [billID],
-                    function (error, result, fields) {
-                        console.log(result); // TODO to remove
+                    function (error, result) {
+                        console.log("GET /users/:userID/bills 2:", result); // TODO to remove
                         if (error) {
                             console.warn("The bills_users table can't be searched:", error);
                             res.status(500).send("Our database is having troubles");
@@ -168,7 +168,8 @@ app.get('/users/:userID/bills', function (req, res) {
                             console.log("User ID", userID, "has", result.length, "bills");
                             // TODO send the all the bills details
                             // just query bills_users, items and items_consumers tables
-                            res.status(200).send(bills);
+                            // TODO maybe query all in one query if possible
+                            // res.status(200).send(bills);
                         }
                     }
                 );
@@ -178,10 +179,10 @@ app.get('/users/:userID/bills', function (req, res) {
 });
 
 // Get bill details
-app.get('/users/:userID/bills/:billID', function (req, res) {
+app.get('/bills/:billID', function (req, res) {
     // Parse body of request
-    var userID = req.userID;
     var billID = req.billID;
+    var userID = req.body.userID;
     var token = req.body.token;
 
     // Check for validity of inputs (see https://www.npmjs.com/package/validator)
@@ -196,11 +197,11 @@ app.get('/users/:userID/bills/:billID', function (req, res) {
         "SELECT (id, token) FROM users WHERE id = ? AND token = ? LIMIT 1",
         [userID, token],
         function (error, result, fields) {
-            console.log(result); // TODO to remove
+            console.log("GET /bills/:billID 1", result); // TODO to remove
             if (error) {
                 console.warn("The users table can't be searched:", error);
                 res.status(500).send("Our database is having troubles");
-            } else if (result == []) { // Wrong userID or token
+            } else if (result.length === 0) { // Wrong userID or token
                 console.log("User ID", userID, "with token", token, "does not exit");
                 res.status(401).send('User ID and token combination is invalid');
             } else {
@@ -211,18 +212,18 @@ app.get('/users/:userID/bills/:billID', function (req, res) {
                     "items.bill_id = ? AND items_consumers.item_id = items.id",
                     [billID, billID, billID],
                     function (error, result, fields) {
-                        console.log(result); // TODO to remove
+                        console.log("GET /bills/:billID 2", result); // TODO to remove
                         if (error) {
                             console.warn("The bills table can't be searched:", error);
                             res.status(500).send("Our database is having troubles");
-                        } else if (result === []) {
+                        } else if (result.length === 0) {
                             console.log("User ID", userID, "does not have bill with id", billID);
                             res.status(204).send('User ID has no such bill');
                         } else {
                             // TODO send the bills details, we already have bills.*
                             // just query bills_users, items and items_consumers tables
                             // Dynamic link is in bills.link
-                            res.status(200).send(bill);
+                            // res.status(200).send(bill);
                         }
                     }
                 );
@@ -251,11 +252,11 @@ app.get('/users', function (req, res) {
         "SELECT (id, digest, salt, token) FROM users WHERE email = ? LIMIT 1",
         [email],
         function (error, result, fields) {
-            console.log(result); // TODO to remove
+            console.log("GET /users 1:", result); // TODO to remove
             if (error) {
                 console.warn("The users table can't be searched:", error);
                 res.status(500).send("Our database is having troubles");
-            } else if (result == []) { // email does not exist
+            } else if (result.length === 0) { // email does not exist
                 console.log("Email does not exist: ", email);
                 res.status(401).send('Incorrect email or password');
             } else {
@@ -264,7 +265,7 @@ app.get('/users', function (req, res) {
                     console.log("Password is incorrect: ", password);
                     res.status(401).send('Incorrect email or password');
                 } else {
-                    res.status(200).send({userID:result[0].id, token:result[0].token});
+                    res.status(200).send({userID: result[0].id, token: result[0].token});
                 }
             }
         }
@@ -328,7 +329,7 @@ app.post('/users', function (req, res) {
     pool.query(
         "INSERT INTO users (email, username, digest, salt, token) VALUES ?",
         [email, username, digest, salt, token],
-        function (error, result, fields) {
+        function (error, result) {
             if (error) {
                 console.warn("The user can't be created:", error);
                 res.status(500).send("Our database is having troubles");
@@ -357,7 +358,7 @@ app.get('/bills/:link', function (req, res) {
         "WHERE bills.link = ? AND bills_users.bill_id = bills.id AND " +
         "items.bill_id = bills.id AND items_consumers.item_id = items.id",
         [link],
-        function (error, result, fields) {
+        function (error, result) {
             console.log(result); // TODO to remove
             if (error) {
                 console.warn("Error: ", error);
