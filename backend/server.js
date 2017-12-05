@@ -205,14 +205,17 @@ app.get('/users/:userID/bills/:billID', function (req, res) {
                 res.status(401).send('User ID and token combination is invalid');
             } else {
                 pool.query(
-                    "SELECT bills.* FROM bills, bills_users WHERE bills.id = ? AND bills_users.id = ? AND bills_users.user_id = ? LIMIT 1",
-                    [billID, billID, userID],
+                    "SELECT bills.*, bill_users.*, items.*, items_consumers.* " +
+                    "FROM bills, bills_users, items, items_consumers " +
+                    "WHERE bills.id = ? AND bills_users.bill_id = ? AND " +
+                    "items.bill_id = ? AND items_consumers.item_id = items.id",
+                    [billID, billID, billID],
                     function (error, result, fields) {
                         console.log(result); // TODO to remove
                         if (error) {
                             console.warn("The bills table can't be searched:", error);
                             res.status(500).send("Our database is having troubles");
-                        } else if (result == []) {
+                        } else if (result === []) {
                             console.log("User ID", userID, "does not have bill with id", billID);
                             res.status(204).send('User ID has no such bill');
                         } else {
@@ -332,6 +335,38 @@ app.post('/users', function (req, res) {
             } else {
                 console.log("User", username, "created");
                 res.status(201).send(token);
+            }
+        }
+    );
+});
+
+app.get('/bills/:link', function (req, res) {
+    // Parse body of request
+    var link = req.link;
+
+    if (link.length != 40) {
+        console.log("Link provided is invalid: ", link);
+        res.status(400).send('Link provided is invalid');
+        return;
+    }
+
+    // Check in database
+    pool.query(
+        "SELECT bills.*, bills_users.*, items.*, items_consumers.*" +
+        "FROM bills, bills_users, items, items_consumers " +
+        "WHERE bills.link = ? AND bills_users.bill_id = bills.id AND " +
+        "items.bill_id = bills.id AND items_consumers.item_id = items.id",
+        [link],
+        function (error, result, fields) {
+            console.log(result); // TODO to remove
+            if (error) {
+                console.warn("Error: ", error);
+                res.status(500).send("Our database is having troubles");
+            } else if (result == []) { // Link does not exist
+                console.log("Link provided does not exist:", link);
+                res.status(404).send('Link not found');
+            } else {
+                res.status(200).send(result); // TODO structure result
             }
         }
     );

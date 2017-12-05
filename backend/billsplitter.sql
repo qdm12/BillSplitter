@@ -60,7 +60,7 @@ CREATE TABLE items_consumers (
     item_id INTEGER NOT NULL,
     user_id INTEGER, -- either this one
     temp_user_id INTEGER, -- or this one for non registered users
-    paid BOOLEAN NOT NULL DEFAULT 0,
+    paid BOOLEAN DEFAULT 0,
     FOREIGN KEY(item_id) REFERENCES items(id),
     FOREIGN KEY(user_id) REFERENCES users(id),
     FOREIGN KEY(temp_user_id) REFERENCES temp_users(id)
