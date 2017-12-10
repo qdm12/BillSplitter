@@ -4,13 +4,13 @@ USE billsplitter;
 -- USERS
 -- ******************************************
 INSERT INTO users (email, username, digest, salt, token)
-VALUES (alice@a.com, Alice, "Goq6n3h=l=m==IcF7U=z75=CJatnkhjOcjiwV=XZfqn34L=Dn=SEct2F8xHLGOCaJA7=9L4qLH1IOp=L==UizCPG",
+VALUES ("alice@a.com", "Alice", "Goq6n3h=l=m==IcF7U=z75=CJatnkhjOcjiwV=XZfqn34L=Dn=SEct2F8xHLGOCaJA7=9L4qLH1IOp=L==UizCPG",
 "=gaxTRjS", "XM53hT=MU=bV=IXCRrANUW8IW=svDcDEVLSkRD7x");
 INSERT INTO users (email, username, digest, salt, token)
-VALUES (bob@b.com, Bob, "Goq6n3h=l=m==IcF7U=z75=CJatnkhjOcjiwV=XZfqn34L=Dn=SEct2F8xHLGOCaJA7=9L4qLH1IOp=L==UizCPG",
+VALUES ("bob@b.com", "Bob", "Goq6n3h=l=m==IcF7U=z75=CJatnkhjOcjiwV=XZfqn34L=Dn=SEct2F8xHLGOCaJA7=9L4qLH1IOp=L==UizCPG",
 "=gaxTRjS", "cBF=j4eBDUBmheY=XiY28=ecTBT=i2=m=D=xYyGf");
 INSERT INTO users (email, username, digest, salt, token)
-VALUES (carol@c.com, Carol, "Goq6n3h=l=m==IcF7U=z75=CJatnkhjOcjiwV=XZfqn34L=Dn=SEct2F8xHLGOCaJA7=9L4qLH1IOp=L==UizCPG",
+VALUES ("carol@c.com", "Carol", "Goq6n3h=l=m==IcF7U=z75=CJatnkhjOcjiwV=XZfqn34L=Dn=SEct2F8xHLGOCaJA7=9L4qLH1IOp=L==UizCPG",
 "=gaxTRjS", "gSlMIBvM=HktbwbFFmwSoI=Z=1IMNxG5pyExRsOp");
 
 -- ******************************************
@@ -24,11 +24,29 @@ INSERT INTO temp_users (name) VALUES ("Gleb");
 -- ******************************************
 INSERT INTO bills (address, restaurant, name, tax, tip, link) 
 VALUES ("196 W Third Avenue", "Pizza'o'ven", "Birthday pizza", 19.67, 5, "2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL");
-INSERT INTO bills_users (bill_id, user_id)
-VALUES ((SELECT MAX(id) FROM bills), 0); -- Alice
-INSERT INTO bills_users (bill_id, user_id)
-VALUES ((SELECT MAX(id) FROM bills), 1); -- Bob
-INSERT INTO bills_users (bill_id, temp_user_id)
-VALUES ((SELECT MAX(id) FROM bills), 0); -- John
-INSERT INTO items (bill_id, name, amount)
-VALUES ((SELECT MAX(id) FROM bills), "pizza 1", 10.5); -- John
+INSERT INTO items (bill_id, name, amount) VALUES ((SELECT MAX(id) FROM bills), "PizzaA", 10.5);
+INSERT INTO items (bill_id, name, amount) VALUES ((SELECT MAX(id) FROM bills), "PizzaB", 14);
+INSERT INTO items (bill_id, name, amount) VALUES ((SELECT MAX(id) FROM bills), "Fries", 6.24);
+INSERT INTO bills_users (bill_id, user_id) VALUES ((SELECT MAX(id) FROM bills), 1); -- Alice
+INSERT INTO bills_users (bill_id, user_id) VALUES ((SELECT MAX(id) FROM bills), 2); -- Bob
+INSERT INTO bills_users (bill_id, temp_user_id) VALUES ((SELECT MAX(id) FROM bills), 1); -- John
+-- TODO item consumers
+
+-- ******************************************
+-- SECOND BILL
+-- ******************************************
+INSERT INTO bills (address, restaurant, name, tax, tip, link) 
+VALUES ("185 E First Avenue", "McDonald's", "McDonald's", 19.67, 0, "WBdfOcWKtm3ZX4jk8cG0aIDxrhNOJC8207Zsr9Lk");
+INSERT INTO items (bill_id, name, amount) VALUES ((SELECT MAX(id) FROM bills), "Cheeseburger", 3.6);
+INSERT INTO items (bill_id, name, amount) VALUES ((SELECT MAX(id) FROM bills), "Cheeseburger", 3.6);
+INSERT INTO items (bill_id, name, amount) VALUES ((SELECT MAX(id) FROM bills), "Large fries", 4.4);
+INSERT INTO items (bill_id, name, amount) VALUES ((SELECT MAX(id) FROM bills), "Diet coke", 1.5);
+INSERT INTO items (bill_id, name, amount) VALUES ((SELECT MAX(id) FROM bills), "Diet coke", 1.5);
+INSERT INTO items (bill_id, name, amount) VALUES ((SELECT MAX(id) FROM bills), "Vanilla ice cream", 3.58);
+INSERT INTO bills_users (bill_id, user_id) VALUES ((SELECT MAX(id) FROM bills), 1; -- Alice
+INSERT INTO bills_users (bill_id, user_id) VALUES ((SELECT MAX(id) FROM bills), 2); -- Bob
+INSERT INTO bills_users (bill_id, user_id) VALUES ((SELECT MAX(id) FROM bills), 3); -- Carol
+INSERT INTO bills_users (bill_id, temp_user_id) VALUES ((SELECT MAX(id) FROM bills), 2); -- Gleb
+-- TODO item consumers
+
+

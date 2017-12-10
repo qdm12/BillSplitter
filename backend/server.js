@@ -38,6 +38,7 @@ app.post('/bills', function (req, res) {
     // TODO check for token and picture format
 
     // Check in database
+    // TODO there should be no concurrent connection for this (auto increment problem)
     pool.query(
         "SELECT (id, token) FROM users WHERE id = ? AND token = ? LIMIT 1",
         [userID, token],
