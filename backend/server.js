@@ -159,7 +159,7 @@ app.get('/users/:userID/bills', function (req, res) {
             } else {
                 pool.query(
                     "SELECT bill_id FROM bills_users WHERE user_id = ?",
-                    [billID],
+                    [userID],
                     function (error, result) {
                         console.log("GET /users/:userID/bills 2:", result); // TODO to remove
                         if (error) {
@@ -207,11 +207,8 @@ app.get('/bills/:billID', function (req, res) {
                 res.status(401).send('User ID and token combination is invalid');
             } else {
                 pool.query(
-                    "SELECT bills.*, bill_users.*, items.*, items_consumers.* " +
-                    "FROM bills, bills_users, items, items_consumers " +
-                    "WHERE bills.id = ? AND bills_users.bill_id = ? AND " +
-                    "items.bill_id = ? AND items_consumers.item_id = items.id",
-                    [billID, billID, billID],
+                    "SELECT * FROM bills WHERE bills.id = ?",
+                    [billID],
                     function (error, result, fields) {
                         console.log("GET /bills/:billID 2", result); // TODO to remove
                         if (error) {
@@ -221,17 +218,76 @@ app.get('/bills/:billID', function (req, res) {
                             console.log("User ID", userID, "does not have bill with id", billID);
                             res.status(204).send('User ID has no such bill');
                         } else {
-                            // TODO send the bills details, we already have bills.*
-                            // just query bills_users, items and items_consumers tables
-                            // Dynamic link is in bills.link
-                            // res.status(200).send(bill);
+                            var bill = {
+                                id:result[0].id,
+                                time:result[0].time,
+                                address:result[0].address,
+                                restaurant:result[0].restaurant,
+                                name:result[0].name,
+                                tax:result[0].tax,
+                                tip:result[0].tip,
+                                link:result[0].link,
+                                done:result[0].done
+                            };
+                            pool.query(
+                                "SELECT bills_users.user_id AS id, users.username AS username FROM bills_users, users WHERE bills.id = ? AND bills_users.user_id = users.id",
+                                [billID],
+                                function (error, result, fields) {
+                                    console.log("GET /bills/:billID 3", result); // TODO to remove
+                                    if (error) {
+                                        console.warn("The bills_users / users table can't be searched:", error);
+                                        res.status(500).send("Our database is having troubles");
+                                    } else {
+                                        bills.users = result; // list of {id:x, username:xxx}s
+                                        pool.query(
+                                            "SELECT bills_users.temp_user_id AS id, temp_users.name AS username FROM bills_users, temp_users WHERE bills.id = ? AND bills_users.temp_user_id = temp_users.id",
+                                            [billID],
+                                            function (error, result, fields) {
+                                                console.log("GET /bills/:billID 4", result); // TODO to remove
+                                                if (error) {
+                                                    console.warn("The bills_users / temp_users table can't be searched:", error);
+                                                    res.status(500).send("Our database is having troubles");
+                                                } else {
+                                                    bills.tempUsers = result; // list of {id:x, username:xxx}s
+                                                    pool.query(
+                                                        "SELECT items.id AS id, items.name AS name, items.amount AS amount FROM items WHERE items.bill_id = ?",
+                                                        [billID],
+                                                        function (error, result, fields) {
+                                                            console.log("GET /bills/:billID 5", result); // TODO to remove
+                                                            if (error) {
+                                                                console.warn("The items table can't be searched:", error);
+                                                                res.status(500).send("Our database is having troubles");
+                                                            } else {
+                                                                bills.items = result;
+                                                                pool.query(
+                                                                    "SELECT items_consumers.* FROM items_consumers, items WHERE items.bill_id = ? AND items.id = items_consumers.item_id",
+                                                                    [billID],
+                                                                    function (error, result, fields) {
+                                                                        console.log("GET /bills/:billID 6", result); // TODO to remove
+                                                                        if (error) {
+                                                                            console.warn("The items_consumers table can't be searched:", error);
+                                                                            res.status(500).send("Our database is having troubles");
+                                                                        } else {
+                                                                            bills.consumers = result;
+                                                                            // TODO send this object bills
+                                                                        }
+                                                                    }
+                                                                );
+                                                            }
+                                                        }
+                                                    );
+                                                }
+                                            }
+                                        );
+                                    }
+                                }
+                            );
                         }
                     }
                 );
             }
         }
     );
-});
 
 // Sign in procedure
 app.get('/users', function (req, res) {
