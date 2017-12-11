@@ -1,6 +1,6 @@
 module.exports = {
     scrypt: scryptHash,
-    randomString: randomString,
+    randomString: randomString
 };
 var scrypt = require('scryptsy');
 
@@ -11,7 +11,7 @@ function scryptHash(input, salt) {
 
 function randomString(length) {
     var s = "";
-    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789^*()_-+[{]}>,<;";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     for (var i = 0; i < length; i++) {
         s += possible.charAt(Math.floor(Math.random() * possible.length));
     }

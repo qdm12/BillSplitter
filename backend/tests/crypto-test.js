@@ -1,4 +1,4 @@
-var chai = require('chai');
+/*var chai = require('chai');
 var expect = chai.expect;
 var Crypto = require('./../crypto.js');
 
@@ -16,4 +16,4 @@ describe('Crypto package', function() {
     it('randomString should return a string of length 10', function() {
         expect(Crypto.randomString(10).length).to.equal(10);
     });
-});
+});*/
