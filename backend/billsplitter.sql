@@ -33,6 +33,7 @@ CREATE TABLE bills (
     tax FLOAT NOT NULL DEFAULT 0, -- from 0 to 100 (%)
 	tip FLOAT NOT NULL DEFAULT 0, -- from 0 to 100 (%)
     link CHARACTER(40) NOT NULL UNIQUE,
+    done BOOLEAN DEFAULT 0
     -- users are in bills_users
     -- items are in items
 );
