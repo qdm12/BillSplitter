@@ -1,3 +1,4 @@
+var fs = require("fs");
 var express = require('express');
 var bodyParser = require('body-parser');
 var app = express();
@@ -7,6 +8,13 @@ var validator = require('validator');
 var mysql = require("mysql");
 
 var crypto = require('./crypto.js');
+
+if (!fs.existsSync("./bills")){
+    fs.mkdirSync("./bills");
+}
+if (!fs.existsSync("./bills/web")){
+    fs.mkdirSync("./bills/web");
+}
 
 var pool = mysql.createPool({
     connectionLimit: 10,
@@ -25,6 +33,10 @@ app.get('/', function (req, res) {
 // Upload picture of bill
 app.post('/bills', function (req, res) {
     // Parse body of request
+    if (!req.body.hasOwnProperty("userID") || !req.body.hasOwnProperty("token") || !req.body.hasOwnProperty("picture")) {
+        res.status(400).send('Body is missing parameters');
+        return;
+    }
     var userID = req.body.userID;
     var token = req.body.token;
     var picture = req.body.picture; // TODO see how to transport picture
@@ -40,7 +52,7 @@ app.post('/bills', function (req, res) {
     // Check in database
     // TODO there should be no concurrent connection for this (auto increment problem)
     pool.query(
-        "SELECT (id, token) FROM users WHERE id = ? AND token = ? LIMIT 1",
+        "SELECT id, token FROM users WHERE id = ? AND token = ? LIMIT 1",
         [userID, token],
         function (error, result, fields) {
             console.log("POST /bills DB 1:", result); // TODO to remove
@@ -113,7 +125,20 @@ app.post('/bills', function (req, res) {
                                                                 console.warn("The bill - user could not be created:", error);
                                                                 res.status(500).send("Our database is having troubles");
                                                             } else {
-                                                                res.status(200).send("Bill created");
+                                                                var path = "/bills/web/" + link;
+                                                                fs.stat(path, function (err, stats) {
+                                                                    if (err && err.errno === 34) { // path does not exist
+                                                                        fs.mkdir(path, function () {
+                                                                            // TODO copy default bill webpage to path
+                                                                            // write the billID somewhere in this so that
+                                                                            // dynamic webpage can use it to fetch information
+                                                                            res.status(200).send("Bill created");
+                                                                        });
+                                                                    } else {
+                                                                        console.warn("Checking the path", path, "gave the error:", err);
+                                                                        res.status(500).send("Our server is having troubles");
+                                                                    }
+                                                                });
                                                             }
                                                         }
                                                     );
@@ -134,9 +159,13 @@ app.post('/bills', function (req, res) {
 // Get bills where user is involved
 app.get('/users/:userID/bills', function (req, res) {
     // Parse body of request
-    var userID = req.userID;
+    var userID = req.params.userID;
+    if (!req.body.hasOwnProperty("token")) {
+        res.status(400).send('Body is missing parameters');
+        return;
+    }
     var token = req.body.token;
-    
+
     // Check for validity of inputs (see https://www.npmjs.com/package/validator)
     if (!validator.isInt(userID)) {
         console.log("Invalid user ID: ", userID);
@@ -146,7 +175,7 @@ app.get('/users/:userID/bills', function (req, res) {
 
     // Check in database
     pool.query(
-        "SELECT (id, token) FROM users WHERE id = ? AND token = ? LIMIT 1",
+        "SELECT id, token FROM users WHERE id = ? AND token = ? LIMIT 1",
         [userID, token],
         function (error, result) {
             console.log("GET /users/:userID/bills 1:", result); // TODO to remove
@@ -182,8 +211,13 @@ app.get('/users/:userID/bills', function (req, res) {
 // Get bill details
 app.get('/bills/:billID', function (req, res) {
     // Parse body of request
-    var billID = req.billID;
+    var billID = req.params.billID;
+    if (!req.body.hasOwnProperty("userID") || !req.body.hasOwnProperty("token")) {
+        res.status(400).send('Body is missing parameters');
+        return;
+    }
     var userID = req.body.userID;
+    console.log(req.body);
     var token = req.body.token;
 
     // Check for validity of inputs (see https://www.npmjs.com/package/validator)
@@ -195,7 +229,7 @@ app.get('/bills/:billID', function (req, res) {
 
     // Check in database
     pool.query(
-        "SELECT (id, token) FROM users WHERE id = ? AND token = ? LIMIT 1",
+        "SELECT id, token FROM users WHERE id = ? AND token = ? LIMIT 1",
         [userID, token],
         function (error, result, fields) {
             console.log("GET /bills/:billID 1", result); // TODO to remove
@@ -238,7 +272,7 @@ app.get('/bills/:billID', function (req, res) {
                                         console.warn("The bills_users / users table can't be searched:", error);
                                         res.status(500).send("Our database is having troubles");
                                     } else {
-                                        bills.users = result; // list of {id:x, username:xxx}s
+                                        bill.users = result; // list of {id:x, username:xxx}s
                                         pool.query(
                                             "SELECT bills_users.temp_user_id AS id, temp_users.name AS username FROM bills_users, temp_users WHERE bills.id = ? AND bills_users.temp_user_id = temp_users.id",
                                             [billID],
@@ -248,7 +282,7 @@ app.get('/bills/:billID', function (req, res) {
                                                     console.warn("The bills_users / temp_users table can't be searched:", error);
                                                     res.status(500).send("Our database is having troubles");
                                                 } else {
-                                                    bills.tempUsers = result; // list of {id:x, username:xxx}s
+                                                    bill.tempUsers = result; // list of {id:x, username:xxx}s
                                                     pool.query(
                                                         "SELECT items.id AS id, items.name AS name, items.amount AS amount FROM items WHERE items.bill_id = ?",
                                                         [billID],
@@ -258,7 +292,7 @@ app.get('/bills/:billID', function (req, res) {
                                                                 console.warn("The items table can't be searched:", error);
                                                                 res.status(500).send("Our database is having troubles");
                                                             } else {
-                                                                bills.items = result;
+                                                                bill.items = result;
                                                                 pool.query(
                                                                     "SELECT items_consumers.* FROM items_consumers, items WHERE items.bill_id = ? AND items.id = items_consumers.item_id",
                                                                     [billID],
@@ -268,8 +302,9 @@ app.get('/bills/:billID', function (req, res) {
                                                                             console.warn("The items_consumers table can't be searched:", error);
                                                                             res.status(500).send("Our database is having troubles");
                                                                         } else {
-                                                                            bills.consumers = result;
-                                                                            // TODO send this object bills
+                                                                            bill.consumers = result;
+                                                                            console.log("Detailed bill is:", bill); // TODO to remove
+                                                                            res.status(200).send(bill);
                                                                         }
                                                                     }
                                                                 );
@@ -288,10 +323,15 @@ app.get('/bills/:billID', function (req, res) {
             }
         }
     );
+});
 
 // Sign in procedure
 app.get('/users', function (req, res) {
     // Parse body of request
+    if (!req.body.hasOwnProperty("email") || !req.body.hasOwnProperty("password")) {
+        res.status(400).send('Body is missing parameters');
+        return;
+    }
     var email = req.body.email;
     var password = req.body.password;
     
@@ -306,7 +346,7 @@ app.get('/users', function (req, res) {
     email = validator.normalizeEmail(email);
 
     pool.query(
-        "SELECT (id, digest, salt, token) FROM users WHERE email = ? LIMIT 1",
+        "SELECT id, digest, salt, token FROM users WHERE email = ? LIMIT 1",
         [email],
         function (error, result, fields) {
             console.log("GET /users 1:", result); // TODO to remove
@@ -332,6 +372,10 @@ app.get('/users', function (req, res) {
 // Sign up procedure
 app.post('/users', function (req, res) {
     // Parses body of request
+    if (!req.body.hasOwnProperty("email") || !req.body.hasOwnProperty("username") || !req.body.hasOwnProperty("password")) {
+        res.status(400).send('Body is missing parameters');
+        return;
+    }
     var email = req.body.email;
     var username = req.body.username;
     var password = req.body.password;
@@ -377,7 +421,7 @@ app.post('/users', function (req, res) {
         res.status(409).send('Username is already taken');
         return;
     }
-    
+
     // Create the user
     // TODO Add email verification
     var salt = crypto.randomString(8);
@@ -398,36 +442,28 @@ app.post('/users', function (req, res) {
     );
 });
 
-app.get('/bills/:link', function (req, res) {
+// Serves bill's webpage
+// link acts as the bill's token really
+app.get('/bills/web/:link', function (req, res) {
     // Parse body of request
-    var link = req.link;
-
-    if (link.length != 40) {
+    var link = req.params.link;
+    if (link.length !== 40) {
         console.log("Link provided is invalid: ", link);
-        res.status(400).send('Link provided is invalid');
+        res.status(400).send("Link provided is invalid");
         return;
     }
-
-    // Check in database
-    pool.query(
-        "SELECT bills.*, bills_users.*, items.*, items_consumers.*" +
-        "FROM bills, bills_users, items, items_consumers " +
-        "WHERE bills.link = ? AND bills_users.bill_id = bills.id AND " +
-        "items.bill_id = bills.id AND items_consumers.item_id = items.id",
-        [link],
-        function (error, result) {
-            console.log(result); // TODO to remove
-            if (error) {
-                console.warn("Error: ", error);
-                res.status(500).send("Our database is having troubles");
-            } else if (result == []) { // Link does not exist
-                console.log("Link provided does not exist:", link);
-                res.status(404).send('Link not found');
+    fs.stat(path, function (err, stats) {
+        if (err) {
+            if (err.errno === 34) { // path does not exist
+                res.status(404).send("Link provided does not exist");
             } else {
-                res.status(200).send(result); // TODO structure result
+                console.warn("Checking the path", path, "gave the error:", err);
+                res.status(500).send("Our server is having troubles");
             }
+        } else {
+            // TODO serve the webpage
         }
-    );
+    });
 });
 
 /*
