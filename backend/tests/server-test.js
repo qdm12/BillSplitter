@@ -92,3 +92,14 @@ describe('Server POST /bills', function() {
         expect(res.body.toString('utf-8')).to.equal("Bill created");
     });
 });
+
+describe('Server GET /users/:userID/bills', function() {
+    before(function() {});
+    it('Simple GET', function() {
+        var res = request('GET', 'http://localhost:8001/users/1/bills', { json: {
+            token: "XM53hT=MU=bV=IXCRrANUW8IW=svDcDEVLSkRD7x"
+        }});
+        expect(res.statusCode).to.equal(200);
+        expect(res.body.toString('utf-8')).to.equal("Your result");
+    });
+});

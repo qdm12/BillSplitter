@@ -9,6 +9,9 @@ var mysql = require("mysql");
 
 var crypto = require('./crypto.js');
 
+var server = null;
+var pool = null;
+
 // All body of HTTP requests must be encoded in x-www-form-urlencoded
 
 app.get('/', function (req, res) {
@@ -41,141 +44,154 @@ app.post('/bills', function (req, res) {
 
     // Check in database
     // TODO there should be no concurrent connection for this (auto increment problem)
-    pool.query(
-        "SELECT id, token FROM users WHERE id = ? AND token = ? LIMIT 1",
-        [userID, token],
-        function (error, result, fields) {
-            console.log("POST /bills DB 1:", result); // TODO to remove
-            if (error) {
-                console.warn("The users table can't be searched:", error);
-                res.status(500).send("Our database is having troubles");
-            } else if (result.length === 0) { // Wrong userID or token
-                console.log("User ID", userID, "with token", token, "does not exit");
-                res.status(401).send("User ID and token combination is invalid");
-            } else {
-                var dt = new Date();
-                var time = dt.toISOString().split('T')[0];
-                var tax = 0;
-                var address = "", restaurant = "";
-                var items = [];
-                // START OCR TODO TODO TODO
-                // ************************************************
-                address = "50 W 4TH ST NEW YORK";
-                restaurant = "McDonald's";
-                tax = 19.5;
-                time = "2017-12-01 00:00:01"; // epoch time obtained from bill
-                items = [
-                    {
-                        name: "Cheeseburger",
-                        amount: 3.67 // tax not included ?
-                    },
-                    {
-                        name: "Fries",
-                        amount: 1.7
-                    }
-                ];
-                // ************************************************
-                // END OCR
-                var name = restaurant; // TODO can be changed later
-                var link = crypto.randomString(40); // ~zero chance that it already exists
-                pool.query(
-                    "BEGIN", // TODO fix transaction somehow
-                    function (error) {
-                        if (error) {
-                            console.warn("The transaction sequence could not be started:", error);
-                            res.status(500).send("Our database is having troubles");
-                        } else {
-                            pool.query( // TODO BEGIN; - COMMIT; - ROLLBACK;
-                                "INSERT INTO bills (address, time, restaurant, name, tax, link) VALUES ?",
-                                [[[address, time, restaurant, name, tax, link]]],
-                                function (error) {
-                                    if (error) {
-                                        console.warn("The new bill could not be created:", error);
-                                        res.status(500).send("Our database is having troubles");
-                                    } else {
-                                        pool.query(
-                                            "SELECT MAX(id) AS lastid FROM bills",
-                                            [],
-                                            function (error, result) {
-                                                console.log("POST /bills DB 2:", result); // TODO to remove
-                                                if (error) {
-                                                    console.warn("The bills table could not be searched:", error);
-                                                    res.status(500).send("Our database is having troubles");
-                                                } else {
-                                                    var billID = result[0].lastid;
-                                                    var values = [];
-                                                    items.forEach(function (item) {
-                                                        values.push([billID, item.name, item.amount]);
-                                                    });
-                                                    pool.query(
-                                                        "INSERT INTO items (bill_id, name, amount) VALUES ?",
-                                                        [values],
-                                                        function (error) {
-                                                            if (error) {
-                                                                console.warn("The items could not be created:", error);
-                                                                res.status(500).send("Our database is having troubles");
-                                                            } else {
-                                                                pool.query(
-                                                                    "INSERT INTO bills_users (bill_id, user_id) VALUES ?",
-                                                                    [[[billID, userID]]],
-                                                                    function (error) {
-                                                                        if (error) {
-                                                                            console.warn("The bill - user could not be created:", error);
-                                                                            res.status(500).send("Our database is having troubles");
-                                                                        } else {
-                                                                            var path = "./bills/web/" + link + "/";
-                                                                            fs.stat(path, function (err) {
-                                                                                if (err && (err.errno === 34)) { // path does not exist
-                                                                                    fs.mkdir(path, function () {
-                                                                                        // TODO copy default bill webpage to path
-                                                                                        // write the billID somewhere in this so that
-                                                                                        // dynamic webpage can use it to fetch information
-                                                                                        pool.query(
-                                                                                            "COMMIT",
-                                                                                            function (error) {
-                                                                                                if (error) {
-                                                                                                    console.warn("The transaction sequence could not be committed:", error);
-                                                                                                    res.status(500).send("Our database is having troubles");
-                                                                                                } else {
-                                                                                                    res.status(200).send("Bill created");
-                                                                                                }
-                                                                                            }
-                                                                                        );
-                                                                                    });
+    pool.getConnection(function(error, connection) {
+        if (error) {
+            console.warn("Could not obtain connection from pool");
+            res.status(500).send("Our server is having troubles");
+        } else {
+            connection.query(
+                "SELECT id, token FROM users WHERE id = ? AND token = ? LIMIT 1",
+                [userID, token],
+                function (error, result) {
+                    console.log("POST /bills DB 1:", result); // TODO to remove
+                    if (error) {
+                        connection.release();
+                        console.warn("The users table can't be searched:", error);
+                        res.status(500).send("Our database is having troubles");
+                    } else if (result.length === 0) { // Wrong userID or token
+                        connection.release();
+                        console.log("User ID", userID, "with token", token, "does not exit");
+                        res.status(401).send("User ID and token combination is invalid");
+                    } else {
+                        var dt = new Date();
+                        var time = dt.toISOString().split('T')[0];
+                        var tax = 0;
+                        var address = "", restaurant = "";
+                        var items = [];
+                        // START OCR TODO TODO TODO
+                        // ************************************************
+                        address = "50 W 4TH ST NEW YORK";
+                        restaurant = "McDonald's";
+                        tax = 19.5;
+                        time = "2017-12-01 00:00:01";
+                        items = [
+                            {
+                                name: "Cheeseburger",
+                                amount: 3.67 // tax not included ?
+                            },
+                            {
+                                name: "Fries",
+                                amount: 1.7
+                            }
+                        ];
+                        // ************************************************
+                        // END OCR
+                        var name = restaurant; // TODO can be changed later
+                        var link = crypto.randomString(40); // ~zero chance that it already exists
+                        connection.beginTransaction(
+                            function (error) {
+                                if (error) {
+                                    connection.release();
+                                    console.warn("The transaction sequence could not be started:", error);
+                                    res.status(500).send("Our database is having troubles");
+                                } else {
+                                    connection.query(
+                                        "INSERT INTO bills (address, time, restaurant, name, tax, link) VALUES ?",
+                                        [[[address, time, restaurant, name, tax, link]]], // TODO insert id as it can skip from id 3 to id 5 if rollback occurs
+                                        function (error) {
+                                            if (error) {
+                                                connection.release();
+                                                console.warn("The new bill could not be created:", error);
+                                                res.status(500).send("Our database is having troubles");
+                                            } else {
+                                                connection.query(
+                                                    "SELECT MAX(id) AS lastid FROM bills",
+                                                    [],
+                                                    function (error, result) {
+                                                        console.log("POST /bills DB 2:", result); // TODO to remove
+                                                        if (error) {
+                                                            connection.release();
+                                                            console.warn("The bills table could not be searched:", error);
+                                                            res.status(500).send("Our database is having troubles");
+                                                        } else {
+                                                            var billID = result[0].lastid;
+                                                            var values = [];
+                                                            items.forEach(function (item) {
+                                                                values.push([billID, item.name, item.amount]);
+                                                            });
+                                                            connection.query(
+                                                                "INSERT INTO items (bill_id, name, amount) VALUES ?",
+                                                                [values],
+                                                                function (error) {
+                                                                    if (error) {
+                                                                        connection.release();
+                                                                        console.warn("The items could not be created:", error);
+                                                                        res.status(500).send("Our database is having troubles");
+                                                                    } else {
+                                                                        connection.query(
+                                                                            "INSERT INTO bills_users (bill_id, user_id) VALUES ?",
+                                                                            [[[billID, userID]]],
+                                                                            function (error) {
+                                                                                if (error) {
+                                                                                    connection.release();
+                                                                                    console.warn("The bill - user could not be created:", error);
+                                                                                    res.status(500).send("Our database is having troubles");
                                                                                 } else {
-                                                                                    console.warn("Checking the path", path, "gave the error:", err);
-                                                                                    pool.query(
-                                                                                        "ROLLBACK",
-                                                                                        function (error) {
-                                                                                            if (error) {
-                                                                                                console.warn("The transaction sequence could not be rollbacked:", error);
-                                                                                                res.status(500).send("Our database is having troubles");
-                                                                                            } else { // fs problem
-                                                                                                console.log("Rolling back database query");
-                                                                                                res.status(500).send("Our server is having troubles");
-                                                                                            }
+                                                                                    var path = "./bills/web/" + link + "/";
+                                                                                    fs.stat(path, function (err) {
+                                                                                        if (err && (err.errno === 34 || err.errno === -4058)) { // path does not exist
+                                                                                            fs.mkdir(path, function () {
+                                                                                                // TODO copy default bill webpage to path
+                                                                                                // write the billID somewhere in this so that
+                                                                                                // dynamic webpage can use it to fetch information
+                                                                                                connection.commit(
+                                                                                                    function (error) {
+                                                                                                        connection.release();
+                                                                                                        if (error) {
+                                                                                                            console.warn("The transaction sequence could not be committed:", error);
+                                                                                                            res.status(500).send("Our database is having troubles");
+                                                                                                        } else {
+                                                                                                            res.status(200).send("Bill created");
+                                                                                                        }
+                                                                                                    }
+                                                                                                );
+                                                                                            });
+                                                                                        } else {
+                                                                                            console.warn("Checking the path", path, "gave the error:", err);
+                                                                                            connection.rollback(
+                                                                                                function (error) {
+                                                                                                    connection.release();
+                                                                                                    if (error) {
+                                                                                                        console.warn("The transaction sequence could not be rollbacked:", error);
+                                                                                                        res.status(500).send("Our database is having troubles");
+                                                                                                    } else { // fs problem
+                                                                                                        console.log("Rolling back database query");
+                                                                                                        res.status(500).send("Our server is having troubles");
+                                                                                                    }
+                                                                                                }
+                                                                                            );
                                                                                         }
-                                                                                    );
+                                                                                    });
                                                                                 }
-                                                                            });
-                                                                        }
+                                                                            }
+                                                                        );
                                                                     }
-                                                                );
-                                                            }
+                                                                }
+                                                            );
                                                         }
-                                                    );
-                                                }
+                                                    }
+                                                );
                                             }
-                                        );
-                                    }
+                                        }
+                                    );
                                 }
-                            );
-                        }
+                            }
+                        );
                     }
-                );
-            }
+                }
+            );
         }
-    );
+    });
 });
 
 // Get bills where user is involved
@@ -183,15 +199,20 @@ app.get('/users/:userID/bills', function (req, res) {
     // Parse body of request
     var userID = req.params.userID;
     if (!req.body.hasOwnProperty("token")) {
-        res.status(400).send('Body is missing parameters');
+        res.status(400).send("Body is missing token");
         return;
     }
     var token = req.body.token;
 
     // Check for validity of inputs (see https://www.npmjs.com/package/validator)
     if (!Number.isInteger(userID)) {
-        console.log("Invalid user ID: ", userID);
-        res.status(400).send('User id is invalid');
+        console.log("Invalid user ID:", userID);
+        res.status(400).send("User id is invalid");
+        return;
+    }
+    if (token.length !== 40) {
+        console.log("Invalid token length:", token);
+        res.status(400).send("Token is invalid");
         return;
     }
 
@@ -498,8 +519,6 @@ TODO
 - Specific information on one item of bill
 */
 
-var server = null;
-var pool = null;
 function start(port, database) {
     if (!fs.existsSync("./bills")){
         fs.mkdirSync("./bills");
