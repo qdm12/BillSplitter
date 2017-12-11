@@ -229,7 +229,7 @@ html, body {margin:0;padding:0;height:100%;}
     width: 20%;
     left: 40%;
 	right: 40%;
-    top:40%;
+    top: 40%;
     height:5%;
     background: #0077B2;
     border: 5px solid #000;
@@ -275,4 +275,27 @@ html, body {margin:0;padding:0;height:100%;}
 
 #settings {
     background: #84B89A;
+}
+
+/*Styling for dynamic webpage with items and individuals*/
+.item {
+	height: 7%;
+	width: 20%;
+	margin: 2%;
+	padding: 1%;
+	border: 1px solid;
+	text-align: center;
+	border-radius: 40px;
+	font-family: 'Spectral SC', serif;
+}
+	
+.person {
+		font-family: 'Spectral SC', serif;
+		position: relative;
+		height: 20px;
+		width: 20px;
+		margin: 2%;
+		padding: 2%;
+		border: 1px solid;
+		border-radius: 40px;
 }
