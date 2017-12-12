@@ -1,35 +1,29 @@
 # BillSplitter
 
 ## Features
-- Send receipt to enterprise / accounting
-- Friends with usernames similar to venmo
+
+- Scan a bill with OCR
+- Assign users or non-users to items of the bill in  a *drag-and-drop* fashion
+- Records all the data of bill in database
 - Friends at a restaurant don't have to install the app to split the bill
 
-## Front end
-- I'm done button: Suggest to pay, install app, or receive reminder
-- Open app if you're a user
+## Future work
 
-### Bill
-- Camera with OCR with Google Cloud API
-	- Then manual modifications available (modify, add, delete)
-	- Add names for participants
-- Submit scan button
-- Navigation bar
-
-### Profile
+- Better analysis of OCR results from tesseract
+- Send receipt to firm by email
+- Clicking on bill web link would pop the app up if you have it installed
+- Optional manual modifications of OCR results
 - QR code for other app users
 
-### History
+## TODO
 
-### Settings
-
-
-### Bill scanning
-- Take a picture with OCR
-- Each item drag and drop of items
-- A splitting button to share with 1 or more friends one item
-
-### Others
+- Add people to bill
+- I'm done button: Suggest to pay, install app, or receive reminder
 
 ## Backend
-- Generate links to share for collaborative identifying
+
+See the [backend documentation](backend/readme.md)
+
+## Frontend
+
+Launch it with [**index.html**](https://qdm12.github.io/Billsplitter)

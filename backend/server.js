@@ -692,3 +692,12 @@ if (require.main === module) {
         start(8000, "billsplitter");
     }
 }
+
+function convertTime() { // TODO
+    var fullDate = "2017-01-15T13:50:16.1271".toString("yyyyMMddHHmmss").replace(/T/, ' ').replace(/\..+/, '');
+    var dateArray=date.split(" ");
+    var date = dateArray[0].split('-');
+    var clock = dateArray[1].split(':');
+    var year = date[0], month = date[1], day = date[2];
+    var hour = clock[0], min = clock[1], sec = clock[2];
+}
