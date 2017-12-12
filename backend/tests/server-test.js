@@ -94,12 +94,30 @@ describe('Server POST /bills', function() {
 });
 
 describe('Server GET /users/:userID/bills', function() {
-    before(function() {});
-    it('Simple GET', function() {
-        var res = request('GET', 'http://localhost:8001/users/1/bills', { json: {
+    it('Missing (no) parameter', function() {
+        var res = request('GET', 'http://localhost:8001/users/1/bills', { json: {}});
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Body is missing token");
+    });
+    it('User ID is not integer', function() {
+        var res = request('GET', 'http://localhost:8001/users/string/bills', { json: {
             token: "XM53hT=MU=bV=IXCRrANUW8IW=svDcDEVLSkRD7x"
         }});
-        expect(res.statusCode).to.equal(200);
-        expect(res.body.toString('utf-8')).to.equal("Your result");
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("User id is invalid");
+    });
+    it('Token is invalid', function() {
+        var res = request('GET', 'http://localhost:8001/users/1/bills', { json: {
+            token: "XM53hT=MU=bV=IXCRrANx"
+        }});
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Token is invalid");
+    });
+    it('Wrong token', function() {
+        var res = request('GET', 'http://localhost:8001/users/1/bills', { json: {
+            token: "XXXXhT=MU=bV=IXCRrANUW8IW=svDcDEVLSkXXXX"
+        }});
+        expect(res.statusCode).to.equal(401);
+        expect(res.body.toString('utf-8')).to.equal("User ID and token combination is invalid");
     });
 });
