@@ -21,6 +21,10 @@
 ### MySQL Database
 
 1. Install **MySQL Community Server** from [dev.mysql.com](https://dev.mysql.com/downloads/mysql/)
+1. Set the MySQL *root* password to `password` with
+    ```bash
+    mysql -u root -p password
+    ```
 1. From this directory (*backend*), launch MySQL with (maybe change `root`):
     ```bash
     mysql -u root -p
@@ -49,6 +53,10 @@
 ### Testing
 
 1. Go to the [**tests**](tests) directory with `cd tests`
+1. Make sure the MySQL *root* password is `password`. Set it with:
+    ```bash
+    mysql -u root -p password
+    ```
 1. From this directory (*backend/tests*), launch MySQL with (maybe change `root`):
     ```bash
     mysql -u root -p
