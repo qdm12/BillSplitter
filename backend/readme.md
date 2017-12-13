@@ -57,15 +57,6 @@
     ```bash
     mysql -u root -p password
     ```
-1. From this directory (*backend/tests*), launch MySQL with (maybe change `root`):
-    ```bash
-    mysql -u root -p
-    ```
-    And enter your MySQL password (or nothing)
-1. Run the SQL script [test.sql](tests/test.sql) to create the database **billsplittertest**, its tables and dummy data, with:
-    ```sql
-    source test.sql
-    ```
 1. Go back to the **backend** directory with `cd ..`
 1. Make sure you have [**NodeJS**](https://nodejs.org/en/download/) installed
 1. From this directory (*backend*), install the required dependencies **and mocha globally** with

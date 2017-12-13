@@ -14,7 +14,6 @@ CREATE TABLE users (
     username VARCHAR(40) UNIQUE,
     digest CHARACTER(88),
     salt CHARACTER(8),
-    token CHARACTER(40),
     PRIMARY KEY(id, email, username)
 );
 

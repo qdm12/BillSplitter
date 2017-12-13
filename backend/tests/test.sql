@@ -11,7 +11,6 @@ CREATE TABLE users (
     username VARCHAR(40) UNIQUE,
     digest CHARACTER(88),
     salt CHARACTER(8),
-    token CHARACTER(40),
     PRIMARY KEY(id, email, username)
 );
 
@@ -67,15 +66,18 @@ CREATE TABLE items_consumers (
 
 -- Add dummy data
     -- USERS
-INSERT INTO users (email, username, digest, salt, token)
+INSERT INTO users (email, username, digest, salt)
 VALUES ("alice@a.com", "Alice", "Goq6n3h=l=m==IcF7U=z75=CJatnkhjOcjiwV=XZfqn34L=Dn=SEct2F8xHLGOCaJA7=9L4qLH1IOp=L==UizCPG",
-"=gaxTRjS", "XM53hT=MU=bV=IXCRrANUW8IW=svDcDEVLSkRD7x");
-INSERT INTO users (email, username, digest, salt, token)
+"=gaxTRjS");
+INSERT INTO users (email, username, digest, salt)
 VALUES ("bob@b.com", "Bob", "Goq6n3h=l=m==IcF7U=z75=CJatnkhjOcjiwV=XZfqn34L=Dn=SEct2F8xHLGOCaJA7=9L4qLH1IOp=L==UizCPG",
-"=gaxTRjS", "cBF=j4eBDUBmheY=XiY28=ecTBT=i2=m=D=xYyGf");
-INSERT INTO users (email, username, digest, salt, token)
+"=gaxTRjS");
+INSERT INTO users (email, username, digest, salt)
 VALUES ("carol@c.com", "Carol", "Goq6n3h=l=m==IcF7U=z75=CJatnkhjOcjiwV=XZfqn34L=Dn=SEct2F8xHLGOCaJA7=9L4qLH1IOp=L==UizCPG",
-"=gaxTRjS", "gSlMIBvM=HktbwbFFmwSoI=Z=1IMNxG5pyExRsOp");
+"=gaxTRjS");
+INSERT INTO users (email, username, digest, salt)
+VALUES ("david@d.com", "David", "Goq6n3h=l=m==IcF7U=z75=CJatnkhjOcjiwV=XZfqn34L=Dn=SEct2F8xHLGOCaJA7=9L4qLH1IOp=L==UizCPG",
+"=gaxTRjS");
 
     -- TEMP USERS
 INSERT INTO temp_users (name) VALUES ("John");

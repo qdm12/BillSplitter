@@ -1,15 +1,15 @@
 USE billsplitter;
 
 -- USERS
-INSERT INTO users (email, username, digest, salt, token)
+INSERT INTO users (email, username, digest, salt)
 VALUES ("alice@a.com", "Alice", "Goq6n3h=l=m==IcF7U=z75=CJatnkhjOcjiwV=XZfqn34L=Dn=SEct2F8xHLGOCaJA7=9L4qLH1IOp=L==UizCPG",
-"=gaxTRjS", "XM53hT=MU=bV=IXCRrANUW8IW=svDcDEVLSkRD7x");
-INSERT INTO users (email, username, digest, salt, token)
+"=gaxTRjS");
+INSERT INTO users (email, username, digest, salt)
 VALUES ("bob@b.com", "Bob", "Goq6n3h=l=m==IcF7U=z75=CJatnkhjOcjiwV=XZfqn34L=Dn=SEct2F8xHLGOCaJA7=9L4qLH1IOp=L==UizCPG",
-"=gaxTRjS", "cBF=j4eBDUBmheY=XiY28=ecTBT=i2=m=D=xYyGf");
-INSERT INTO users (email, username, digest, salt, token)
+"=gaxTRjS");
+INSERT INTO users (email, username, digest, salt)
 VALUES ("carol@c.com", "Carol", "Goq6n3h=l=m==IcF7U=z75=CJatnkhjOcjiwV=XZfqn34L=Dn=SEct2F8xHLGOCaJA7=9L4qLH1IOp=L==UizCPG",
-"=gaxTRjS", "gSlMIBvM=HktbwbFFmwSoI=Z=1IMNxG5pyExRsOp");
+"=gaxTRjS");
 
 -- TEMP USERS
 INSERT INTO temp_users (name) VALUES ("John");

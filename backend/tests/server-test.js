@@ -1,12 +1,15 @@
 var chai = require('chai');
-var request = require('sync-request');
 var expect = chai.expect;
 var Server = require('./../server.js');
 
+var request = require('sync-request');
+var fs = require('fs');
+var mysql = require('mysql');
+
 // Make sure you have the server running on port 8001 with the database "billsplittertest"
+// Do this with `node server.js test` on another terminal
 
 describe('Server GET /', function() {
-    before(function() {});
     it('Simple GET', function() {
         var res = request('GET', 'http://localhost:8001/');
         expect(res.statusCode).to.equal(200);
@@ -14,110 +17,160 @@ describe('Server GET /', function() {
     });
 });
 
-describe('Server POST /bills', function() {
-    it('No body parameter', function() {
-        var res = request('POST', 'http://localhost:8001/bills', {});
+describe('Server GET /bills', function() {
+    before(function(done) {
+        const testSuite = this;
+        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
+            if (error) {
+                console.error("Reading the SQL script file failed:", error);
+                testSuite.skip();
+            } else {
+                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
+                connection.connect();
+                connection.query(data, function (error, results) {
+                    if (error) {
+                        console.error("The Test SQL script did not execute successfully:", error);
+                        testSuite.skip();
+                    } else {
+                        done();
+                    }
+                });
+                connection.end();
+            }
+        });
+    });
+    it('Missing token', function() {
+        var res = request('GET', 'http://localhost:8001/bills', {
+            headers: {}
+        });
         expect(res.statusCode).to.equal(400);
-        expect(res.body.toString('utf-8')).to.equal("Body is missing parameters");
+        expect(res.body.toString('utf-8')).to.equal("Token is missing from x-access-token in headers");
     });
-    it('Missing one body parameter', function() {
-        var res = request('POST', 'http://localhost:8001/bills', { json: {
-            userID: 4,
-            token: "x"
-        }});
-        expect(res.statusCode).to.equal(400);
-        expect(res.body.toString('utf-8')).to.equal("Body is missing parameters");
-    });
-    it('User ID is a string', function() {
-        var res = request('POST', 'http://localhost:8001/bills', { json: {
-            userID: "string",
-            token: "XM53hT=MU=bV=IXCRrANUW8IW=svDcDEVLSkRD7x",
-            picture: "?"
-        }});
-        expect(res.statusCode).to.equal(400);
-        expect(res.body.toString('utf-8')).to.equal("User id is invalid");
-    });
-    it('Token too short', function() {
-        var res = request('POST', 'http://localhost:8001/bills', { json: {
-            userID: 2,
-            token: "XM53hT=MU=bV=IXCRrANUx",
-            picture: "?"
-        }});
+    it('Invalid token', function() {
+        var res = request('GET', 'http://localhost:8001/bills', {
+            headers: {
+                'x-access-token': "XXXXXXXXXXX"
+            }
+        });
         expect(res.statusCode).to.equal(401);
-        expect(res.body.toString('utf-8')).to.equal("User ID and token combination is invalid");
+        expect(res.body.toString('utf-8')).to.equal("Token is invalid");
     });
-    it('Token too long', function() {
-        var res = request('POST', 'http://localhost:8001/bills', { json: {
-            userID: 2,
-            token: "XM53hT=MU=bV=IXCRrANUxXM53hT=MU=bV=IXCRrANUxXM53hT=MU=bV=IXCRrANUxXM53hT=MU=bV=IXCRrANUx",
-            picture: "?"
-        }});
+    it('User ID does not exist anymore', function() {
+        var res = request('GET', 'http://localhost:8001/bills', {
+            headers: {
+                // token for user ID 256
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjI1NiwiaWF0IjoxNTEzMTk2MjM0LCJleHAiOjE1MTMyODI2MzR9.peHmCivucnGWUnZpejybdneiAIpcnVcO213NjnXtVyk"
+            }
+        });
         expect(res.statusCode).to.equal(401);
-        expect(res.body.toString('utf-8')).to.equal("User ID and token combination is invalid");
+        expect(res.body.toString('utf-8')).to.equal("User ID does not exist");
     });
-    it('User ID does not exist', function() {
-        var res = request('POST', 'http://localhost:8001/bills', { json: {
-            userID: 2568,
-            token: "XM53hT=MU=bV=IXCRrANUW8IW=svDcDEVLSkRD7x",
-            picture: "?"
-        }});
-        expect(res.statusCode).to.equal(401);
-        expect(res.body.toString('utf-8')).to.equal("User ID and token combination is invalid");
-    });
-    it('Wrong user ID', function() {
-        var res = request('POST', 'http://localhost:8001/bills', { json: {
-            userID: 2,
-            token: "XM53hT=MU=bV=IXCRrANUW8IW=svDcDEVLSkRD7x",
-            picture: "?"
-        }});
-        expect(res.statusCode).to.equal(401);
-        expect(res.body.toString('utf-8')).to.equal("User ID and token combination is invalid");
-    });
-    it('Wrong token', function() {
-        var res = request('POST', 'http://localhost:8001/bills', { json: {
-            userID: 1,
-            token: "XXX3hT=MU=bV=IXCRrANUW8IW=svDcDEVLSkXXXX",
-            picture: "?"
-        }});
-        expect(res.statusCode).to.equal(401);
-        expect(res.body.toString('utf-8')).to.equal("User ID and token combination is invalid");
+    it('No bill yet', function() {
+        var res = request('GET', 'http://localhost:8001/bills', {
+            headers: {
+                // token for user ID 4
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjQsImlhdCI6MTUxMzE5NjY4NiwiZXhwIjoxNTEzMjgzMDg2fQ.MiEZCdQNQdDTWqtXv0sFi8DjgeZoL7OW3jZAA4mpXjQ"
+            }
+        });
+        expect(res.statusCode).to.equal(204);
+        expect(res.body.toString('utf-8')).to.equal("");
     });
     it('Success', function() {
-        var res = request('POST', 'http://localhost:8001/bills', { json: {
-            userID: 1,
-            token: "XM53hT=MU=bV=IXCRrANUW8IW=svDcDEVLSkRD7x",
-            picture: "?"
-        }});
+        var res = request('GET', 'http://localhost:8001/bills', {
+            headers: {
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzE5NTAxMywiZXhwIjoxNTEzMjgxNDEzfQ.6llgBUZB9uY6m6I1ih4_HMLMrHDTRs_38n-wPVwYFu4"
+            }
+        });
         expect(res.statusCode).to.equal(200);
-        expect(res.body.toString('utf-8')).to.equal("Bill created");
+        var billIDs = JSON.parse(res.body.toString('utf-8'));
+        expect(billIDs).to.eql([ 1, 2 ]);
     });
 });
 
-describe('Server GET /users/:userID/bills', function() {
-    it('Missing (no) parameter', function() {
-        var res = request('GET', 'http://localhost:8001/users/1/bills', { json: {}});
-        expect(res.statusCode).to.equal(400);
-        expect(res.body.toString('utf-8')).to.equal("Body is missing token");
+
+
+describe('Server POST /bills', function() {
+    before(function(done) {
+        const testSuite = this;
+        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
+            if (error) {
+                console.error("Reading the SQL script file failed:", error);
+                testSuite.skip();
+            } else {
+                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
+                connection.connect();
+                connection.query(data, function (error, results) {
+                    if (error) {
+                        console.error("The Test SQL script did not execute successfully:", error);
+                        testSuite.skip();
+                    } else {
+                        done();
+                    }
+                });
+                connection.end();
+            }
+        });
     });
-    it('User ID is not integer', function() {
-        var res = request('GET', 'http://localhost:8001/users/string/bills', { json: {
-            token: "XM53hT=MU=bV=IXCRrANUW8IW=svDcDEVLSkRD7x"
-        }});
+    it('No parameter', function() {
+        var res = request('POST', 'http://localhost:8001/bills', {});
         expect(res.statusCode).to.equal(400);
-        expect(res.body.toString('utf-8')).to.equal("User id is invalid");
+        expect(res.body.toString('utf-8')).to.equal("Token is missing from x-access-token in headers");
     });
-    it('Token is invalid', function() {
-        var res = request('GET', 'http://localhost:8001/users/1/bills', { json: {
-            token: "XM53hT=MU=bV=IXCRrANx"
-        }});
+    it('Missing token', function() {
+        var res = request('POST', 'http://localhost:8001/bills', {
+            json: {picture: "?"}
+        });
         expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Token is missing from x-access-token in headers");
+    });
+    it('Missing body', function() {
+        var res = request('POST', 'http://localhost:8001/bills', {
+            headers: {
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzE5NTAxMywiZXhwIjoxNTEzMjgxNDEzfQ.6llgBUZB9uY6m6I1ih4_HMLMrHDTRs_38n-wPVwYFu4"
+            }
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Body is missing the picture parameter");
+    });
+    it('Missing body parameter picture', function() {
+        var res = request('POST', 'http://localhost:8001/bills', {
+            headers: {
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzE5NTAxMywiZXhwIjoxNTEzMjgxNDEzfQ.6llgBUZB9uY6m6I1ih4_HMLMrHDTRs_38n-wPVwYFu4"
+            },
+            json: {}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Body is missing the picture parameter");
+    });
+    it('Invalid token', function() {
+        var res = request('POST', 'http://localhost:8001/bills', {
+            headers: {
+                'x-access-token': "XXXXXXXXXXX"
+            },
+            json: {picture: "?"}
+        });
+        expect(res.statusCode).to.equal(401);
         expect(res.body.toString('utf-8')).to.equal("Token is invalid");
     });
-    it('Wrong token', function() {
-        var res = request('GET', 'http://localhost:8001/users/1/bills', { json: {
-            token: "XXXXhT=MU=bV=IXCRrANUW8IW=svDcDEVLSkXXXX"
-        }});
+    it('User ID does not exist anymore', function() {
+        var res = request('POST', 'http://localhost:8001/bills', {
+            headers: {
+                // token for user ID 256
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjI1NiwiaWF0IjoxNTEzMTk2MjM0LCJleHAiOjE1MTMyODI2MzR9.peHmCivucnGWUnZpejybdneiAIpcnVcO213NjnXtVyk"
+            },
+            json: {picture: "?"}
+        });
         expect(res.statusCode).to.equal(401);
-        expect(res.body.toString('utf-8')).to.equal("User ID and token combination is invalid");
+        expect(res.body.toString('utf-8')).to.equal("User ID does not exist");
+    });
+    it('Success', function() {
+        var res = request('POST', 'http://localhost:8001/bills', {
+            headers: {
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzE5NTAxMywiZXhwIjoxNTEzMjgxNDEzfQ.6llgBUZB9uY6m6I1ih4_HMLMrHDTRs_38n-wPVwYFu4"
+            },
+            json: {picture: "?"}
+        });
+        expect(res.statusCode).to.equal(200);
+        expect(res.body.toString('utf-8')).to.equal("Bill created");
     });
 });
