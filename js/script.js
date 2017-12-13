@@ -8,7 +8,7 @@ if(isMobile){
     console.log('Desktop detected.');
 } */
 
-var currentScreen = "bill"; // that depends if user is logged in
+var currentScreen = "identification"; // that depends if user is logged in
 
 function configureNavigationBar() {
     console.log("Current screen is now", currentScreen);

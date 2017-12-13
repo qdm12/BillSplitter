@@ -1,4 +1,9 @@
-html, body {margin:0;padding:0;height:100%;}
+html, body {
+	margin:0;
+	padding:0;
+	height:100%;
+	font-family: 'Spectral SC', serif !important;
+}
 
 /* latin-ext */
 @font-face {
@@ -31,6 +36,7 @@ html, body {margin:0;padding:0;height:100%;}
 	text-align: center;
 	font-weight: 550;
 	font-size:5vmin;
+	cursor: default;
 }
 	
 /* Top banner style */
@@ -83,16 +89,17 @@ html, body {margin:0;padding:0;height:100%;}
     50%{background-position:100% 50%}
     100%{background-position:7% 70%}
 }
-#identification {
+/*#identification {
     background: linear-gradient(280deg, #b0ffe9, #a9caff, #ffd2bf);
     background-size:250%;
     animation: background_animation 9s ease-in-out infinite;
 }
+*/
 #identification #identificationError {
     position:absolute;
     width:70%;
     left:14%;
-    top:2%;
+    top:10%;
     display:flex;
     justify-content:center;
     align-items:center;
@@ -106,9 +113,10 @@ html, body {margin:0;padding:0;height:100%;}
     position: relative;
     width:80%;
     height:70%;
-    top:10%;
+    top:20%;
+	padding: 2%;
     margin:auto;
-    background: rgba(190, 190, 190, 0.295);
+    background: #0077B2; /*blending in with background*/
 }
 
 #identification #identificationBox #switch {
@@ -117,12 +125,13 @@ html, body {margin:0;padding:0;height:100%;}
     top:0%;
     height:10%;
     padding:1%;
-    background: rgba(0, 255, 221, 0.192);
+    background: #0077B2;
 }
 #identification #identificationBox #switch .switchTab {
     width:48%;
     height:100%;
     background: rgba(0, 153, 255, 0.315);
+	border: solid #000 1px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -133,6 +142,7 @@ html, body {margin:0;padding:0;height:100%;}
     -moz-transition:all 0.5s;
     -o-transition:all 0.5s;
     -ms-transition:all 0.5s;
+	cursor:pointer;
 }
 #identification #identificationBox #switch #signupTab {
     float:left;
@@ -142,14 +152,17 @@ html, body {margin:0;padding:0;height:100%;}
 }
 
 #identification #identificationBox input {
-    position:absolute;
+	position:absolute;
+	font-family: 'Spectral SC', Serif;
     width:80%;
     margin-left:7%;
-    padding:1.4%;
+	padding-left: 1%;
+	padding-top: 1%;
+    padding-bottom: 1%;
     font-size:1.8vmax;
     color:white;
     background: rgba(65, 179, 255, 0.096);
-    border: 3px solid rgba(123, 145, 255, 0.678);
+    border: 2px solid #000;
 	transition:all 0.5s;
     -webkit-transition:all 0.5s;
     -moz-transition:all 0.5s;
@@ -168,7 +181,7 @@ html, body {margin:0;padding:0;height:100%;}
     font-size:3vmin;
     color: white;
     background: rgba(55, 0, 255, 0.158);
-    border: 4px solid rgba(181, 69, 255, 0.459);
+    border: 4px solid #000;
 	transition:all 0.5s;
     -webkit-transition:all 0.5s;
     -moz-transition:all 0.5s;
@@ -178,6 +191,15 @@ html, body {margin:0;padding:0;height:100%;}
 
 #signup{
 	font-family: 'Spectral SC', serif;
+}
+
+#identification #identificationBox button:hover {
+    background: #C7E9F3;
+	transition:all 0.5s;
+    -webkit-transition:all 0.5s;
+    -moz-transition:all 0.5s;
+    -o-transition:all 0.5s;
+    -ms-transition:all 0.5s;
 }
 
 #identification #identificationBox button:active {
@@ -199,6 +221,9 @@ html, body {margin:0;padding:0;height:100%;}
 }
 #identification #identificationBox #signup #signupSubmit {
     top: 80%;
+	cursor:pointer;
+	font-size:1.7vw;
+	font-family: 'Spectral SC', serif;
 }
 #identification #identificationBox #login #loginEmail {
     top: 25%;
@@ -208,12 +233,15 @@ html, body {margin:0;padding:0;height:100%;}
 }
 #identification #identificationBox #login #loginSubmit {
     top: 75%;
+	font-size:1.7vw;
+	font-family: 'Spectral SC', serif;
+	cursor: pointer;
 }
 #identification #identificationBox #login #loginForgot {
     position:absolute;
-    top:85%;
-    right:5%;
-    font-size:1.7vw;
+	left: 44%;
+    top:95%;
+	cursor: pointer;
 }
 #identification #identificationBox .error {
     color: rgba(255, 19, 19, 0.37);
