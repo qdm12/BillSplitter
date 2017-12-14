@@ -503,7 +503,7 @@ app.post('/login', function (req, res) {
     var email = req.body.email;
     var password = req.body.password;
     if (!email || !password) {
-        return res.status(400).send("Body is missing parameters");
+        return res.status(400).send("Body is missing parameter(s)");
     }
 
     // Check for validity of inputs (see https://www.npmjs.com/package/validator)
@@ -517,17 +517,16 @@ app.post('/login', function (req, res) {
         return res.status(400).send("Your password is too long");
     }
 
-    pool.getConnection(function(error) {
+    pool.getConnection(function(error, connection) {
       if (error) {
         console.warn("Could not obtain connection from pool\n");
         return res.status(500).send("Our server is having troubles");
       }
       connection.query(
-        "SELECT id, digest, salt, token FROM users WHERE email = ? LIMIT 1",
+        "SELECT id, digest, salt FROM users WHERE email = ? LIMIT 1",
         [email],
         function (error, result) {
           connection.release();
-          console.log("GET /users 1:", result); // TODO to remove
           if (error) {
             console.warn("The users table can't be searched:", error, "\n");
             return res.status(500).send("Our database is having troubles");
@@ -535,7 +534,7 @@ app.post('/login', function (req, res) {
           if (result.length === 0) { // email does not exist
             return res.status(401).send("Incorrect email or password");
           }
-          Scrypt.scrypt(password, result[0].salt, {N:16384, r:8, p:1, dkLen:64, encoding:'base64'}, function (digest) {
+          Scrypt(password, result[0].salt, {N:16384, r:8, p:1, dkLen:64, encoding:'base64'}, function (digest) {
             if (digest !== result[0].digest) {
               return res.status(401).send("Incorrect email or password");
             }
@@ -586,7 +585,7 @@ app.post('/users', function (req, res) {
         return res.status(400).send("Password is too long");
     }
 
-    pool.getConnection(function(error) {
+    pool.getConnection(function(error, connection) {
       if (error) {
         console.warn("Could not obtain connection from pool\n");
         return res.status(500).send("Our server is having troubles");
