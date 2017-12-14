@@ -9,9 +9,11 @@ var mysql = require('mysql');
 // Make sure you have the server running on port 8001 with the database "billsplittertest"
 // Do this with `node server.js test` on another terminal
 
+
 before(function() { // takes some ~1 second for the first request for some reason
     var res = request('GET', 'http://localhost:8001/');
 });
+
 
 // Testing of server
 describe('Server GET /', function() {
@@ -464,7 +466,48 @@ describe('Server POST /users', function() {
         });
         expect(res.statusCode).to.equal(201);
         var credentials = JSON.parse(res.body.toString('utf-8'));
-        expect(credentials.userID).to.equal(1);
+        expect(credentials.userID).to.equal(5);
         expect(credentials.token.length).to.equal(143); // token is randomly generated
+    });
+});
+
+
+// Dynamic webpage
+describe('Server GET /web/:link', function() {
+    before(function(done) {
+        const testSuite = this;
+        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
+            if (error) {
+                console.error("Reading the SQL script file failed:", error);
+                testSuite.skip();
+            } else {
+                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
+                connection.connect();
+                connection.query(data, function (error, results) {
+                    if (error) {
+                        console.error("The Test SQL script did not execute successfully:", error);
+                        testSuite.skip();
+                    } else {
+                        done();
+                    }
+                });
+                connection.end();
+            }
+        });
+    });
+    it('Link is not 40 characters', function() {
+        var res = request('GET', 'http://localhost:8001/web/abc123');
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Link provided is invalid");
+    });
+    it('Link does not exist', function() {
+        var res = request('GET', 'http://localhost:8001/web/XXXFHtGDh44bMtW4VbngW3XxPQwqIQucnAUYYYYY');
+        expect(res.statusCode).to.equal(404);
+        expect(res.body.toString('utf-8')).to.equal("Link provided does not exist");
+    });
+    it('Success', function() {
+        var res = request('GET', 'http://localhost:8001/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL');
+        expect(res.statusCode).to.equal(200);
+        expect(res.body.toString('utf-8').length).to.greaterThan(200);
     });
 });

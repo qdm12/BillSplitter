@@ -1,5 +1,5 @@
 /*jslint white:true */
-var fs = require("fs");
+var path = require('path');
 var express = require('express');
 var bodyParser = require('body-parser');
 var app = express();
@@ -186,58 +186,13 @@ app.post('/bills', function (req, res) {
                                 });
                                 return res.status(500).send("Our database is having troubles");
                               }
-                              var path = "./bills/web/" + link + "/";
-                              fs.stat(path, function (err) {
-                                if (err && (err.errno === 34 || err.errno === -4058)) { // path does not exist
-                                  fs.mkdir(path, function (error) {
-                                    if (error) {
-                                      console.warn("The directory", path, "could not be created, error is:", error);
-                                      connection.rollback(function (error) {
-                                        connection.release();
-                                        if (error) {
-                                          console.warn("The transaction sequence could not be rollbacked:", error, "\n");
-                                          return res.status(500).send("Our database is having troubles");
-                                        }
-                                        console.log("Rolling back database query\n");
-                                        res.status(500).send("Our server is having troubles");
-                                      });
-                                      return;
-                                    }
-                                    // TODO copy default bill webpage to path
-                                    // write the billID somewhere in this so that
-                                    // dynamic webpage can use it to fetch information
-                                    connection.commit(function (error) {
-                                      connection.release();
-                                      if (error) {
-                                        console.warn("The transaction sequence could not be committed:", error, "\n");
-                                        return res.status(500).send("Our database is having troubles");
-                                      }
-                                      res.status(200).send("Bill created");
-                                    });
-                                  });
-                                } else if (err) {
-                                  console.warn("Checking the path", path, "gave the error:", err);
-                                  connection.rollback(function (error) {
-                                    connection.release();
-                                    if (error) {
-                                      console.warn("The transaction sequence could not be rollbacked:", error, "\n");
-                                      return res.status(500).send("Our database is having troubles");
-                                    }
-                                    console.log("Rolling back database query\n");
-                                    res.status(500).send("Our server is having troubles");
-                                  });
-                                } else { // path already exists - unlikely just redo the whole thing
-                                  console.warn("Path", path, "already exists !!");
-                                  connection.rollback(function (error) {
-                                    connection.release();
-                                    if (error) {
-                                      console.warn("The transaction sequence could not be rollbacked:", error, "\n");
-                                      return res.status(500).send("Our database is having troubles");
-                                    }
-                                    console.log("Rolling back database query\n");
-                                    res.status(500).send("Please try again, sorry about that.");
-                                  });
+                              connection.commit(function (error) {
+                                connection.release();
+                                if (error) {
+                                  console.warn("The transaction sequence could not be committed:", error, "\n");
+                                  return res.status(500).send("Our database is having troubles");
                                 }
+                                res.status(200).send("Bill created");
                               });
                             }
                           );
@@ -589,7 +544,7 @@ app.post('/users', function (req, res) {
         return res.status(500).send("Our server is having troubles");
       }
       connection.query(
-        "SELECT 1 FROM users WHERE email = ?",
+        "SELECT 1 FROM users WHERE email = ? LIMIT 1",
         [email],
         function (error, result) {
           if (error) {
@@ -602,7 +557,7 @@ app.post('/users', function (req, res) {
             return res.status(409).send("Email is already registered");
           }
           connection.query(
-            "SELECT 1 FROM users WHERE username = ?",
+            "SELECT 1 FROM users WHERE username = ? LIMIT 1",
             [username],
             function (error, result) {
               if (error) {
@@ -712,26 +667,36 @@ GET /bills/web/:link to get dynamic webpage of bill
 Required URL parameters: link
 Required body parameters:
 *********************************
-Reponds: TODO ?
+Reponds: HTML file
 *********************************
 ********************************* */
-app.get('/bills/web/:link', function (req, res) {
+app.get('/web/:link', function (req, res) {
     // Parse body of request
-    var link = req.params.link; // link acts as the bill's token really
-    if (link.length !== 40) {
+    var link = req.params.link; // link acts as the bill's token
+    if (!link || (link && link.length !== 40)) {
         return res.status(400).send("Link provided is invalid");
     }
-    var path = "./bills/web/" + link;
-    fs.stat(path, function (err) {
-        if (err) {
-            if (err.errno === 34) { // path does not exist
-                return res.status(404).send("Link provided does not exist");
-            }
-            console.warn("Checking the path", path, "gave the error:", err, "\n");
-            return res.status(500).send("Our server is having troubles");
+    pool.getConnection(function(error, connection) {
+      if (error) {
+        console.warn("Could not obtain connection from pool\n");
+        return res.status(500).send("Our server is having troubles");
+      }
+      connection.query(
+        "SELECT 1 FROM bills WHERE link = ? LIMIT 1",
+        [link],
+        function (error, result) {
+          connection.release();
+          if (error) {
+            console.warn("The bills table can't be searched:", error, "\n");
+            return res.status(500).send("Our database is having troubles");
+          }
+          if (result.length === 0) {
+              return res.status(404).send("Link provided does not exist");
+          }
+          res.status(200).sendFile(path.join(__dirname + '/dynamic/Dynamic_webpage_gen3.html'));
         }
-        // TODO serve the webpage
-    });
+      );
+    });    
 });
 
 /*
@@ -745,12 +710,6 @@ TODO
 */
 
 function start(port, database) {
-    if (!fs.existsSync("./bills")){
-        fs.mkdirSync("./bills");
-    }
-    if (!fs.existsSync("./bills/web")){
-        fs.mkdirSync("./bills/web");
-    }
     pool = mysql.createPool({
         connectionLimit: 10,
         host: "localhost",
@@ -765,6 +724,7 @@ function start(port, database) {
 
 function stop() {
     server.close();
+    pool.end();
 }
 
 if (require.main === module) {
@@ -780,7 +740,7 @@ function randomString(length) {
     var s = "";
     var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     var i;
-    for (i = 0; i < length; i += 1) {
+    for(i = 0; i < length; i += 1) {
         s += possible.charAt(Math.floor(Math.random() * possible.length));
     }
     return s;
@@ -798,3 +758,7 @@ function dbTimeToTimeObj(databaseTimestamp) {
         year: dateArray[3]
     };
 }
+
+module.exports = {
+    stop: stop
+};
