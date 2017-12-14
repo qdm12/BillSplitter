@@ -63,7 +63,7 @@ describe('Server POST /bills', function() {
     it('Missing body', function() {
         var res = request('POST', 'http://localhost:8001/bills', {
             headers: {
-                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzE5NTAxMywiZXhwIjoxNTEzMjgxNDEzfQ.6llgBUZB9uY6m6I1ih4_HMLMrHDTRs_38n-wPVwYFu4"
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzI4MjIxNX0.yBmaWqLBtfThJF9oNMN6Imhn8OfgXyUwseM_nmxJZi0"
             }
         });
         expect(res.statusCode).to.equal(400);
@@ -72,7 +72,7 @@ describe('Server POST /bills', function() {
     it('Missing body parameter picture', function() {
         var res = request('POST', 'http://localhost:8001/bills', {
             headers: {
-                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzE5NTAxMywiZXhwIjoxNTEzMjgxNDEzfQ.6llgBUZB9uY6m6I1ih4_HMLMrHDTRs_38n-wPVwYFu4"
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzI4MjIxNX0.yBmaWqLBtfThJF9oNMN6Imhn8OfgXyUwseM_nmxJZi0"
             },
             json: {}
         });
@@ -93,7 +93,7 @@ describe('Server POST /bills', function() {
         var res = request('POST', 'http://localhost:8001/bills', {
             headers: {
                 // token for user ID 256
-                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjI1NiwiaWF0IjoxNTEzMTk2MjM0LCJleHAiOjE1MTMyODI2MzR9.peHmCivucnGWUnZpejybdneiAIpcnVcO213NjnXtVyk"
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjI1NiwiaWF0IjoxNTEzMjgyMjkyfQ.HAVz-a60xp-AJdPmtXozfl2wOABodAdtEf21EKgGtVI"
             },
             json: {picture: "?"}
         });
@@ -103,7 +103,7 @@ describe('Server POST /bills', function() {
     it('Success', function() {
         var res = request('POST', 'http://localhost:8001/bills', {
             headers: {
-                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzE5NTAxMywiZXhwIjoxNTEzMjgxNDEzfQ.6llgBUZB9uY6m6I1ih4_HMLMrHDTRs_38n-wPVwYFu4"
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzI4MjIxNX0.yBmaWqLBtfThJF9oNMN6Imhn8OfgXyUwseM_nmxJZi0"
             },
             json: {picture: "?"}
         });
@@ -156,7 +156,7 @@ describe('Server GET /bills', function() {
         var res = request('GET', 'http://localhost:8001/bills', {
             headers: {
                 // token for user ID 256
-                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjI1NiwiaWF0IjoxNTEzMTk2MjM0LCJleHAiOjE1MTMyODI2MzR9.peHmCivucnGWUnZpejybdneiAIpcnVcO213NjnXtVyk"
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjI1NiwiaWF0IjoxNTEzMjgyMjkyfQ.HAVz-a60xp-AJdPmtXozfl2wOABodAdtEf21EKgGtVI"
             }
         });
         expect(res.statusCode).to.equal(401);
@@ -166,7 +166,7 @@ describe('Server GET /bills', function() {
         var res = request('GET', 'http://localhost:8001/bills', {
             headers: {
                 // token for user ID 4
-                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjQsImlhdCI6MTUxMzE5NjY4NiwiZXhwIjoxNTEzMjgzMDg2fQ.MiEZCdQNQdDTWqtXv0sFi8DjgeZoL7OW3jZAA4mpXjQ"
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjQsImlhdCI6MTUxMzI4MjI4OH0.vCoORSsgfk2-s3xuppO4Fm8GOOhIqiJyDoTih2BiT34"
             }
         });
         expect(res.statusCode).to.equal(204);
@@ -175,7 +175,7 @@ describe('Server GET /bills', function() {
     it('Success', function() {
         var res = request('GET', 'http://localhost:8001/bills', {
             headers: {
-                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzE5NTAxMywiZXhwIjoxNTEzMjgxNDEzfQ.6llgBUZB9uY6m6I1ih4_HMLMrHDTRs_38n-wPVwYFu4"
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzI4MjIxNX0.yBmaWqLBtfThJF9oNMN6Imhn8OfgXyUwseM_nmxJZi0"
             }
         });
         expect(res.statusCode).to.equal(200);
@@ -218,7 +218,7 @@ describe('Server GET /bills/:billID', function() {
     it('billID is not an integer', function() {
         var res = request('GET', 'http://localhost:8001/bills/abc', {
             headers: {
-                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzE5NTAxMywiZXhwIjoxNTEzMjgxNDEzfQ.6llgBUZB9uY6m6I1ih4_HMLMrHDTRs_38n-wPVwYFu4"
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzI4MjIxNX0.yBmaWqLBtfThJF9oNMN6Imhn8OfgXyUwseM_nmxJZi0"
             }
         });
         expect(res.statusCode).to.equal(400);
@@ -237,7 +237,7 @@ describe('Server GET /bills/:billID', function() {
         var res = request('GET', 'http://localhost:8001/bills/1', {
             headers: {
                 // token for user ID 256
-                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjI1NiwiaWF0IjoxNTEzMTk2MjM0LCJleHAiOjE1MTMyODI2MzR9.peHmCivucnGWUnZpejybdneiAIpcnVcO213NjnXtVyk"
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjI1NiwiaWF0IjoxNTEzMjgyMjkyfQ.HAVz-a60xp-AJdPmtXozfl2wOABodAdtEf21EKgGtVI"
             }
         });
         expect(res.statusCode).to.equal(401);
@@ -247,7 +247,7 @@ describe('Server GET /bills/:billID', function() {
         var res = request('GET', 'http://localhost:8001/bills/1', {
             headers: {
                 // token for user ID 4
-                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjQsImlhdCI6MTUxMzE5NjY4NiwiZXhwIjoxNTEzMjgzMDg2fQ.MiEZCdQNQdDTWqtXv0sFi8DjgeZoL7OW3jZAA4mpXjQ"
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjQsImlhdCI6MTUxMzI4MjI4OH0.vCoORSsgfk2-s3xuppO4Fm8GOOhIqiJyDoTih2BiT34"
             }
         });
         expect(res.statusCode).to.equal(204);
@@ -256,7 +256,7 @@ describe('Server GET /bills/:billID', function() {
     it('Success', function() {
         var res = request('GET', 'http://localhost:8001/bills/1', {
             headers: {
-                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzE5NTAxMywiZXhwIjoxNTEzMjgxNDEzfQ.6llgBUZB9uY6m6I1ih4_HMLMrHDTRs_38n-wPVwYFu4"
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzI4MjIxNX0.yBmaWqLBtfThJF9oNMN6Imhn8OfgXyUwseM_nmxJZi0"
             }
         });
         expect(res.statusCode).to.equal(200);
@@ -270,17 +270,17 @@ describe('Server GET /bills/:billID', function() {
             tax: 19.67,
             tip: 5,
             link: '2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL',
-            done: 0,
+            done: false,
             users: [{id:1, username:'Alice'}, {id:2, username:'Bob'}],
             tempUsers: [{id:1, username:'John'}],
             items: [{id:1, name:'PizzaA', amount:10.5}, {id:2, name:'PizzaB', amount:14}, {id:3, name:'Fries', amount:6.24}],
             consumers: [
-                { item_id: 1, user_id: 1, temp_user_id: null, paid: 0 },
-                { item_id: 1, user_id: null, temp_user_id: 1, paid: 0 },
-                { item_id: 2, user_id: 2, temp_user_id: null, paid: 0 },
-                { item_id: 3, user_id: 1, temp_user_id: null, paid: 0 },
-                { item_id: 3, user_id: 2, temp_user_id: null, paid: 0 },
-                { item_id: 3, user_id: null, temp_user_id: 1, paid: 0 }
+                { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
+                { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
+                { item_id: 2, user_id: 2, temp_user_id: null, paid: false },
+                { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
+                { item_id: 3, user_id: 2, temp_user_id: null, paid: false },
+                { item_id: 3, user_id: null, temp_user_id: 1, paid: false }
             ]
         });
     });
@@ -328,6 +328,20 @@ describe('Server POST /login', function() {
         });
         expect(res.statusCode).to.equal(400);
         expect(res.body.toString('utf-8')).to.equal("Body is missing parameter(s)");
+    });
+    it('Email is not a string (number)', function() {
+        var res = request('POST', 'http://localhost:8001/login', {
+            json: {email:1, password:"password"}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Your email address is not a string");
+    });
+    it('Password is not a string (number)', function() {
+        var res = request('POST', 'http://localhost:8001/login', {
+            json: {email:"elliot@e.com", password:1}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Your password is not a string");
     });
     it('Email is not an email address', function() {
         var res = request('POST', 'http://localhost:8001/login', {
@@ -417,6 +431,27 @@ describe('Server POST /users', function() {
         });
         expect(res.statusCode).to.equal(400);
         expect(res.body.toString('utf-8')).to.equal("Body is missing parameter(s)");
+    });
+    it('Email is not a string (number)', function() {
+        var res = request('POST', 'http://localhost:8001/users', {
+            json: {email:1, username:"Elliot", password:"password"}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Your email address is not a string");
+    });
+    it('Username is not a string (number)', function() {
+        var res = request('POST', 'http://localhost:8001/users', {
+            json: {email:"elliot@e.com", username:1, password:"password"}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Your username is not a string");
+    });
+    it('Password is not a string (number)', function() {
+        var res = request('POST', 'http://localhost:8001/users', {
+            json: {email:"elliot@e.com", username:"Elliot", password:1}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Your password is not a string");
     });
     it('Email is not an email address', function() {
         var res = request('POST', 'http://localhost:8001/users', {
@@ -560,17 +595,17 @@ describe('Server GET /bills/web/:link/details', function() {
             tax: 19.67,
             tip: 5,
             link: '2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL',
-            done: 0,
+            done: false,
             users: [{id:1, username:'Alice'}, {id:2, username:'Bob'}],
             tempUsers: [{id:1, username:'John'}],
             items: [{id:1, name:'PizzaA', amount:10.5}, {id:2, name:'PizzaB', amount:14}, {id:3, name:'Fries', amount:6.24}],
             consumers: [
-                { item_id: 1, user_id: 1, temp_user_id: null, paid: 0 },
-                { item_id: 1, user_id: null, temp_user_id: 1, paid: 0 },
-                { item_id: 2, user_id: 2, temp_user_id: null, paid: 0 },
-                { item_id: 3, user_id: 1, temp_user_id: null, paid: 0 },
-                { item_id: 3, user_id: 2, temp_user_id: null, paid: 0 },
-                { item_id: 3, user_id: null, temp_user_id: 1, paid: 0 }
+                { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
+                { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
+                { item_id: 2, user_id: 2, temp_user_id: null, paid: false },
+                { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
+                { item_id: 3, user_id: 2, temp_user_id: null, paid: false },
+                { item_id: 3, user_id: null, temp_user_id: 1, paid: false }
             ]
         });
     });

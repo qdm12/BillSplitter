@@ -12,7 +12,7 @@ var Scrypt = require('scrypt-async');
 
 var secret = "secretkey"; // Used for token generation and verification
 // TODO store secret in environment variable
-var tokenExpiration = 86400;
+var tokenExpiration = 99999999; // a lot
 
 var server = null;
 var pool = null;
@@ -31,7 +31,7 @@ Reponds: Your result
 *********************************
 ********************************* */
 app.get('/', function (req, res) {
-    res.end("Your result");
+    res.status(200).send("Your result");
 });
 
 
@@ -53,7 +53,7 @@ app.post('/bills', function (req, res) {
         return res.status(400).send("Token is missing from x-access-token in headers");
     }
 
-    // Parse body
+    // Parse body of request
     var picture = req.body.picture;
     if (!picture) {
         return res.status(400).send("Body is missing the picture parameter");
@@ -67,7 +67,6 @@ app.post('/bills', function (req, res) {
       }
       var userID = decoded.userID;
       // Check in database
-      // TODO there should be no concurrent connection for this (auto increment problem)
       pool.getConnection(function(error, connection) {
         if (error) {
           console.warn("Could not obtain connection from pool\n");
@@ -114,6 +113,7 @@ app.post('/bills', function (req, res) {
             var link = randomString(40); // ~zero chance that it already exists
             connection.beginTransaction(function (error) {
               if (error) {
+                connection.release();
                 console.warn("The database transaction sequence could not be started:", error, "\n");
                 return res.status(500).send("Our server is having troubles");
               }
@@ -134,8 +134,8 @@ app.post('/bills', function (req, res) {
                     return res.status(500).send("Our database is having troubles");
                   }
                   connection.query(
-                    "SELECT MAX(id) AS lastid FROM bills",
-                    [],
+                    "SELECT id AS lastid FROM bills WHERE link = ?",
+                    [link], // we use link as MAX(id) might fail with concurrent connections
                     function (error, result) {
                       if (error) {
                         console.warn("The bills table could not be searched:", error);
@@ -232,6 +232,7 @@ app.get('/bills', function (req, res) {
         return res.status(401).send("Token is invalid");
       }
       var userID = decoded.userID;
+      
       // Check in database
       pool.getConnection(function (error, connection) {
           if (error) {
@@ -297,11 +298,14 @@ app.get('/bills/:billID', function (req, res) {
         return res.status(400).send("Token is missing from x-access-token in headers");
     }
 
-    // Parse body of request
+    // Parse URL parameters of request
     var billID = req.params.billID;
 
     // Check for validity of inputs
     if (isNaN(billID)) {
+        return res.status(400).send("billID is invalid");
+    }
+    if (billID < 1 || billID > 2147483647) {
         return res.status(400).send("billID is invalid");
     }
 
@@ -346,14 +350,14 @@ app.get('/bills/:billID', function (req, res) {
                 }
                 var bill = {
                   id: result[0].id,
-                  time: dbTimeToTimeObj(result[0].time),
+                  link: result[0].link,
                   address: result[0].address,
                   restaurant: result[0].restaurant,
                   name: result[0].name,
+                  time: dbTimeToTimeObj(result[0].time),
                   tax: result[0].tax,
                   tip: result[0].tip,
-                  link: result[0].link,
-                  done: result[0].done
+                  done: Boolean(Number(result[0].done))
                 };
                 connection.query(
                   "SELECT bills_users.user_id, users.username FROM bills_users, users WHERE bills_users.bill_id = ? AND bills_users.user_id = users.id",
@@ -420,7 +424,7 @@ app.get('/bills/:billID', function (req, res) {
                                         item_id: result[i].item_id,
                                         user_id: result[i].user_id,
                                         temp_user_id: result[i].temp_user_id,
-                                        paid: result[i].paid
+                                        paid: Boolean(Number(result[i].paid))
                                     });
                                 }
                                 res.status(200).json(bill);
@@ -461,6 +465,12 @@ app.post('/login', function (req, res) {
     }
 
     // Check for validity of inputs (see https://www.npmjs.com/package/validator)
+    if (typeof email !== "string") {
+        return res.status(400).send("Your email address is not a string");
+    }
+    if (typeof password !== "string") {
+        return res.status(400).send("Your password is not a string");
+    }
     email = validator.trim(email);
     if (!validator.isEmail(email)) {
         return res.status(400).send("Your email address is invalid");
@@ -519,6 +529,15 @@ app.post('/users', function (req, res) {
     }
 
     // Check for validity of inputs (see https://www.npmjs.com/package/validator)
+    if (typeof email !== "string") {
+        return res.status(400).send("Your email address is not a string");
+    }
+    if (typeof username !== "string") {
+        return res.status(400).send("Your username is not a string");
+    }
+    if (typeof password !== "string") {
+        return res.status(400).send("Your password is not a string");
+    }
     email = validator.trim(email);
     username = validator.trim(username);
     password = validator.trim(password);
@@ -576,6 +595,7 @@ app.post('/users', function (req, res) {
               Scrypt(password, salt, {N:16384, r:8, p:1, dkLen:32, encoding:'base64'}, function (digest) {
                 connection.beginTransaction(function (error) {
                   if (error) {
+                    connection.release();
                     console.warn("The database transaction sequence could not be started:", error, "\n");
                     return res.status(500).send("Our server is having troubles");
                   }
@@ -671,9 +691,9 @@ Reponds: bill object in JSON encoding
 *********************************
 ********************************* */
 app.get('/bills/web/:link/details', function (req, res) {
-    // Parse body of request
+    // Parse URL parameters of request
     var link = req.params.link; // link acts as the bill's token
-    if (!link || (link && link.length !== 40)) {
+    if (!link || (link && typeof link != "string") || (link && typeof link == "string" && link.length !== 40)) {
         return res.status(400).send("Link provided is invalid");
     }
     pool.getConnection(function(error, connection) {
@@ -706,14 +726,14 @@ app.get('/bills/web/:link/details', function (req, res) {
               // Bill exists for sure
               var bill = {
                 id: result[0].id,
-                time: dbTimeToTimeObj(result[0].time),
+                link: result[0].link,
                 address: result[0].address,
                 restaurant: result[0].restaurant,
                 name: result[0].name,
+                time: dbTimeToTimeObj(result[0].time),
                 tax: result[0].tax,
                 tip: result[0].tip,
-                link: result[0].link,
-                done: result[0].done
+                done: Boolean(Number(result[0].done))
               };
               connection.query(
                 "SELECT bills_users.user_id, users.username FROM bills_users, users WHERE bills_users.bill_id = ? AND bills_users.user_id = users.id",
@@ -780,7 +800,7 @@ app.get('/bills/web/:link/details', function (req, res) {
                                       item_id: result[i].item_id,
                                       user_id: result[i].user_id,
                                       temp_user_id: result[i].temp_user_id,
-                                      paid: result[i].paid
+                                      paid: Boolean(Number(result[i].paid))
                                   });
                               }
                               res.status(200).json(bill);
@@ -811,9 +831,9 @@ Reponds: HTML file
 *********************************
 ********************************* */
 app.get('/bills/web/:link', function (req, res) {
-    // Parse body of request
+    // Parse URL parameters of request
     var link = req.params.link; // link acts as the bill's token
-    if (!link || (link && link.length !== 40)) {
+    if (!link || (link && typeof link != "string") || (link && typeof link == "string" && link.length !== 40)) {
         return res.status(400).send("Link provided is invalid");
     }
     pool.getConnection(function(error, connection) {
@@ -831,7 +851,7 @@ app.get('/bills/web/:link', function (req, res) {
             return res.status(500).send("Our database is having troubles");
           }
           if (result.length === 0) {
-              return res.status(404).send("Link provided does not exist");
+            return res.status(404).send("Link provided does not exist");
           }
           res.status(200).sendFile(path.join(__dirname + '/dynamic/Dynamic_webpage_gen3.html'));
         }
@@ -839,13 +859,229 @@ app.get('/bills/web/:link', function (req, res) {
     });
 });
 
+
+/* ******************************
+*********************************
+PUT /bills/web/:link to change the bill
+*********************************
+Required URL parameters: link
+Required body parameters: bill object (name, done, users, tempUsers, consumers)
+*********************************
+Reponds: Bill updated
+*********************************
+********************************* */
+app.put('/bills/web/:link', function (req, res) {
+    // Parse URL parameter of request
+    var link = req.params.link; // link acts as the bill's token
+    if (!link || (link && link.length !== 40)) {
+        return res.status(400).send("Link provided is invalid");
+    }
+    var billJSON = req.body.bill;
+    if (!billJSON) {
+        return res.status(400).send("Body is missing the bill parameter");
+    }
+    pool.getConnection(function(error, connection) {
+      if (error) {
+        console.warn("Could not obtain connection from pool\n");
+        return res.status(500).send("Our server is having troubles");
+      }
+      connection.query(
+        "SELECT id FROM bills WHERE link = ? LIMIT 1",
+        [link],
+        function (error, result) {
+          if (error) {
+            connection.release();
+            console.warn("The bills table can't be searched:", error, "\n");
+            return res.status(500).send("Our database is having troubles");
+          }
+          if (result.length === 0) {
+            connection.release();
+            return res.status(404).send("Link provided does not exist");
+          }
+          var bill = null;
+          try {
+            bill = JSON.parse(billJSON);
+          } catch (ParsingError) {
+            console.log("Bill JSON provided can't be parsed:", ParsingError, "\n");
+            return res.status(400).send("The bill JSON parameter is malformed");
+          }
+          // we add it to the object for clarity
+          bill.id = result[0].id;
+          bill.link = link;
+          if (!bill.name || !bill.done || !bill.users || !bill.tempUsers || !bill.consumers) {
+            return res.status(400).send("The bill object provided is missing top level properties");
+          }
+          if (typeof bill.name !== "string" || bill.name.length > 50) {
+            return res.status(400).send("The property name is not a string of less than 51 characters");
+          }
+          if (typeof bill.done !== "boolean") {
+            return res.status(400).send("The property done is not a boolean");
+          }
+          if (!Array.isArray(bill.users)) {
+            return res.status(400).send("The bill object users property is not an array");
+          }
+          if (!Array.isArray(bill.tempUsers)) {
+            return res.status(400).send("The bill object tempUsers property is not an array");
+          }
+          if (!Array.isArray(bill.consumers)) {
+            return res.status(400).send("The bill object consumers property is not an array");
+          }
+          var i;
+          for(i = 0; i < bill.users.length; i += 1) {
+            if (!bill.users[i].id) {
+                return res.status(400).send("The user object "+i+" is missing its id property");
+            }
+            if (isNaN(bill.users[i].id)) {
+                return res.status(400).send("The user object "+i+" id property is not a number");
+            }
+            if (bill.users[i].id < 1 || bill.users[i].id > 2147483647) {
+                return res.status(400).send("The user object "+i+" id property is not in the correct range");
+            }
+          }
+          for(i = 0; i < bill.tempUsers.length; i += 1) {
+            if (!bill.tempUsers[i].id) {
+                return res.status(400).send("The tempUser object "+i+" is missing its id property");
+            }
+            if (isNaN(bill.tempUsers[i].id)) {
+                return res.status(400).send("The tempUser object "+i+" id property is not a number");
+            }
+            if (bill.tempUsers[i].id < 1 || bill.tempUsers[i].id > 2147483647) {
+                return res.status(400).send("The tempUser object "+i+" id property is not in the correct range");
+            }
+          }
+          for(i = 0; i < bill.consumers.length; i += 1) {
+            if (!bill.consumers[i].item_id) {
+                return res.status(400).send("The consumer object "+i+" is missing its item_id property");
+            }
+            if (isNaN(bill.consumers[i].item_id)) {
+                return res.status(400).send("The consumer object "+i+" item_id property is not a number");
+            }
+            if (bill.consumers[i].item_id < 1 || bill.consumers[i].item_id > 2147483647) {
+                return res.status(400).send("The consumer object "+i+" item_id property is not in the correct range");
+            }
+            if (bill.consumers[i].user_id === undefined) {
+                return res.status(400).send("The consumer object "+i+" is missing its user_id property");
+            }
+            if (bill.consumers[i].user_id && isNaN(bill.consumers[i].user_id)) {
+                return res.status(400).send("The consumer object "+i+" user_id property is not null or a number");
+            }
+            if (bill.consumers[i].user_id && (bill.consumers[i].user_id < 1 || bill.consumers[i].user_id > 2147483647)) {
+                return res.status(400).send("The consumer object "+i+" user_id property is not null but not in the correct range");
+            }
+            if (bill.consumers[i].temp_user_id === undefined) {
+                return res.status(400).send("The consumer object "+i+" is missing its temp_user_id property");
+            }
+            if (bill.consumers[i].temp_user_id && isNaN(bill.consumers[i].temp_user_id)) {
+                return res.status(400).send("The consumer object "+i+" temp_user_id property is not null or a number");
+            }
+            if (bill.consumers[i].temp_user_id && (bill.consumers[i].temp_user_id < 1 || bill.consumers[i].temp_user_id > 2147483647)) {
+                return res.status(400).send("The consumer object "+i+" temp_user_id property is not null but not in the correct range");
+            }
+            if (!bill.consumers[i].paid) {
+                return res.status(400).send("The consumer object "+i+" is missing its paid property");
+            }
+            if ((typeof bill.consumers[i].paid) !== "boolean") {
+                return res.status(400).send("The consumer object "+i+" paid property is not a boolean");
+            }
+          }
+          connection.beginTransaction(function (error) {
+            if (error) {
+              connection.release();
+              console.warn("The database transaction sequence could not be started:", error, "\n");
+              return res.status(500).send("Our server is having troubles");
+            }
+            connection.query(
+              "UPDATE bills SET name = ?, done = ? WHERE id = ?",
+              [bill.name, bill.done, bill.id],
+              function (error) {
+                if (error) {
+                  console.warn("The bills table can't be searched:", error, "\n");
+                  connection.rollback(function (error) {
+                    connection.release();
+                    if (error) {
+                      console.warn("The transaction sequence could not be rollbacked:", error, "\n");
+                    } else {
+                      console.log("Rolling back database query\n");
+                    }
+                  });
+                  return res.status(500).send("Our database is having troubles");
+                }
+                var values = [];
+                for(i = 0; i < bill.users.length; i += 1) {
+                  values.push([bill.id, bill.users[i].id, null]);
+                }
+                for(i = 0; i < bill.tempUsers.length; i += 1) {
+                  values.push([bill.id, null, bill.tempUsers[i].id]);
+                }
+                connection.query( // TODO check that unique works here
+                  "INSERT INTO bills_users (bill_id, user_id, temp_user_id) VALUES ?",
+                  [values],
+                  function (error) {
+                    if (error) {
+                      console.warn("The users can't be inserted in the bills_users table:", error, "\n");
+                      connection.rollback(function (error) {
+                        connection.release();
+                        if (error) {
+                          console.warn("The transaction sequence could not be rollbacked:", error, "\n");
+                        } else {
+                          console.log("Rolling back database query\n");
+                        }
+                      });
+                      return res.status(500).send("Our database is having troubles");
+                    }
+                    values = [];
+                    for(i = 0; i < bill.consumers.length; i += 1) {
+                      values.push([
+                          bill.consumers[i].item_id,
+                          bill.consumers[i].user_id,
+                          bill.consumers[i].temp_user_id,
+                          bill.consumers[i].paid
+                        ]);
+                    }
+                    connection.query( // TODO check that unique works here
+                      "INSERT INTO items_consumers (item_id, user_id, temp_user_id, paid) VALUES ?",
+                      [values],
+                      function (error) {
+                        if (error) {
+                          console.warn("The consumers data can't be inserted in the items_consumers table:", error, "\n");
+                          connection.rollback(function (error) {
+                            connection.release();
+                            if (error) {
+                              console.warn("The transaction sequence could not be rollbacked:", error, "\n");
+                            } else {
+                              console.log("Rolling back database query\n");
+                            }
+                          });
+                          return res.status(500).send("Our database is having troubles");
+                        }
+                        // XXX
+                        connection.commit(function (error) {
+                          connection.release();
+                          if (error) {
+                            console.warn("The transaction sequence could not be committed:", error, "\n");
+                            return res.status(500).send("Our database is having troubles");
+                          }
+                          res.status(200).send("Bill updated");
+                        });
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          });
+        }
+      );
+    });
+});
+
 /*
 TODO
-- Update bill with
-    - list of users
-    - list of temp users
-    - object of consumers (with paid)
-- check bills with id very large maybe it'd fail
+- Create temp user
+- Test PUT /bills/web/:link to change the bill
+- switch to camelcase
+- Delete account
+- get user ID from username
 */
 
 function start(port, database) {
