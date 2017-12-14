@@ -347,7 +347,7 @@ app.get('/bills/:billID', function (req, res) {
     var billID = req.params.billID;
 
     // Check for validity of inputs
-    if (!Number.isInteger(billID)) {
+    if (isNaN(billID)) {
         console.log("Invalid bill ID: ", billID, "\n");
         return res.status(400).send("billID is invalid");
     }
@@ -358,7 +358,7 @@ app.get('/bills/:billID', function (req, res) {
       }
       var userID = decoded.userID;
       // Check in database
-      pool.getConnection(function(error) {
+      pool.getConnection(function(error, connection) {
         if (error) {
           console.warn("Could not obtain connection from pool\n");
           return res.status(500).send("Our server is having troubles");
@@ -378,8 +378,8 @@ app.get('/bills/:billID', function (req, res) {
               return res.status(401).send("User ID does not exist");
             }
             connection.query(
-              "SELECT * FROM bills WHERE bills.id = ?",
-              [billID],
+              "SELECT bills.* FROM bills, bills_users WHERE bills.id = ? AND bills_users.user_id = ?",
+              [billID, userID],
               function (error, result) {
                 console.log("GET /bills/:billID 2", result); // TODO to remove
                 if (error) {
@@ -389,7 +389,7 @@ app.get('/bills/:billID', function (req, res) {
                 }
                 if (result.length === 0) {
                   connection.release();
-                  return res.status(204).send("User ID has no such bill");
+                  return res.status(204).send();
                 }
                 var bill = {
                   id: result[0].id,
@@ -650,7 +650,7 @@ app.post('/users', function (req, res) {
                             return;
                           }
                           var userID = result[0].id;
-                          if (!Number.isInteger(userID)) {
+                          if (isNaN(userID)) {
                             console.warn("The user ID", userID, "is not an integer");
                             connection.rollback(function (error) {
                               connection.release();
