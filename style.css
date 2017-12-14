@@ -25,7 +25,7 @@ html, body {
 #top_bar{
 	width: 100%;
 	position: fixed;
-	z-index:2; /*on top of other layers*/
+	z-index:6; /*on top of other layers*/
 	padding-top: 1vh;
 	padding-bottom: 1vh;
 	background: #dad2c8;
@@ -293,8 +293,34 @@ html, body {
     background: #8D3D37;
 }
 
-#history {
-    background: #FF8E00;
+/*Bill History Styling */
+
+#history{
+    background-color: #FF8E00;
+	display: grid;
+	grid-template-columns: 250px 250px;
+	grid-template-rows: repeat(3, 450px);
+	grid-gap: 20px;
+	grid-auto-rows: 60%;  
+	justify-items: center;
+	justify-content: center;
+	align-items: stretch;
+	align-content: center;
+	grid-auto-flow: column;
+}
+
+#histContent{
+	font-size: 3vmin;
+	position: absolute;
+    width: 60%;
+    left: 20%;
+	right: 20%;
+    top: 20%;
+    border: 5px solid #000;
+}
+
+.billLabel{
+	font-weight: 600;
 }
 
 #profile {
