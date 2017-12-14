@@ -287,7 +287,7 @@ Required headers parameters: x-access-token
 Required URL parameters: billID
 Required body parameters:
 *********************************
-Reponds: bill object
+Reponds: bill object in JSON encoding
 *********************************
 ********************************* */
 app.get('/bills/:billID', function (req, res) {
@@ -310,6 +310,7 @@ app.get('/bills/:billID', function (req, res) {
         return res.status(401).send("Token is invalid");
       }
       var userID = decoded.userID;
+      
       // Check in database
       pool.getConnection(function(error, connection) {
         if (error) {
@@ -336,7 +337,7 @@ app.get('/bills/:billID', function (req, res) {
               function (error, result) {
                 if (error) {
                   connection.release();
-                  console.warn("The bills table can't be searched:", error, "\n");
+                  console.warn("The bills / bills_users table can't be searched:", error, "\n");
                   return res.status(500).send("Our database is having troubles");
                 }
                 if (result.length === 0) {
@@ -659,6 +660,145 @@ app.post('/users', function (req, res) {
     });
 });
 
+/* ******************************
+*********************************
+GET /bills/web/:link/details to get the details of the bill
+*********************************
+Required URL parameters: link
+Required body parameters:
+*********************************
+Reponds: bill object in JSON encoding
+*********************************
+********************************* */
+app.get('/bills/web/:link/details', function (req, res) {
+    // Parse body of request
+    var link = req.params.link; // link acts as the bill's token
+    if (!link || (link && link.length !== 40)) {
+        return res.status(400).send("Link provided is invalid");
+    }
+    pool.getConnection(function(error, connection) {
+      if (error) {
+        console.warn("Could not obtain connection from pool\n");
+        return res.status(500).send("Our server is having troubles");
+      }
+      connection.query(
+        "SELECT id FROM bills WHERE link = ? LIMIT 1",
+        [link],
+        function (error, result) {
+          connection.release();
+          if (error) {
+            console.warn("The bills table can't be searched:", error, "\n");
+            return res.status(500).send("Our database is having troubles");
+          }
+          if (result.length === 0) {
+              return res.status(404).send("Link provided does not exist");
+          }
+          var billID = result[0].id;
+          connection.query(
+            "SELECT * FROM bills WHERE id = ?",
+            [billID],
+            function (error, result) {
+              if (error) {
+                connection.release();
+                console.warn("The bills table can't be searched:", error, "\n");
+                return res.status(500).send("Our database is having troubles");
+              }
+              // Bill exists for sure
+              var bill = {
+                id: result[0].id,
+                time: dbTimeToTimeObj(result[0].time),
+                address: result[0].address,
+                restaurant: result[0].restaurant,
+                name: result[0].name,
+                tax: result[0].tax,
+                tip: result[0].tip,
+                link: result[0].link,
+                done: result[0].done
+              };
+              connection.query(
+                "SELECT bills_users.user_id, users.username FROM bills_users, users WHERE bills_users.bill_id = ? AND bills_users.user_id = users.id",
+                [billID],
+                function (error, result) {
+                  if (error) {
+                    connection.release();
+                    console.warn("The bills_users / users table can't be searched:", error, "\n");
+                    return res.status(500).send("Our database is having troubles");
+                  }
+                  bill.users = [];
+                  var i;
+                  for(i = 0; i < result.length; i += 1) {
+                      bill.users.push({
+                          id: result[i].user_id,
+                          username: result[i].username
+                      });
+                  }
+                  connection.query(
+                    "SELECT bills_users.temp_user_id, temp_users.name FROM bills_users, temp_users WHERE bills_users.bill_id = ? AND bills_users.temp_user_id = temp_users.id",
+                    [billID],
+                    function (error, result) {
+                      if (error) {
+                        connection.release();
+                        console.warn("The bills_users / temp_users table can't be searched:", error, "\n");
+                        return res.status(500).send("Our database is having troubles");
+                      }
+                      bill.tempUsers = [];
+                      for(i = 0; i < result.length; i += 1) {
+                          bill.tempUsers.push({
+                              id: result[i].temp_user_id,
+                              username: result[i].name
+                          });
+                      }
+                      connection.query(
+                        "SELECT id, name, amount FROM items WHERE items.bill_id = ?",
+                        [billID],
+                        function (error, result) {
+                          if (error) {
+                            connection.release();
+                            console.warn("The items table can't be searched:", error, "\n");
+                            return res.status(500).send("Our database is having troubles");
+                          }
+                          bill.items = [];
+                          for(i = 0; i < result.length; i += 1) {
+                              bill.items.push({
+                                  id: result[i].id,
+                                  name: result[i].name,
+                                  amount: result[i].amount
+                              });
+                          }
+                          connection.query(
+                            "SELECT items_consumers.* FROM items_consumers, items WHERE items.bill_id = ? AND items.id = items_consumers.item_id",
+                            [billID],
+                            function (error, result) {
+                              if (error) {
+                                connection.release();
+                                console.warn("The items_consumers table can't be searched:", error, "\n");
+                                return res.status(500).send("Our database is having troubles");
+                              }
+                              bill.consumers = [];
+                              for(i = 0; i < result.length; i += 1) {
+                                  bill.consumers.push({
+                                      item_id: result[i].item_id,
+                                      user_id: result[i].user_id,
+                                      temp_user_id: result[i].temp_user_id,
+                                      paid: result[i].paid
+                                  });
+                              }
+                              res.status(200).json(bill);
+                            }
+                          );
+                        }
+                      );
+                    }
+                  );
+                }
+              );
+            }
+          );
+        }
+      );
+    });
+});
+
 
 /* ******************************
 *********************************
@@ -670,7 +810,7 @@ Required body parameters:
 Reponds: HTML file
 *********************************
 ********************************* */
-app.get('/web/:link', function (req, res) {
+app.get('/bills/web/:link', function (req, res) {
     // Parse body of request
     var link = req.params.link; // link acts as the bill's token
     if (!link || (link && link.length !== 40)) {
@@ -696,17 +836,16 @@ app.get('/web/:link', function (req, res) {
           res.status(200).sendFile(path.join(__dirname + '/dynamic/Dynamic_webpage_gen3.html'));
         }
       );
-    });    
+    });
 });
 
 /*
 TODO
-- Add user to bill
-- Add temp user to bill
-- Add user to an item, in items_consumers
-- Add temp user to an item, in items_consumers
-- Change paid status in items_consumers
-- Specific information on one item of bill
+- Update bill with
+    - list of users
+    - list of temp users
+    - object of consumers (with paid)
+- check bills with id very large maybe it'd fail
 */
 
 function start(port, database) {

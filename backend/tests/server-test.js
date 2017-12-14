@@ -473,7 +473,7 @@ describe('Server POST /users', function() {
 
 
 // Dynamic webpage
-describe('Server GET /web/:link', function() {
+describe('Server GET /bills/web/:link', function() {
     before(function(done) {
         const testSuite = this;
         fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
@@ -496,18 +496,82 @@ describe('Server GET /web/:link', function() {
         });
     });
     it('Link is not 40 characters', function() {
-        var res = request('GET', 'http://localhost:8001/web/abc123');
+        var res = request('GET', 'http://localhost:8001/bills/web/abc123');
         expect(res.statusCode).to.equal(400);
         expect(res.body.toString('utf-8')).to.equal("Link provided is invalid");
     });
     it('Link does not exist', function() {
-        var res = request('GET', 'http://localhost:8001/web/XXXFHtGDh44bMtW4VbngW3XxPQwqIQucnAUYYYYY');
+        var res = request('GET', 'http://localhost:8001/bills/web/XXXFHtGDh44bMtW4VbngW3XxPQwqIQucnAUYYYYY');
         expect(res.statusCode).to.equal(404);
         expect(res.body.toString('utf-8')).to.equal("Link provided does not exist");
     });
     it('Success', function() {
-        var res = request('GET', 'http://localhost:8001/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL');
+        var res = request('GET', 'http://localhost:8001/bills/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL');
         expect(res.statusCode).to.equal(200);
         expect(res.body.toString('utf-8').length).to.greaterThan(200);
+    });
+});
+
+
+
+// Obtain details of a bill from web link
+describe('Server GET /bills/web/:link/details', function() {
+    before(function(done) {
+        const testSuite = this;
+        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
+            if (error) {
+                console.error("Reading the SQL script file failed:", error);
+                testSuite.skip();
+            } else {
+                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
+                connection.connect();
+                connection.query(data, function (error, results) {
+                    if (error) {
+                        console.error("The Test SQL script did not execute successfully:", error);
+                        testSuite.skip();
+                    } else {
+                        done();
+                    }
+                });
+                connection.end();
+            }
+        });
+    });
+    it('Link is not 40 characters', function() {
+        var res = request('GET', 'http://localhost:8001/bills/web/abc123/details');
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Link provided is invalid");
+    });
+    it('Link does not exist', function() {
+        var res = request('GET', 'http://localhost:8001/bills/web/XXXFHtGDh44bMtW4VbngW3XxPQwqIQucnAUYYYYY/details');
+        expect(res.statusCode).to.equal(404);
+        expect(res.body.toString('utf-8')).to.equal("Link provided does not exist");
+    });
+    it('Success', function() {
+        var res = request('GET', 'http://localhost:8001/bills/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL/details');
+        expect(res.statusCode).to.equal(200);
+        var bill = JSON.parse(res.body.toString('utf-8'));
+        expect(bill).to.eql({
+            id: 1,
+            time: {sec:'01', min:'00', hour:'00', day:'01', month:'Dec', year:'2017' },
+            address: '196 W Third Avenue',
+            restaurant: 'Pizza\'o\'ven',
+            name: 'Birthday pizza',
+            tax: 19.67,
+            tip: 5,
+            link: '2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL',
+            done: 0,
+            users: [{id:1, username:'Alice'}, {id:2, username:'Bob'}],
+            tempUsers: [{id:1, username:'John'}],
+            items: [{id:1, name:'PizzaA', amount:10.5}, {id:2, name:'PizzaB', amount:14}, {id:3, name:'Fries', amount:6.24}],
+            consumers: [
+                { item_id: 1, user_id: 1, temp_user_id: null, paid: 0 },
+                { item_id: 1, user_id: null, temp_user_id: 1, paid: 0 },
+                { item_id: 2, user_id: 2, temp_user_id: null, paid: 0 },
+                { item_id: 3, user_id: 1, temp_user_id: null, paid: 0 },
+                { item_id: 3, user_id: 2, temp_user_id: null, paid: 0 },
+                { item_id: 3, user_id: null, temp_user_id: 1, paid: 0 }
+            ]
+        });
     });
 });
