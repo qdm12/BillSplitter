@@ -6,7 +6,7 @@ var app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 var validator = require('validator');
-var mysql = require("mysql");
+var mysql = require('mysql');
 var jwt = require('jsonwebtoken');
 var Scrypt = require('scrypt-async');
 
@@ -453,7 +453,6 @@ app.get('/bills/:billID', function (req, res) {
                               "SELECT items_consumers.* FROM items_consumers, items WHERE items.bill_id = ? AND items.id = items_consumers.item_id",
                               [billID],
                               function (error, result) {
-                                console.log("GET /bills/:billID:", result); // TODO to remove
                                 if (error) {
                                   connection.release();
                                   console.warn("The items_consumers table can't be searched:", error, "\n");
@@ -468,7 +467,6 @@ app.get('/bills/:billID', function (req, res) {
                                         paid: result[i].paid
                                     });
                                 }
-                                console.log("Detailed bill is:", bill, "\n"); // TODO to remove
                                 res.status(200).json(bill);
                               }
                             );
@@ -534,7 +532,7 @@ app.post('/login', function (req, res) {
           if (result.length === 0) { // email does not exist
             return res.status(401).send("Incorrect email or password");
           }
-          Scrypt(password, result[0].salt, {N:16384, r:8, p:1, dkLen:64, encoding:'base64'}, function (digest) {
+          Scrypt(password, result[0].salt, {N:16384, r:8, p:1, dkLen:32, encoding:'base64'}, function (digest) {
             if (digest !== result[0].digest) {
               return res.status(401).send("Incorrect email or password");
             }
@@ -549,7 +547,7 @@ app.post('/login', function (req, res) {
 
 /* ******************************
 *********************************
-POST /users to sign up (+sign in) and obtain userID and token
+POST /users to sign up (+login)
 *********************************
 Required URL parameters:
 Required body parameters: email, username, password
@@ -619,7 +617,7 @@ app.post('/users', function (req, res) {
               // Create the user
               // TODO Add email verification
               var salt = randomString(8);
-              Scrypt.scrypt(password, salt, {N:16384, r:8, p:1, dkLen:64, encoding:'base64'}, function (digest) {
+              Scrypt(password, salt, {N:16384, r:8, p:1, dkLen:32, encoding:'base64'}, function (digest) {
                 connection.beginTransaction(function (error) {
                   if (error) {
                     console.warn("The database transaction sequence could not be started:", error, "\n");

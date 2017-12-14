@@ -9,6 +9,9 @@ var mysql = require('mysql');
 // Make sure you have the server running on port 8001 with the database "billsplittertest"
 // Do this with `node server.js test` on another terminal
 
+before(function() { // takes some ~1 second for the first request for some reason
+    var res = request('GET', 'http://localhost:8001/');
+});
 
 // Testing of server
 describe('Server GET /', function() {
@@ -351,5 +354,14 @@ describe('Server POST /login', function() {
         });
         expect(res.statusCode).to.equal(401);
         expect(res.body.toString('utf-8')).to.equal("Incorrect email or password");
+    });
+    it('Success', function() {
+        var res = request('POST', 'http://localhost:8001/login', {
+            json: {email:"alice@a.com", password:"password"}
+        });
+        expect(res.statusCode).to.equal(200);
+        var credentials = JSON.parse(res.body.toString('utf-8'));
+        expect(credentials.userID).to.equal(1);
+        expect(credentials.token.length).to.equal(143); // as token is randomly generated
     });
 });

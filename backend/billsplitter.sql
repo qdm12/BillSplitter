@@ -12,7 +12,7 @@ CREATE TABLE users (
     id INTEGER AUTO_INCREMENT UNIQUE,
     email VARCHAR(70) UNIQUE,
     username VARCHAR(40) UNIQUE,
-    digest CHARACTER(88),
+    digest CHARACTER(44), -- base 64 encoded
     salt CHARACTER(8),
     PRIMARY KEY(id, email, username)
 );
