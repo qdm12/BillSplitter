@@ -567,7 +567,7 @@ app.post('/users', function (req, res) {
     username = validator.trim(username);
     password = validator.trim(password);
     if (!validator.isEmail(email)) {
-        return res.status(400).send("Your email is invalid");
+        return res.status(400).send("Your email address is invalid");
     }
     email = validator.normalizeEmail(email);
     if (username.length < 4) {
@@ -576,7 +576,7 @@ app.post('/users', function (req, res) {
     if (username.length > 40) {
         return res.status(400).send("Username is too long");
     }
-    if (password.length < 4) {
+    if (password.length < 6) {
         return res.status(400).send("Password is too short");
     }
     if (password.length > 100) {
@@ -703,6 +703,7 @@ app.post('/users', function (req, res) {
       );
     });
 });
+
 
 /* ******************************
 *********************************

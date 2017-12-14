@@ -322,28 +322,28 @@ describe('Server POST /login', function() {
     });
     it('Password parameter is missing', function() {
         var res = request('POST', 'http://localhost:8001/login', {
-            json: {email:"email@e.com"}
+            json: {email:"alice@a.com"}
         });
         expect(res.statusCode).to.equal(400);
         expect(res.body.toString('utf-8')).to.equal("Body is missing parameter(s)");
     });
     it('Email is not an email address', function() {
         var res = request('POST', 'http://localhost:8001/login', {
-            json: {email:"email.blablacom", password:"password"}
+            json: {email:"ema@bla.1", password:"password"}
         });
         expect(res.statusCode).to.equal(400);
         expect(res.body.toString('utf-8')).to.equal("Your email address is invalid");
     });
     it('Password is more than 100 characters', function() {
         var res = request('POST', 'http://localhost:8001/login', {
-            json: {email:"email@e.com", password:"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+            json: {email:"alice@a.com", password:"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
         });
         expect(res.statusCode).to.equal(400);
         expect(res.body.toString('utf-8')).to.equal("Your password is too long");
     });
     it('Email does not exist', function() {
         var res = request('POST', 'http://localhost:8001/login', {
-            json: {email:"email@e.com", password:"password"}
+            json: {email:"elliot@e.com", password:"password"}
         });
         expect(res.statusCode).to.equal(401);
         expect(res.body.toString('utf-8')).to.equal("Incorrect email or password");
@@ -362,6 +362,109 @@ describe('Server POST /login', function() {
         expect(res.statusCode).to.equal(200);
         var credentials = JSON.parse(res.body.toString('utf-8'));
         expect(credentials.userID).to.equal(1);
-        expect(credentials.token.length).to.equal(143); // as token is randomly generated
+        expect(credentials.token.length).to.equal(143); // token is randomly generated
+    });
+});
+
+
+// Sign up (+login)
+describe('Server POST /users', function() {
+    before(function(done) {
+        const testSuite = this;
+        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
+            if (error) {
+                console.error("Reading the SQL script file failed:", error);
+                testSuite.skip();
+            } else {
+                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
+                connection.connect();
+                connection.query(data, function (error, results) {
+                    if (error) {
+                        console.error("The Test SQL script did not execute successfully:", error);
+                        testSuite.skip();
+                    } else {
+                        done();
+                    }
+                });
+                connection.end();
+            }
+        });
+    });
+    it('No body is provided', function() {
+        var res = request('POST', 'http://localhost:8001/users', {});
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Body is missing parameter(s)");
+    });
+    it('Email parameter is missing', function() {
+        var res = request('POST', 'http://localhost:8001/users', {
+            json: {username:"Elliot", password:"password"}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Body is missing parameter(s)");
+    });
+    it('Username parameter is missing', function() {
+        var res = request('POST', 'http://localhost:8001/users', {
+            json: {email:"elliot@e.com", password:"password"}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Body is missing parameter(s)");
+    });
+    it('Password parameter is missing', function() {
+        var res = request('POST', 'http://localhost:8001/users', {
+            json: {email:"elliot@e.com", username:"Elliot"}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Body is missing parameter(s)");
+    });
+    it('Email is not an email address', function() {
+        var res = request('POST', 'http://localhost:8001/users', {
+            json: {email:"email.blablacom", username:"Elliot", password:"password"}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Your email address is invalid");
+    });
+    it('Username is less than 4 characters', function() {
+        var res = request('POST', 'http://localhost:8001/users', {
+            json: {email:"elliot@e.com", username:"Ell", password:"password"}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Username is too short");
+    });
+    it('Username is more than 40 characters', function() {
+        var res = request('POST', 'http://localhost:8001/users', {
+            json: {email:"elliot@e.com", username:"Elliottttttttttttttttttttttttttttttttttttttttt", password:"password"}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Username is too long");
+    });
+    it('Password is less than 6 characters', function() {
+        var res = request('POST', 'http://localhost:8001/users', {
+            json: {email:"elliot@e.com", username:"Elliot", password:"aaaaa"}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Password is too short");
+    });
+    it('Password is more than 100 characters', function() {
+        var res = request('POST', 'http://localhost:8001/users', {
+            json: {email:"elliot@e.com", username:"Elliot", password:"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Password is too long");
+    });
+    it('Email alice@a.com is already registered', function() {
+        var res = request('POST', 'http://localhost:8001/users', {
+            json: {email:"alice@a.com", username:"Elliot", password:"password"}
+        });
+        expect(res.statusCode).to.equal(409);
+        expect(res.body.toString('utf-8')).to.equal("Email is already registered");
+    });
+    it('Success', function() {
+        var res = request('POST', 'http://localhost:8001/users', {
+            json: {email:"elliot@e.com", username:"Elliot", password:"password"}
+        });
+        expect(res.statusCode).to.equal(201);
+        var credentials = JSON.parse(res.body.toString('utf-8'));
+        expect(credentials.userID).to.equal(1);
+        expect(credentials.token.length).to.equal(143); // token is randomly generated
     });
 });
