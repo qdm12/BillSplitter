@@ -137,7 +137,6 @@ app.post('/bills', function (req, res) {
                     "SELECT MAX(id) AS lastid FROM bills",
                     [],
                     function (error, result) {
-                      console.log("POST /bills DB 2:", result); // TODO to remove
                       if (error) {
                         console.warn("The bills table could not be searched:", error);
                         connection.rollback(function (error) {
@@ -348,7 +347,6 @@ app.get('/bills/:billID', function (req, res) {
 
     // Check for validity of inputs
     if (isNaN(billID)) {
-        console.log("Invalid bill ID: ", billID, "\n");
         return res.status(400).send("billID is invalid");
     }
 
@@ -377,11 +375,10 @@ app.get('/bills/:billID', function (req, res) {
               console.log("User ID", userID, "does not exist\n");
               return res.status(401).send("User ID does not exist");
             }
-            connection.query(
-              "SELECT bills.* FROM bills, bills_users WHERE bills.id = ? AND bills_users.user_id = ?",
+            connection.query( // this also makes sure the user belongs to that bill
+              "SELECT bills.* FROM bills, bills_users WHERE bills.id = ? AND bills.id = bills_users.bill_id AND bills_users.user_id = ?",
               [billID, userID],
               function (error, result) {
-                console.log("GET /bills/:billID 2", result); // TODO to remove
                 if (error) {
                   connection.release();
                   console.warn("The bills table can't be searched:", error, "\n");
@@ -393,7 +390,7 @@ app.get('/bills/:billID', function (req, res) {
                 }
                 var bill = {
                   id: result[0].id,
-                  time: result[0].time,
+                  time: dbTimeToTimeObj(result[0].time),
                   address: result[0].address,
                   restaurant: result[0].restaurant,
                   name: result[0].name,
@@ -403,49 +400,74 @@ app.get('/bills/:billID', function (req, res) {
                   done: result[0].done
                 };
                 connection.query(
-                  "SELECT bills_users.user_id AS id, users.username AS username FROM bills_users, users WHERE bills.id = ? AND bills_users.user_id = users.id",
+                  "SELECT bills_users.user_id, users.username FROM bills_users, users WHERE bills_users.bill_id = ? AND bills_users.user_id = users.id",
                   [billID],
                   function (error, result) {
-                    console.log("GET /bills/:billID 3", result); // TODO to remove
                     if (error) {
                       connection.release();
                       console.warn("The bills_users / users table can't be searched:", error, "\n");
                       return res.status(500).send("Our database is having troubles");
                     }
-                    bill.users = result; // list of {id:x, username:xxx}s
+                    bill.users = [];
+                    var i;
+                    for(i = 0; i < result.length; i += 1) {
+                        bill.users.push({
+                            id: result[i].user_id,
+                            username: result[i].username
+                        });
+                    }
                     connection.query(
-                      "SELECT bills_users.temp_user_id AS id, temp_users.name AS username FROM bills_users, temp_users WHERE bills.id = ? AND bills_users.temp_user_id = temp_users.id",
+                      "SELECT bills_users.temp_user_id, temp_users.name FROM bills_users, temp_users WHERE bills_users.bill_id = ? AND bills_users.temp_user_id = temp_users.id",
                       [billID],
                       function (error, result) {
-                        console.log("GET /bills/:billID 4", result); // TODO to remove
                         if (error) {
                           connection.release();
                           console.warn("The bills_users / temp_users table can't be searched:", error, "\n");
                           return res.status(500).send("Our database is having troubles");
                         }
-                        bill.tempUsers = result; // list of {id:x, username:xxx}s
+                        bill.tempUsers = [];
+                        for(i = 0; i < result.length; i += 1) {
+                            bill.tempUsers.push({
+                                id: result[i].temp_user_id,
+                                username: result[i].name
+                            });
+                        }
                         connection.query(
-                          "SELECT items.id AS id, items.name AS name, items.amount AS amount FROM items WHERE items.bill_id = ?",
+                          "SELECT id, name, amount FROM items WHERE items.bill_id = ?",
                           [billID],
                           function (error, result) {
-                            console.log("GET /bills/:billID 5", result); // TODO to remove
                             if (error) {
                               connection.release();
                               console.warn("The items table can't be searched:", error, "\n");
                               return res.status(500).send("Our database is having troubles");
                             }
-                            bill.items = result;
+                            bill.items = [];
+                            for(i = 0; i < result.length; i += 1) {
+                                bill.items.push({
+                                    id: result[i].id,
+                                    name: result[i].name,
+                                    amount: result[i].amount
+                                });
+                            }
                             connection.query(
                               "SELECT items_consumers.* FROM items_consumers, items WHERE items.bill_id = ? AND items.id = items_consumers.item_id",
                               [billID],
                               function (error, result) {
-                                console.log("GET /bills/:billID 6", result); // TODO to remove
+                                console.log("GET /bills/:billID:", result); // TODO to remove
                                 if (error) {
                                   connection.release();
                                   console.warn("The items_consumers table can't be searched:", error, "\n");
                                   return res.status(500).send("Our database is having troubles");
                                 }
-                                bill.consumers = result;
+                                bill.consumers = [];
+                                for(i = 0; i < result.length; i += 1) {
+                                    bill.consumers.push({
+                                        item_id: result[i].item_id,
+                                        user_id: result[i].user_id,
+                                        temp_user_id: result[i].temp_user_id,
+                                        paid: result[i].paid
+                                    });
+                                }
                                 console.log("Detailed bill is:", bill, "\n"); // TODO to remove
                                 res.status(200).json(bill);
                               }
@@ -766,11 +788,15 @@ function randomString(length) {
     return s;
 }
 
-function convertTime() { // TODO
-    var fullDate = "2017-01-15T13:50:16.1271".toString("yyyyMMddHHmmss").replace(/T/, ' ').replace(/\..+/, '');
-    var dateArray = fullDate.split(" ");
-    var date = dateArray[0].split('-');
-    var clock = dateArray[1].split(':');
-    var year = date[0], month = date[1], day = date[2];
-    var hour = clock[0], min = clock[1], sec = clock[2];
+function dbTimeToTimeObj(databaseTimestamp) {
+    var dateArray = databaseTimestamp.toString("yyyyMMddHHmmss").replace(/T/, ' ').replace(/\..+/, '').split(" ");
+    var clock = dateArray[4].split(":");
+    return {
+        sec: clock[2],
+        min: clock[1],
+        hour: clock[0],
+        day: dateArray[2],
+        month: dateArray[1],
+        year: dateArray[3]
+    };
 }

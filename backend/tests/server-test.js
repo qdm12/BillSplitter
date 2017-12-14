@@ -219,7 +219,7 @@ describe('Server GET /bills/:billID', function() {
         expect(res.statusCode).to.equal(400);
         expect(res.body.toString('utf-8')).to.equal("billID is invalid");
     });
-    it('Invalid token', function() {
+    it('Token is invalid', function() {
         var res = request('GET', 'http://localhost:8001/bills/1', {
             headers: {
                 'x-access-token': "XXXXXXXXXXX"
@@ -248,14 +248,35 @@ describe('Server GET /bills/:billID', function() {
         expect(res.statusCode).to.equal(204);
         expect(res.body.toString('utf-8')).to.equal("");
     });
-    it('No bill (wrong token)', function() {
+    it('Success', function() {
         var res = request('GET', 'http://localhost:8001/bills/1', {
             headers: {
-                // token for user ID 4
-                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjQsImlhdCI6MTUxMzE5NjY4NiwiZXhwIjoxNTEzMjgzMDg2fQ.MiEZCdQNQdDTWqtXv0sFi8DjgeZoL7OW3jZAA4mpXjQ"
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzE5NTAxMywiZXhwIjoxNTEzMjgxNDEzfQ.6llgBUZB9uY6m6I1ih4_HMLMrHDTRs_38n-wPVwYFu4"
             }
         });
-        expect(res.statusCode).to.equal(204);
-        expect(res.body.toString('utf-8')).to.equal("");
+        expect(res.statusCode).to.equal(200);
+        var bill = JSON.parse(res.body.toString('utf-8'));
+        expect(bill).to.eql({
+            id: 1,
+            time: {sec:'01', min:'00', hour:'00', day:'01', month:'Dec', year:'2017' },
+            address: '196 W Third Avenue',
+            restaurant: 'Pizza\'o\'ven',
+            name: 'Birthday pizza',
+            tax: 19.67,
+            tip: 5,
+            link: '2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL',
+            done: 0,
+            users: [{id:1, username:'Alice'}, {id:2, username:'Bob'}],
+            tempUsers: [{id:1, username:'John'}],
+            items: [{id:1, name:'PizzaA', amount:10.5}, {id:2, name:'PizzaB', amount:14}, {id:3, name:'Fries', amount:6.24}],
+            consumers: [
+                { item_id: 1, user_id: 1, temp_user_id: null, paid: 0 },
+                { item_id: 1, user_id: null, temp_user_id: 1, paid: 0 },
+                { item_id: 2, user_id: 2, temp_user_id: null, paid: 0 },
+                { item_id: 3, user_id: 1, temp_user_id: null, paid: 0 },
+                { item_id: 3, user_id: 2, temp_user_id: null, paid: 0 },
+                { item_id: 3, user_id: null, temp_user_id: 1, paid: 0 }
+            ]
+        });
     });
 });
