@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bill Splitting Interface</title>
+<script
+src="https://code.jquery.com/jquery-3.2.1.min.js"
+integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+crossorigin="anonymous">
+</script>
+<script
+src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+crossorigin="anonymous">
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+<link rel="stylesheet" type="text/css" href="../../style.css">
+</head>
+<header>
+	<div id="top_bar">
+		BillSplitter
+	</div>
+	</header>
+<body>
+<script>
+(function() {
+  	//for testing, using below JSON object hosted on my websys account
+	var JSONObjectURL = "http://websys3.stern.nyu.edu/~gs2723/websys/JSON_text2.js";
+	var targetID;
+	var targetName;
+	var payloadID;
+	var payloadName;
+	var bill = {};
+	var sendUsers = [];
+	var sendTempUsers = [];
+	var consumers = [];
+	// the DB_call object specifies the data to be sent to server; not relevant in test case.
+	$('body').html($('<div />', {class: 'container'}));
+	$(".container").html("Drag People to Items");
+	$('<div />',{ class: "wrapper", width: "300px", height: "300px", borderstyle: "solid", color: "#ccc", padding: "10px"}).appendTo('.container');
+	$.getJSON(JSONObjectURL)
+		.done(function(data) {
+			console.log("done loading")
+			$('.wrapper').append($('<div />', {class: 'items'}));
+			$('.wrapper').append($('<div />', {class: 'people'}));
+			$('.items').css({"float":"right","width":"50%"});
+			$('.people').css({"display":"flex","flex-direction": "column","float":"left","width":"50%"});
+			//Create item list
+			$.each(data.items, function(i, val){
+				$('<div />', { id: val["id"], class: "item", text: val["name"], width: "400px", align: "right"}).appendTo('.items');
+				$("#"+val["id"]).after("<br>");
+				$(".item").css({"background-Color":"grey","padding":"1px","border-style":"solid","border-size":"1px"});
+				$('.item').droppable({accept: ".person",
+										 drop: function(event,ui){
+											 targetID = event.target.id;
+											 targetName = $(event.target).text();
+											 payload = ui.draggable;
+											 payloadID = ui.draggable.prop("id");
+											 payloadName = ui.draggable.text();
+											 //Check by class if user is a regular user or tempUser
+											 if ($(payload).hasClass("user")){
+												 tempPush = {"item_id": targetID, "user_id": payloadID, "temp_user_id": null, paid: false};
+												 //console.log("user class");
+												 //Generate new replacement user for the one user dragged.
+												 $('<div />', { id: payloadID, class: "user person", text: payloadName, width: "50px"}).appendTo('.people');
+												 $('.person').css({"background-color":"#E8B467","padding":"1px","border-style":"solid","border-size":"1px"});
+												 $('.person').draggable({containment: ".wrapper", scroll: false, snap: ".item", snapMode: "inner", revert: "invalid"});
+																		  }
+											 else if ($(payload).hasClass("tempUser")) {
+												 tempPush = {"item_id": targetID, "user_id": null, "temp_user_id": payloadID, paid: false}
+												 //console.log("tempUser class");
+												 //Generate new replacement user for the one user dragged.
+												 $('<div />', { id: payloadID, class: "tempUser person", text: payloadName, width: "50px"}).appendTo('.people');
+												 $('.person').css({"background-color":"#E8B467","padding":"1px","border-style":"solid","border-size":"1px"});
+												 $('.person').draggable({containment: ".wrapper", scroll: false, snap: ".item", snapMode: "inner", revert: "invalid"});
+																					};
+											
+											 if (tempPush in consumers) {
+												 console.log("tempPush already in consumers")
+											 }
+											 else {consumers.push(tempPush);};
+											 //console.log("consumers:"+JSON.stringify(consumers));
+											 
+											 bill["name"] = "New name";
+											 bill["done"] = false;
+											 bill["users"] = sendUsers;
+											 bill["tempUsers"] = sendTempUsers;
+											 bill["consumers"] = consumers;
+											 
+											 console.log("Bill:"+JSON.stringify(bill))
+										 }});});
+			//Create regular user list.
+			$.each(data.users, function(index, value){
+						$('<div />', { id: value["id"], class: "user person", text: value["username"], width: "50px"}).appendTo('.people');
+						$('.person').css({"background-color":"#E8B467","padding":"1px","border-style":"solid","border-size":"1px"});
+						$('.person').draggable({containment: ".wrapper", scroll: false, snap: ".item", snapMode: "inner", revert: "invalid"});
+						sendUsers.push({"id":value["id"]});
+			});
+			//Create temp user list.
+			$.each(data.tempUsers, function(index, value){
+						$('<div />', { id: value["id"], class: "tempUser person", text: value["username"], width: "50px"}).appendTo('.people');
+						$('.person').css({"background-color":"#E8B467","padding":"1px","border-style":"solid","border-size":"1px"});
+						$('.person').draggable({containment: ".wrapper", scroll: false, snap: ".item", snapMode: "inner", revert: "invalid"});
+						sendTempUsers.push({"id":value["id"]});
+			
+			});
+											}
+					  );
+      		}
+)();
+</script>
+<div></div>
+</body>
+</html>
