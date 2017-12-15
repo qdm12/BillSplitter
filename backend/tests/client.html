@@ -20,7 +20,7 @@ function serverPing() {
             alert("Server answered with HTTP status code " + http.status + ": " + http.responseText);
         }
     }
-    http.open("GET", "http://localhost:8000/", true); // true for asynchronous 
+    http.open("GET", "http://localhost:8000/ping", true); // true for asynchronous 
     http.send(null);
 }
 

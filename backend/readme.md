@@ -19,6 +19,17 @@
 
 ### Routes
 
+**Method**|**Path**                      |**Header paramaters**|**URL parameters**|**Body parameters**        |**Response on success**|**Response status on success**
+:--------:|:----------------------------:|:-------------------:|:----------------:|:-------------------------:|:---------------------:|:----------------------------:
+ GET      | /ping                        |                     |                  |                           | `pong`                | 200
+ POST     | /bills                       | x-access-token      |                  | picture                   | `Bill created`        | 201
+ GET      | /bills                       | x-access-token      |                  |                           | *List of bills IDs*   | 200
+ GET      | /bills/**billID**            | x-access-token      | billID           |                           | *Bill object*         | 200
+ POST     | /login                       |                     |                  | email, password           | *Credentials object*  | 200
+ POST     | /users                       |                     |                  | email, password, username | *Credentials object*  | 200
+ GET      | /bills/web/**link**/details  |                     | link             |                           | *Bill object*         | 200
+ GET      | /bills/web/**link**          |                     | link             |                           | *HTML file*           | 200
+ PUT      | /bills/web/**link**          |                     | link             | bill update object        | `Bill updated`        | 200
 
 ## Installation
 

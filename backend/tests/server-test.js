@@ -17,9 +17,9 @@ before(function() { // takes some ~1 second for the first request for some reaso
 // Testing of server
 describe('Server GET /', function() {
     it('Simple GET', function() {
-        var res = request('GET', 'http://localhost:8001/');
+        var res = request('GET', 'http://localhost:8001/ping');
         expect(res.statusCode).to.equal(200);
-        expect(res.body.toString('utf-8')).to.equal("Your result");
+        expect(res.body.toString('utf-8')).to.equal("pong");
     });
 });
 
@@ -110,7 +110,7 @@ describe('Server POST /bills', function() {
             },
             json: {picture: "?"}
         });
-        expect(res.statusCode).to.equal(200);
+        expect(res.statusCode).to.equal(201);
         expect(res.body.toString('utf-8')).to.equal("Bill created");
     });
 });

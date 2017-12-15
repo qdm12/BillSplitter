@@ -22,7 +22,7 @@ var pool = null;
 
 /* ******************************
 *********************************
-GET / for testing of server
+GET /ping for testing of server
 *********************************
 Required URL parameters:
 Required body parameters:
@@ -30,8 +30,8 @@ Required body parameters:
 Reponds: Your result
 *********************************
 ********************************* */
-app.get('/', function (req, res) {
-    res.status(200).send("Your result");
+app.get('/ping', function (req, res) {
+    res.status(200).send("pong");
 });
 
 
@@ -192,7 +192,7 @@ app.post('/bills', function (req, res) {
                                   console.warn("The transaction sequence could not be committed:", error, "\n");
                                   return res.status(500).send("Our database is having troubles");
                                 }
-                                res.status(200).send("Bill created");
+                                res.status(201).send("Bill created");
                               });
                             }
                           );
