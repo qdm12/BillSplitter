@@ -14,7 +14,6 @@ before(function() { // takes some ~1 second for the first request for some reaso
     var res = request('GET', 'http://localhost:8001/');
 });
 
-
 // Testing of server
 describe('Server GET /', function() {
     it('Simple GET', function() {
@@ -24,29 +23,33 @@ describe('Server GET /', function() {
     });
 });
 
+// Just creating the database for each test suite
+function setUpDatabase(testSuite, done) {
+    fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
+        if (error) {
+            console.error("Reading the SQL script file failed:", error);
+            testSuite.skip();
+        } else {
+            var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
+            connection.connect();
+            connection.query(data, function (error, results) {
+                if (error) {
+                    console.error("The Test SQL script did not execute successfully:", error);
+                    testSuite.skip();
+                } else {
+                    done();
+                }
+            });
+            connection.end();
+        }
+    });
+}
+
 
 // Upload a new bill
 describe('Server POST /bills', function() {
     before(function(done) {
-        const testSuite = this;
-        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
-            if (error) {
-                console.error("Reading the SQL script file failed:", error);
-                testSuite.skip();
-            } else {
-                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
-                connection.connect();
-                connection.query(data, function (error, results) {
-                    if (error) {
-                        console.error("The Test SQL script did not execute successfully:", error);
-                        testSuite.skip();
-                    } else {
-                        done();
-                    }
-                });
-                connection.end();
-            }
-        });
+        setUpDatabase(this, done);
     });
     it('No parameter', function() {
         var res = request('POST', 'http://localhost:8001/bills', {});
@@ -116,25 +119,7 @@ describe('Server POST /bills', function() {
 // Obtain bills IDs where a certain user is involved
 describe('Server GET /bills', function() {
     before(function(done) {
-        const testSuite = this;
-        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
-            if (error) {
-                console.error("Reading the SQL script file failed:", error);
-                testSuite.skip();
-            } else {
-                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
-                connection.connect();
-                connection.query(data, function (error, results) {
-                    if (error) {
-                        console.error("The Test SQL script did not execute successfully:", error);
-                        testSuite.skip();
-                    } else {
-                        done();
-                    }
-                });
-                connection.end();
-            }
-        });
+        setUpDatabase(this, done);
     });
     it('Missing token', function() {
         var res = request('GET', 'http://localhost:8001/bills', {
@@ -188,25 +173,7 @@ describe('Server GET /bills', function() {
 // Obtain details of a bill
 describe('Server GET /bills/:billID', function() {
     before(function(done) {
-        const testSuite = this;
-        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
-            if (error) {
-                console.error("Reading the SQL script file failed:", error);
-                testSuite.skip();
-            } else {
-                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
-                connection.connect();
-                connection.query(data, function (error, results) {
-                    if (error) {
-                        console.error("The Test SQL script did not execute successfully:", error);
-                        testSuite.skip();
-                    } else {
-                        done();
-                    }
-                });
-                connection.end();
-            }
-        });
+        setUpDatabase(this, done);
     });
     it('Missing token', function() {
         var res = request('GET', 'http://localhost:8001/bills/1', {
@@ -290,25 +257,7 @@ describe('Server GET /bills/:billID', function() {
 // Log in
 describe('Server POST /login', function() {
     before(function(done) {
-        const testSuite = this;
-        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
-            if (error) {
-                console.error("Reading the SQL script file failed:", error);
-                testSuite.skip();
-            } else {
-                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
-                connection.connect();
-                connection.query(data, function (error, results) {
-                    if (error) {
-                        console.error("The Test SQL script did not execute successfully:", error);
-                        testSuite.skip();
-                    } else {
-                        done();
-                    }
-                });
-                connection.end();
-            }
-        });
+        setUpDatabase(this, done);
     });
     it('No body is provided', function() {
         var res = request('POST', 'http://localhost:8001/login', {});
@@ -386,25 +335,7 @@ describe('Server POST /login', function() {
 // Sign up (+login)
 describe('Server POST /users', function() {
     before(function(done) {
-        const testSuite = this;
-        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
-            if (error) {
-                console.error("Reading the SQL script file failed:", error);
-                testSuite.skip();
-            } else {
-                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
-                connection.connect();
-                connection.query(data, function (error, results) {
-                    if (error) {
-                        console.error("The Test SQL script did not execute successfully:", error);
-                        testSuite.skip();
-                    } else {
-                        done();
-                    }
-                });
-                connection.end();
-            }
-        });
+        setUpDatabase(this, done);
     });
     it('No body is provided', function() {
         var res = request('POST', 'http://localhost:8001/users', {});
@@ -510,25 +441,7 @@ describe('Server POST /users', function() {
 // Dynamic webpage
 describe('Server GET /bills/web/:link', function() {
     before(function(done) {
-        const testSuite = this;
-        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
-            if (error) {
-                console.error("Reading the SQL script file failed:", error);
-                testSuite.skip();
-            } else {
-                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
-                connection.connect();
-                connection.query(data, function (error, results) {
-                    if (error) {
-                        console.error("The Test SQL script did not execute successfully:", error);
-                        testSuite.skip();
-                    } else {
-                        done();
-                    }
-                });
-                connection.end();
-            }
-        });
+        setUpDatabase(this, done);
     });
     it('Link is not 40 characters', function() {
         var res = request('GET', 'http://localhost:8001/bills/web/abc123');
@@ -552,25 +465,7 @@ describe('Server GET /bills/web/:link', function() {
 // Obtain details of a bill from web link
 describe('Server GET /bills/web/:link/details', function() {
     before(function(done) {
-        const testSuite = this;
-        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
-            if (error) {
-                console.error("Reading the SQL script file failed:", error);
-                testSuite.skip();
-            } else {
-                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
-                connection.connect();
-                connection.query(data, function (error, results) {
-                    if (error) {
-                        console.error("The Test SQL script did not execute successfully:", error);
-                        testSuite.skip();
-                    } else {
-                        done();
-                    }
-                });
-                connection.end();
-            }
-        });
+        setUpDatabase(this, done);
     });
     it('Link is not 40 characters', function() {
         var res = request('GET', 'http://localhost:8001/bills/web/abc123/details');
