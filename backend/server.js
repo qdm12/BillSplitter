@@ -693,7 +693,7 @@ Reponds: bill object in JSON encoding
 app.get('/bills/web/:link/details', function (req, res) {
     // Parse URL parameters of request
     var link = req.params.link; // link acts as the bill's token
-    if (!link || (link && typeof link != "string") || (link && typeof link == "string" && link.length !== 40)) {
+    if (!link || (link && typeof link !== "string") || (link && typeof link == "string" && link.length !== 40)) {
         return res.status(400).send("Link provided is invalid");
     }
     pool.getConnection(function(error, connection) {
@@ -833,7 +833,7 @@ Reponds: HTML file
 app.get('/bills/web/:link', function (req, res) {
     // Parse URL parameters of request
     var link = req.params.link; // link acts as the bill's token
-    if (!link || (link && typeof link != "string") || (link && typeof link == "string" && link.length !== 40)) {
+    if (!link || (link && typeof link !== "string") || (link && typeof link == "string" && link.length !== 40)) {
         return res.status(400).send("Link provided is invalid");
     }
     pool.getConnection(function(error, connection) {
@@ -873,11 +873,11 @@ Reponds: Bill updated
 app.put('/bills/web/:link', function (req, res) {
     // Parse URL parameter of request
     var link = req.params.link; // link acts as the bill's token
-    if (!link || (link && link.length !== 40)) {
+    if (!link || (link && typeof link !== "string") || (link && typeof link == "string" && link.length !== 40)) {
         return res.status(400).send("Link provided is invalid");
     }
-    var billJSON = req.body.bill;
-    if (!billJSON) {
+    var bill = req.body.bill;
+    if (!bill) {
         return res.status(400).send("Body is missing the bill parameter");
     }
     pool.getConnection(function(error, connection) {
@@ -898,17 +898,15 @@ app.put('/bills/web/:link', function (req, res) {
             connection.release();
             return res.status(404).send("Link provided does not exist");
           }
-          var bill = null;
-          try {
-            bill = JSON.parse(billJSON);
-          } catch (ParsingError) {
-            console.log("Bill JSON provided can't be parsed:", ParsingError, "\n");
-            return res.status(400).send("The bill JSON parameter is malformed");
+          if ((typeof bill) !== "object") {
+            return res.status(400).send("The bill JSON parameter is malformed or not an object");
           }
           // we add it to the object for clarity
           bill.id = result[0].id;
           bill.link = link;
-          if (!bill.name || !bill.done || !bill.users || !bill.tempUsers || !bill.consumers) {
+          if (bill.name === undefined || bill.done === undefined || 
+            bill.users === undefined || bill.tempUsers === undefined ||
+            bill.consumers === undefined) {
             return res.status(400).send("The bill object provided is missing top level properties");
           }
           if (typeof bill.name !== "string" || bill.name.length > 50) {
@@ -928,7 +926,7 @@ app.put('/bills/web/:link', function (req, res) {
           }
           var i;
           for(i = 0; i < bill.users.length; i += 1) {
-            if (!bill.users[i].id) {
+            if (bill.users[i].id === undefined) {
                 return res.status(400).send("The user object "+i+" is missing its id property");
             }
             if (isNaN(bill.users[i].id)) {
@@ -939,7 +937,7 @@ app.put('/bills/web/:link', function (req, res) {
             }
           }
           for(i = 0; i < bill.tempUsers.length; i += 1) {
-            if (!bill.tempUsers[i].id) {
+            if (bill.tempUsers[i].id === undefined) {
                 return res.status(400).send("The tempUser object "+i+" is missing its id property");
             }
             if (isNaN(bill.tempUsers[i].id)) {
@@ -950,7 +948,7 @@ app.put('/bills/web/:link', function (req, res) {
             }
           }
           for(i = 0; i < bill.consumers.length; i += 1) {
-            if (!bill.consumers[i].item_id) {
+            if (bill.consumers[i].item_id === undefined) {
                 return res.status(400).send("The consumer object "+i+" is missing its item_id property");
             }
             if (isNaN(bill.consumers[i].item_id)) {
@@ -977,7 +975,7 @@ app.put('/bills/web/:link', function (req, res) {
             if (bill.consumers[i].temp_user_id && (bill.consumers[i].temp_user_id < 1 || bill.consumers[i].temp_user_id > 2147483647)) {
                 return res.status(400).send("The consumer object "+i+" temp_user_id property is not null but not in the correct range");
             }
-            if (!bill.consumers[i].paid) {
+            if (bill.consumers[i].paid === undefined) {
                 return res.status(400).send("The consumer object "+i+" is missing its paid property");
             }
             if ((typeof bill.consumers[i].paid) !== "boolean") {
@@ -1014,7 +1012,7 @@ app.put('/bills/web/:link', function (req, res) {
                   values.push([bill.id, null, bill.tempUsers[i].id]);
                 }
                 connection.query( // TODO check that unique works here
-                  "INSERT INTO bills_users (bill_id, user_id, temp_user_id) VALUES ?",
+                  "INSERT IGNORE INTO bills_users (bill_id, user_id, temp_user_id) VALUES ?",
                   [values],
                   function (error) {
                     if (error) {
@@ -1039,7 +1037,7 @@ app.put('/bills/web/:link', function (req, res) {
                         ]);
                     }
                     connection.query( // TODO check that unique works here
-                      "INSERT INTO items_consumers (item_id, user_id, temp_user_id, paid) VALUES ?",
+                      "INSERT IGNORE INTO items_consumers (item_id, user_id, temp_user_id, paid) VALUES ?",
                       [values],
                       function (error) {
                         if (error) {
@@ -1054,7 +1052,6 @@ app.put('/bills/web/:link', function (req, res) {
                           });
                           return res.status(500).send("Our database is having troubles");
                         }
-                        // XXX
                         connection.commit(function (error) {
                           connection.release();
                           if (error) {
