@@ -14,7 +14,6 @@ before(function() { // takes some ~1 second for the first request for some reaso
     var res = request('GET', 'http://localhost:8001/');
 });
 
-
 // Testing of server
 describe('Server GET /', function() {
     it('Simple GET', function() {
@@ -24,29 +23,33 @@ describe('Server GET /', function() {
     });
 });
 
+// Just creating the database for each test suite
+function setUpDatabase(testSuite, done) {
+    fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
+        if (error) {
+            console.error("Reading the SQL script file failed:", error);
+            testSuite.skip();
+        } else {
+            var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
+            connection.connect();
+            connection.query(data, function (error, results) {
+                if (error) {
+                    console.error("The Test SQL script did not execute successfully:", error);
+                    testSuite.skip();
+                } else {
+                    done();
+                }
+            });
+            connection.end();
+        }
+    });
+}
+
 
 // Upload a new bill
 describe('Server POST /bills', function() {
     before(function(done) {
-        const testSuite = this;
-        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
-            if (error) {
-                console.error("Reading the SQL script file failed:", error);
-                testSuite.skip();
-            } else {
-                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
-                connection.connect();
-                connection.query(data, function (error, results) {
-                    if (error) {
-                        console.error("The Test SQL script did not execute successfully:", error);
-                        testSuite.skip();
-                    } else {
-                        done();
-                    }
-                });
-                connection.end();
-            }
-        });
+        setUpDatabase(this, done);
     });
     it('No parameter', function() {
         var res = request('POST', 'http://localhost:8001/bills', {});
@@ -116,25 +119,7 @@ describe('Server POST /bills', function() {
 // Obtain bills IDs where a certain user is involved
 describe('Server GET /bills', function() {
     before(function(done) {
-        const testSuite = this;
-        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
-            if (error) {
-                console.error("Reading the SQL script file failed:", error);
-                testSuite.skip();
-            } else {
-                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
-                connection.connect();
-                connection.query(data, function (error, results) {
-                    if (error) {
-                        console.error("The Test SQL script did not execute successfully:", error);
-                        testSuite.skip();
-                    } else {
-                        done();
-                    }
-                });
-                connection.end();
-            }
-        });
+        setUpDatabase(this, done);
     });
     it('Missing token', function() {
         var res = request('GET', 'http://localhost:8001/bills', {
@@ -188,25 +173,7 @@ describe('Server GET /bills', function() {
 // Obtain details of a bill
 describe('Server GET /bills/:billID', function() {
     before(function(done) {
-        const testSuite = this;
-        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
-            if (error) {
-                console.error("Reading the SQL script file failed:", error);
-                testSuite.skip();
-            } else {
-                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
-                connection.connect();
-                connection.query(data, function (error, results) {
-                    if (error) {
-                        console.error("The Test SQL script did not execute successfully:", error);
-                        testSuite.skip();
-                    } else {
-                        done();
-                    }
-                });
-                connection.end();
-            }
-        });
+        setUpDatabase(this, done);
     });
     it('Missing token', function() {
         var res = request('GET', 'http://localhost:8001/bills/1', {
@@ -290,25 +257,7 @@ describe('Server GET /bills/:billID', function() {
 // Log in
 describe('Server POST /login', function() {
     before(function(done) {
-        const testSuite = this;
-        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
-            if (error) {
-                console.error("Reading the SQL script file failed:", error);
-                testSuite.skip();
-            } else {
-                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
-                connection.connect();
-                connection.query(data, function (error, results) {
-                    if (error) {
-                        console.error("The Test SQL script did not execute successfully:", error);
-                        testSuite.skip();
-                    } else {
-                        done();
-                    }
-                });
-                connection.end();
-            }
-        });
+        setUpDatabase(this, done);
     });
     it('No body is provided', function() {
         var res = request('POST', 'http://localhost:8001/login', {});
@@ -386,25 +335,7 @@ describe('Server POST /login', function() {
 // Sign up (+login)
 describe('Server POST /users', function() {
     before(function(done) {
-        const testSuite = this;
-        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
-            if (error) {
-                console.error("Reading the SQL script file failed:", error);
-                testSuite.skip();
-            } else {
-                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
-                connection.connect();
-                connection.query(data, function (error, results) {
-                    if (error) {
-                        console.error("The Test SQL script did not execute successfully:", error);
-                        testSuite.skip();
-                    } else {
-                        done();
-                    }
-                });
-                connection.end();
-            }
-        });
+        setUpDatabase(this, done);
     });
     it('No body is provided', function() {
         var res = request('POST', 'http://localhost:8001/users', {});
@@ -510,25 +441,12 @@ describe('Server POST /users', function() {
 // Dynamic webpage
 describe('Server GET /bills/web/:link', function() {
     before(function(done) {
-        const testSuite = this;
-        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
-            if (error) {
-                console.error("Reading the SQL script file failed:", error);
-                testSuite.skip();
-            } else {
-                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
-                connection.connect();
-                connection.query(data, function (error, results) {
-                    if (error) {
-                        console.error("The Test SQL script did not execute successfully:", error);
-                        testSuite.skip();
-                    } else {
-                        done();
-                    }
-                });
-                connection.end();
-            }
-        });
+        setUpDatabase(this, done);
+    });
+    it('Link is not a string (integer)', function() {
+        var res = request('GET', 'http://localhost:8001/bills/web/1');
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Link provided is invalid");
     });
     it('Link is not 40 characters', function() {
         var res = request('GET', 'http://localhost:8001/bills/web/abc123');
@@ -552,25 +470,12 @@ describe('Server GET /bills/web/:link', function() {
 // Obtain details of a bill from web link
 describe('Server GET /bills/web/:link/details', function() {
     before(function(done) {
-        const testSuite = this;
-        fs.readFile(__dirname + "/test.sql", 'utf8', function (error, data) {
-            if (error) {
-                console.error("Reading the SQL script file failed:", error);
-                testSuite.skip();
-            } else {
-                var connection = mysql.createConnection({host:"localhost", user:"root", password:"password", multipleStatements: true});
-                connection.connect();
-                connection.query(data, function (error, results) {
-                    if (error) {
-                        console.error("The Test SQL script did not execute successfully:", error);
-                        testSuite.skip();
-                    } else {
-                        done();
-                    }
-                });
-                connection.end();
-            }
-        });
+        setUpDatabase(this, done);
+    });
+    it('Link is not a string (integer)', function() {
+        var res = request('GET', 'http://localhost:8001/bills/web/1/details');
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Link provided is invalid");
     });
     it('Link is not 40 characters', function() {
         var res = request('GET', 'http://localhost:8001/bills/web/abc123/details');
@@ -608,5 +513,149 @@ describe('Server GET /bills/web/:link/details', function() {
                 { item_id: 3, user_id: null, temp_user_id: 1, paid: false }
             ]
         });
+    });
+});
+
+
+// Update bill using the dynamic link
+describe('Server PUT /bills/web/:link', function() {
+    before(function(done) {
+        setUpDatabase(this, done);
+    });
+    it('Link is not a string (integer)', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/web/1', {
+            json: {
+                bill: {
+                    name: "New name",
+                    done: false,
+                    users: [{id:1}, {id:2}, {id:3}], // Added Carol (id 3)
+                    tempUsers: [{id:1}],
+                    consumers: [
+                        { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
+                        { item_id: 2, user_id: 2, temp_user_id: null, paid: true },
+                        { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: 2, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: null, temp_user_id: 1, paid: true },
+                        { item_id: 2, user_id: 3, temp_user_id: null, paid: true }
+                    ]
+                }
+            }
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Link provided is invalid");
+    });
+    it('Link is not 40 characters', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/web/abc123', {
+            json: {
+                bill: {
+                    name: "New name",
+                    done: false,
+                    users: [{id:1}, {id:2}, {id:3}], // Added Carol (id 3)
+                    tempUsers: [{id:1}],
+                    consumers: [
+                        { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
+                        { item_id: 2, user_id: 2, temp_user_id: null, paid: true },
+                        { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: 2, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: null, temp_user_id: 1, paid: true },
+                        { item_id: 2, user_id: 3, temp_user_id: null, paid: true }
+                    ]
+                }
+            }
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Link provided is invalid");
+    });
+    it('No body provided', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL');
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Body is missing the bill parameter");
+    });
+    it('Bill JSON parameter is missing', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL', {
+            json: {}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Body is missing the bill parameter");
+    });
+    it('Link does not exist', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/web/XXXFHtGDh44bMtW4VbngW3XxPQwqIQucnAUYYYYY', {
+            json: {
+                bill: {
+                    name: "New name",
+                    done: false,
+                    users: [{id:1}, {id:2}, {id:3}], // Added Carol (id 3)
+                    tempUsers: [{id:1}],
+                    consumers: [
+                        { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
+                        { item_id: 2, user_id: 2, temp_user_id: null, paid: true },
+                        { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: 2, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: null, temp_user_id: 1, paid: true },
+                        { item_id: 2, user_id: 3, temp_user_id: null, paid: true }
+                    ]
+                }
+            }
+        });
+        expect(res.statusCode).to.equal(404);
+        expect(res.body.toString('utf-8')).to.equal("Link provided does not exist");
+    });
+    it('Bill JSON parameter is malformed', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL', {
+            json: {
+                bill: "abc"
+            }
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("The bill JSON parameter is malformed or not an object");
+    });
+    it('Missing element in bill JSON object', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL', {
+            json: {
+                bill: {
+                    name: "New name",
+                    done: false,
+                    users: [{id:1}, {id:2}, {id:3}], // Added Carol (id 3)
+                    tempUsers: [{id:1}],
+                    consumers: [
+                        { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
+                        { item_id: 2, user_id: 2, temp_user_id: null, paid: true },
+                        { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 3, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: null, temp_user_id: 1, paid: true },
+                        { item_id: 2, user_id: 3, temp_user_id: null, paid: true }
+                    ]
+                }
+            }
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("The consumer object 4 is missing its user_id property");
+    });
+    it('Success', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL', {
+            json: {
+                bill: {
+                    name: "New name",
+                    done: false,
+                    users: [{id:1}, {id:2}, {id:3}], // Added Carol (id 3)
+                    tempUsers: [{id:1}],
+                    consumers: [
+                        { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
+                        { item_id: 2, user_id: 2, temp_user_id: null, paid: true },
+                        { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: 2, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: null, temp_user_id: 1, paid: true },
+                        { item_id: 2, user_id: 3, temp_user_id: null, paid: true }
+                    ]
+                }
+            }
+        });
+        expect(res.statusCode).to.equal(200);
+        expect(res.body.toString('utf-8')).to.equal("Bill updated");
     });
 });
