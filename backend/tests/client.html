@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<body>
+<button onclick="serverPing()">Server ping</button>
+<button onclick="uploadBill()">Create new bill</button>
+<button onclick="getBillIDsOfUser()">Get bills IDs of user</button>
+<button onclick="getBillDetailsByID()">Get bill details from its ID</button>
+<button onclick="getBillIDsOfUser()">Get bills IDs of user</button>
+<button onclick="login()">Login</button>
+<button onclick="signup()">Signup</button>
+<button onclick="getDynamicHTML()">Dynamic HTML</button>
+<button onclick="getBillDetailsByLink()">Get bill details from its link</button>
+<button onclick="updateBillByLink()">Update bill details from its link</button>
+
+<script>
+function serverPing() {
+    var http = new XMLHttpRequest();
+    http.onreadystatechange = function() { 
+        if (http.readyState == XMLHttpRequest.DONE) {
+            alert("Server answered with HTTP status code " + http.status + ": " + http.responseText);
+        }
+    }
+    http.open("GET", "http://localhost:8000/", true); // true for asynchronous 
+    http.send(null);
+}
+
+function uploadBill() {
+    var body = {picture:"?"};
+    var http = new XMLHttpRequest();
+    http.open("POST", "http://localhost:8000/bills", true);
+    http.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+    http.setRequestHeader('x-access-token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzM2MTE1Mn0.ADJM99Kok8zmUeaiu0hCZLtIPvSKEBfGg_uaTKx5zpM');
+    http.onreadystatechange = function() { // callback function
+        if(http.readyState == XMLHttpRequest.DONE) {
+            alert("Server answered with HTTP status code " + http.status + ": " + http.responseText);
+        }
+    }
+    http.send(JSON.stringify(body));
+}
+
+function getBillIDsOfUser() {
+    var http = new XMLHttpRequest();
+    http.open("GET", "http://localhost:8000/bills", true);
+    http.setRequestHeader('x-access-token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzM2MTE1Mn0.ADJM99Kok8zmUeaiu0hCZLtIPvSKEBfGg_uaTKx5zpM');
+    http.onreadystatechange = function() { // callback function
+        if(http.readyState == XMLHttpRequest.DONE) {
+            alert("Server answered with HTTP status code " + http.status + ": " + http.responseText);
+        }
+    }
+    http.send();
+}
+
+function getBillDetailsByID() {
+    var http = new XMLHttpRequest();
+    http.open("GET", "http://localhost:8000/bills/1", true);
+    http.setRequestHeader('x-access-token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzM2MTE1Mn0.ADJM99Kok8zmUeaiu0hCZLtIPvSKEBfGg_uaTKx5zpM');
+    http.onreadystatechange = function() { // callback function
+        if(http.readyState == XMLHttpRequest.DONE) {
+            alert("Server answered with HTTP status code " + http.status + ": " + http.responseText);
+        }
+    }
+    http.send();
+}
+
+function login() {
+    var body = {email: "alice@a.com", password: "password"};
+    var http = new XMLHttpRequest();
+    http.open("POST", "http://localhost:8000/login", true);
+    http.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+    http.onreadystatechange = function() { // callback function
+        if(http.readyState == XMLHttpRequest.DONE) {
+            alert("Server answered with HTTP status code " + http.status + ": " + http.responseText);
+        }
+    }
+    http.send(JSON.stringify(body));
+}
+
+function signup() {
+    var body = {email:"elliot@e.com", username:"Elliot", password:"password"}
+    var http = new XMLHttpRequest();
+    http.open("POST", "http://localhost:8000/users", true);
+    http.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+    http.onreadystatechange = function() { // callback function
+        if(http.readyState == XMLHttpRequest.DONE) {
+            alert("Server answered with HTTP status code " + http.status + ": " + http.responseText);
+        }
+    }
+    http.send(JSON.stringify(body));
+}
+
+function getDynamicHTML() {
+    var http = new XMLHttpRequest();
+    http.open("GET", "http://localhost:8000/bills/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL", true);
+    http.onreadystatechange = function() { // callback function
+        if(http.readyState == XMLHttpRequest.DONE) {
+            alert("Server answered with HTTP status code " + http.status + ": " + http.responseText);
+        }
+    }
+    http.send();
+}
+
+function getBillDetailsByLink() {
+    var http = new XMLHttpRequest();
+    http.open("GET", "http://localhost:8000/bills/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL/details", true);
+    http.onreadystatechange = function() { // callback function
+        if(http.readyState == XMLHttpRequest.DONE) {
+            alert("Server answered with HTTP status code " + http.status + ": " + http.responseText);
+        }
+    }
+    http.send();
+}
+
+
+function updateBillByLink() {
+    var body = {
+        bill: {
+            name: "New name",
+            done: false,
+            users: [{id:1}, {id:2}, {id:3}], // Added Carol (id 3)
+            tempUsers: [{id:1}],
+            consumers: [
+                { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
+                { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
+                { item_id: 2, user_id: 2, temp_user_id: null, paid: true },
+                { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
+                { item_id: 3, user_id: 2, temp_user_id: null, paid: false },
+                { item_id: 3, user_id: null, temp_user_id: 1, paid: true },
+                { item_id: 2, user_id: 3, temp_user_id: null, paid: true }
+            ]
+        }
+    };
+    var http = new XMLHttpRequest();
+    http.open("PUT", "http://localhost:8000/bills/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL", true);
+    http.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+    http.onreadystatechange = function() { // callback function
+        if(http.readyState == XMLHttpRequest.DONE) {
+            alert("Server answered with HTTP status code " + http.status + ": " + http.responseText);
+        }
+    }
+    http.send(JSON.stringify(body));
+}
+</script>
+
+</body>
+</html>
