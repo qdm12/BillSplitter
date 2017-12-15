@@ -1,7 +1,24 @@
 # Backend server
 
+## Description
 - Based on NodeJS and MySQL
 - RESTful interface
+
+### Requirements
+- [NodeJS](https://nodejs.org/en/download/)
+    - [express](https://www.npmjs.com/package/express)
+    - [body-parser](https://www.npmjs.com/package/body-parser)
+    - [validator](https://www.npmjs.com/package/validator)
+    - [scrypt-async](https://www.npmjs.com/package/scrypt-async)
+    - [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken)
+    - [mysql](https://www.npmjs.com/package/mysql)
+    - [chai](https://www.npmjs.com/package/chai) (for testing)
+    - [mocha](https://www.npmjs.com/package/mocha) (for testing)
+    - [sync-request](https://www.npmjs.com/package/sync-request) (for testing)
+- [MySQL Community Server](https://dev.mysql.com/downloads/mysql/)
+
+### Routes
+
 
 ## Installation
 
@@ -102,7 +119,6 @@ This allows you to see a HTML / Javascript webpage communicating with the backen
     ```
     The server will run on port **8000** with the database **billsplitter**.
     You can stop it *later* by entering **CTRL**+**C**
-1. Open a **new** terminal and go to the [**tests**](tests) directory
 1. You can now click on buttons to produce responses
 
 ### Unit automated tests
