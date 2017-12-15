@@ -322,7 +322,7 @@ describe('Server POST /login', function() {
     });
     it('Success', function() {
         var res = request('POST', 'http://localhost:8001/login', {
-            json: {email:"alice@a.com", password:"password"}
+            json: {email: "alice@a.com", password: "password"}
         });
         expect(res.statusCode).to.equal(200);
         var credentials = JSON.parse(res.body.toString('utf-8'));

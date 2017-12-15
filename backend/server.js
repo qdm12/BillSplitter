@@ -502,7 +502,7 @@ app.post('/login', function (req, res) {
             if (digest !== result[0].digest) {
               return res.status(401).send("Incorrect email or password");
             }
-            var token = jwt.sign({userID: result[0].id}, secret, {expiresIn: tokenExpiration});
+            var token = jwt.sign({userID: result[0].id}, secret);
             // deterministic creation so multiple logins possible
             res.status(200).json({userID: result[0].id, token: token});
           });
@@ -658,7 +658,7 @@ app.post('/users', function (req, res) {
                             });
                             return;
                           }
-                          var token = jwt.sign({userID: userID}, secret, {expiresIn: tokenExpiration});
+                          var token = jwt.sign({userID: userID}, secret);
                           connection.commit(function (error) {
                             connection.release();
                             if (error) {
@@ -1079,6 +1079,7 @@ TODO
 - switch to camelcase
 - Delete account
 - get user ID from username
+- Remove people with PUT, enhance the PUT bill
 */
 
 function start(port, database) {
