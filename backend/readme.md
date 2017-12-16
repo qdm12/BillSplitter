@@ -51,10 +51,10 @@
 
 ### MySQL Database
 
-1. Install **MySQL Community Server** from [dev.mysql.com](https://dev.mysql.com/downloads/mysql/)
+1. Install **MySQL Community Server** from [dev.mysql.com](https://dev.mysql.com/downloads/mysql/) and [**MySQL Workbench**](https://dev.mysql.com/downloads/workbench/).
 1. Set the MySQL `root` password to `password` with
     ```bash
-    mysql -u root -p password
+    mysqladmin -u root -p password password
     ```
 1. From this directory (*backend*), launch MySQL with:
     ```bash
@@ -76,10 +76,10 @@
 
 ## Testing
 
-1. Make sure you have [**NodeJS**](https://nodejs.org/en/download/) installed and [**MySQL Community Server**]((https://dev.mysql.com/downloads/mysql/) installed
+1. Make sure you have [**NodeJS**](https://nodejs.org/en/download/) installed, [**MySQL Community Server**]((https://dev.mysql.com/downloads/mysql/) installed and [**MySQL Workbench**](https://dev.mysql.com/downloads/workbench/) installed.
 1. Make sure the MySQL `root` password is `password`. If not set, set it with a terminal with:
     ```bash
-    mysql -u root -p password
+    mysqladmin -u root -p password password
     ```
 1. From the *backend* directory, install the required dependencies with:
     ```bash
