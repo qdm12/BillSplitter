@@ -4,17 +4,19 @@ module.exports = {
     stop: stop
 };
 
+var fs = require('fs');
 var path = require('path');
 var express = require('express');
 var bodyParser = require('body-parser');
+var cors = require('cors');
 var app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(cors());
 var validator = require('validator');
 var mysql = require('mysql');
 var jwt = require('jsonwebtoken');
 var Scrypt = require('scrypt-async');
-var fs = require('fs');
 
 var parameters = {
     local: {

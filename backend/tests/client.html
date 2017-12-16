@@ -13,9 +13,11 @@
 <button onclick="updateBillByLink()">Update bill details from its link</button>
 
 <script>
-var serverAddress = "localhost";
-var serverPort = 8001;
-var serverURL = "http://" + serverAddress + ":" + serverPort;
+var serverHost = "websys3.stern.nyu.edu";
+var serverPort = 7001;
+// var serverHost = "localhost";
+// var serverPort = 8000;
+var serverURL = "http://" + serverHost + ":" + serverPort;
 
 function serverPing() {
     var http = new XMLHttpRequest();
