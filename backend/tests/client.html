@@ -13,6 +13,10 @@
 <button onclick="updateBillByLink()">Update bill details from its link</button>
 
 <script>
+var serverAddress = "localhost";
+var serverPort = 8001;
+var serverURL = "http://" + serverAddress + ":" + serverPort;
+
 function serverPing() {
     var http = new XMLHttpRequest();
     http.onreadystatechange = function() { 
@@ -20,14 +24,14 @@ function serverPing() {
             alert("Server answered with HTTP status code " + http.status + ": " + http.responseText);
         }
     }
-    http.open("GET", "http://localhost:8000/ping", true); // true for asynchronous 
+    http.open("GET", serverURL + "/ping", true); // true for asynchronous 
     http.send(null);
 }
 
 function uploadBill() {
     var body = {picture:"?"};
     var http = new XMLHttpRequest();
-    http.open("POST", "http://localhost:8000/bills", true);
+    http.open("POST", serverURL + "/bills", true);
     http.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
     http.setRequestHeader('x-access-token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzM2MTE1Mn0.ADJM99Kok8zmUeaiu0hCZLtIPvSKEBfGg_uaTKx5zpM');
     http.onreadystatechange = function() { // callback function
@@ -40,7 +44,7 @@ function uploadBill() {
 
 function getBillIDsOfUser() {
     var http = new XMLHttpRequest();
-    http.open("GET", "http://localhost:8000/bills", true);
+    http.open("GET", serverURL + "/bills", true);
     http.setRequestHeader('x-access-token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzM2MTE1Mn0.ADJM99Kok8zmUeaiu0hCZLtIPvSKEBfGg_uaTKx5zpM');
     http.onreadystatechange = function() { // callback function
         if(http.readyState == XMLHttpRequest.DONE) {
@@ -52,7 +56,7 @@ function getBillIDsOfUser() {
 
 function getBillDetailsByID() {
     var http = new XMLHttpRequest();
-    http.open("GET", "http://localhost:8000/bills/1", true);
+    http.open("GET", serverURL + "/bills/1", true);
     http.setRequestHeader('x-access-token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzM2MTE1Mn0.ADJM99Kok8zmUeaiu0hCZLtIPvSKEBfGg_uaTKx5zpM');
     http.onreadystatechange = function() { // callback function
         if(http.readyState == XMLHttpRequest.DONE) {
@@ -65,7 +69,7 @@ function getBillDetailsByID() {
 function login() {
     var body = {email: "alice@a.com", password: "password"};
     var http = new XMLHttpRequest();
-    http.open("POST", "http://localhost:8000/login", true);
+    http.open("POST", serverURL + "/login", true);
     http.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
     http.onreadystatechange = function() { // callback function
         if(http.readyState == XMLHttpRequest.DONE) {
@@ -78,7 +82,7 @@ function login() {
 function signup() {
     var body = {email:"elliot@e.com", username:"Elliot", password:"password"}
     var http = new XMLHttpRequest();
-    http.open("POST", "http://localhost:8000/users", true);
+    http.open("POST", serverURL + "/users", true);
     http.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
     http.onreadystatechange = function() { // callback function
         if(http.readyState == XMLHttpRequest.DONE) {
@@ -90,7 +94,7 @@ function signup() {
 
 function getDynamicHTML() {
     var http = new XMLHttpRequest();
-    http.open("GET", "http://localhost:8000/bills/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL", true);
+    http.open("GET", serverURL + "/bills/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL", true);
     http.onreadystatechange = function() { // callback function
         if(http.readyState == XMLHttpRequest.DONE) {
             alert("Server answered with HTTP status code " + http.status + ": " + http.responseText);
@@ -101,7 +105,7 @@ function getDynamicHTML() {
 
 function getBillDetailsByLink() {
     var http = new XMLHttpRequest();
-    http.open("GET", "http://localhost:8000/bills/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL/details", true);
+    http.open("GET", serverURL + "/bills/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL/details", true);
     http.onreadystatechange = function() { // callback function
         if(http.readyState == XMLHttpRequest.DONE) {
             alert("Server answered with HTTP status code " + http.status + ": " + http.responseText);
@@ -130,7 +134,7 @@ function updateBillByLink() {
         }
     };
     var http = new XMLHttpRequest();
-    http.open("PUT", "http://localhost:8000/bills/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL", true);
+    http.open("PUT", serverURL + "/bills/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL", true);
     http.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
     http.onreadystatechange = function() { // callback function
         if(http.readyState == XMLHttpRequest.DONE) {

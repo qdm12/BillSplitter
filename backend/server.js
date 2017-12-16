@@ -1,4 +1,9 @@
 /*jslint white:true */
+module.exports = {
+    start: start,
+    stop: stop
+};
+
 var path = require('path');
 var express = require('express');
 var bodyParser = require('body-parser');
@@ -9,16 +14,112 @@ var validator = require('validator');
 var mysql = require('mysql');
 var jwt = require('jsonwebtoken');
 var Scrypt = require('scrypt-async');
+var fs = require('fs');
 
-var secret = "secretkey"; // Used for token generation and verification
-// TODO store secret in environment variable
-var tokenExpiration = 99999999; // a lot
-
+var params = {
+    databaseHost: "localhost",
+    databaseUser: "root",
+    databasePassword: "password",
+    databaseConnectionLimit: 10,
+    databaseName: "billsplitter",
+    databaseTestName: "billsplittertest",
+    sqlScript: "billsplitter.sql",
+    sqlTestScript: "tests/test.sql",
+    serverPort: 8000,
+    serverTestPort: 8001,
+    serverSecret: "secretkey", // TODO store secret in environment variable
+    serverTestSecret: "TestSecret"
+};
+var secret = null;
 var server = null;
 var pool = null;
 
-// All body of HTTP requests must be encoded in x-www-form-urlencoded
 
+function start(port, databaseName, sqlScript) {
+    databaseExists(databaseName, function(exists) {
+        if (!exists) {
+            fs.readFile(__dirname + "/" + sqlScript, 'utf8', function (error, data) {
+                if (error) {
+                    console.error("Reading the SQL script file failed");
+                    throw error;      
+                }              
+                var connection = mysql.createConnection({
+                    host: params.databaseHost,
+                    user: params.databaseUser,
+                    password: params.databasePassword,
+                    multipleStatements: true
+                });
+                connection.connect();
+                connection.query(data, function (error, results) {
+                    if (error) {
+                        console.error("The SQL script did not execute successfully");
+                        throw error;
+                    }
+                    pool = mysql.createPool({
+                        connectionLimit: params.databaseConnectionLimit,
+                        host: params.databaseHost,
+                        user: params.databaseUser,
+                        password: params.databasePassword,
+                        database: databaseName
+                    });
+                    console.log("Database created and connection pool configured");
+                });
+                connection.end();
+            });
+        } else {
+            pool = mysql.createPool({
+                connectionLimit: params.databaseConnectionLimit,
+                host: params.databaseHost,
+                user: params.databaseUser,
+                password: params.databasePassword,
+                database: databaseName
+            });
+            console.log("Database found and connection pool configured");
+        }
+    });
+    server = app.listen(port, function () {
+        console.log("Server listening at %s:%s", params.databaseHost, port);
+    });
+}
+
+function stop() {
+    server.close();
+    pool.end();
+}
+
+if (require.main === module) {
+    if (process.argv.length > 2 && process.argv[2] === "test") {
+        secret = params.serverTestSecret;
+        start(params.serverTestPort, params.databaseTestName, params.sqlTestScript);
+    } else {
+        secret = params.serverSecret;
+        start(params.serverPort, params.databaseName, params.sqlScript);
+    }
+}
+
+function databaseExists(databaseName, callback) {
+    var connection = mysql.createConnection({
+        host: params.databaseHost,
+        user: params.databaseUser,
+        password: params.databasePassword
+    });
+    connection.connect();
+    connection.query(
+        "SHOW DATABASES LIKE ?",
+        [databaseName],
+        function (error, results) {
+            if (error) {
+                console.error("The database existence check failed:", error);
+                callback(false);
+            } else if (results.length === 0) {
+                callback(false);
+            } else {
+                callback(true);
+            }
+        }
+    );
+    connection.end();
+}
 
 /* ******************************
 *********************************
@@ -853,7 +954,7 @@ app.get('/bills/web/:link', function (req, res) {
           if (result.length === 0) {
             return res.status(404).send("Link provided does not exist");
           }
-          res.status(200).sendFile(path.join(__dirname + '/dynamic/Dynamic_webpage_gen3.html'));
+          res.status(200).sendFile(path.join(__dirname + '/dynamic/Dynamic_webpage_gen4.html'));
         }
       );
     });
@@ -1082,33 +1183,6 @@ TODO
 - Remove people with PUT, enhance the PUT bill
 */
 
-function start(port, database) {
-    pool = mysql.createPool({
-        connectionLimit: 10,
-        host: "localhost",
-        user: "root",
-        password: "password",
-        database: database
-    });
-    server = app.listen(port, function () {
-        console.log("Server listening at localhost:%s", port);
-    });
-}
-
-function stop() {
-    server.close();
-    pool.end();
-}
-
-if (require.main === module) {
-    if (process.argv.length > 2 && process.argv[2] === "test") {
-        secret = "TestSecret";
-        start(8001, "billsplittertest");
-    } else {
-        start(8000, "billsplitter");
-    }
-}
-
 function randomString(length) {
     var s = "";
     var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -1131,7 +1205,3 @@ function dbTimeToTimeObj(databaseTimestamp) {
         year: dateArray[3]
     };
 }
-
-module.exports = {
-    stop: stop
-};

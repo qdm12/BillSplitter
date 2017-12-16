@@ -15,8 +15,8 @@ before(function() { // takes some ~1 second for the first request for some reaso
 });
 
 // Testing of server
-describe('Server GET /', function() {
-    it('Simple GET', function() {
+describe('Server GET /ping', function() {
+    it('GET /ping', function() {
         var res = request('GET', 'http://localhost:8001/ping');
         expect(res.statusCode).to.equal(200);
         expect(res.body.toString('utf-8')).to.equal("pong");
@@ -327,7 +327,7 @@ describe('Server POST /login', function() {
         expect(res.statusCode).to.equal(200);
         var credentials = JSON.parse(res.body.toString('utf-8'));
         expect(credentials.userID).to.equal(1);
-        expect(credentials.token.length).to.equal(143); // token is randomly generated
+        expect(credentials.token.length).to.equal(120); // token is randomly generated
     });
 });
 
@@ -433,7 +433,7 @@ describe('Server POST /users', function() {
         expect(res.statusCode).to.equal(201);
         var credentials = JSON.parse(res.body.toString('utf-8'));
         expect(credentials.userID).to.equal(5);
-        expect(credentials.token.length).to.equal(143); // token is randomly generated
+        expect(credentials.token.length).to.equal(120); // token is randomly generated
     });
 });
 
