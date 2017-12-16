@@ -3,6 +3,7 @@ html, body {
 	padding:0;
 	height:100%;
 	font-family: 'Spectral SC', serif !important;
+	overflow-y: hidden;
 }
 
 /* latin-ext */
@@ -22,10 +23,10 @@ html, body {
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
 }
 
-#top_bar{
+#topBar{
 	width: 100%;
-	position: fixed;
-	z-index:6; /*on top of other layers*/
+	position: relative;
+	z-index:10; /*on top of other layers*/
 	padding-top: 1vh;
 	padding-bottom: 1vh;
 	background: #dad2c8;
@@ -332,24 +333,56 @@ html, body {
 }
 
 /*Styling for dynamic webpage with items and individuals*/
-.item {
-	height: 7%;
-	width: 20%;
-	margin: 2%;
-	padding: 1%;
-	border: 1px solid;
-	text-align: center;
-	border-radius: 40px;
-	font-family: 'Spectral SC', serif;
-}
 	
 .person {
 		font-family: 'Spectral SC', serif;
 		position: relative;
-		height: 20px;
-		width: 20px;
-		margin: 2%;
-		padding: 2%;
-		border: 1px solid;
-		border-radius: 40px;
+		margin-left: 1.5%;
+		margin-right: 1.5%;
+		margin-top: 1%;
+		margin-bottom: 1%;
+		padding: 1.5%;
+		border: .15rem solid;
+		border-radius: 4rem;
+		display: inline-block;
+		font-size: 1.25rem;
+		cursor: default;
+		background-color: #0077B2;
+}
+
+#partyScroll{
+	background-color: #0077B2;
+	height: 20%;
+	overflow-y: hidden;
+	overflow-x: scroll;	
+	width: 100%;
+	text-align: center;
+	border-bottom: 2px #000 solid;
+	position: relative;
+	z-index:10; /*on top of other layers*/
+	white-space:nowrap;
+}
+
+.item {
+		display: block;
+		position: relative;
+		margin-left: auto;
+		margin-right: auto;
+		margin-top:2%;
+		margin-bottom:2%;
+		width: 35%;
+		font-family: 'Spectral SC', serif;
+		padding: 1.5%;
+		border: .25rem #000 solid;
+		border-radius: 4rem;
+		font-size: 1.25rem;
+		cursor: default;
+		text-align: center;
+}
+
+#itemizedBill{
+	top:35%;
+	max-height: 75%;
+	overflow-y: scroll;
+	width: 100%;
 }
