@@ -16,29 +16,48 @@ var jwt = require('jsonwebtoken');
 var Scrypt = require('scrypt-async');
 var fs = require('fs');
 
-var params = {
-    databaseHost: "localhost",
-    databaseUser: "root",
-    databasePassword: "password",
-    databaseConnectionLimit: 10,
-    databaseName: "billsplitter",
-    databaseTestName: "billsplittertest",
-    sqlScript: "billsplitter.sql",
-    sqlTestScript: "tests/test.sql",
-    serverPort: 8000,
-    serverTestPort: 8001,
-    serverSecret: "secretkey", // TODO store secret in environment variable
-    serverTestSecret: "TestSecret"
+var parameters = {
+    local: {
+        databaseHost: "localhost",
+        databaseUser: "root",
+        databasePassword: "password",
+        databaseConnectionLimit: 10,
+        databaseName: "billsplitter",
+        sqlScript: "local.sql",
+        port: 8000,
+        secret: "secretkey"
+    },
+    test: {
+        databaseHost: "localhost",
+        databaseUser: "root",
+        databasePassword: "password",
+        databaseConnectionLimit: 10,
+        databaseName: "billsplittertest",
+        sqlScript: "tests/test.sql",
+        port: 8001,
+        secret: "TestSecret"
+    },
+    websys: {
+        databaseHost: "localhost",
+        databaseUser: "websysF17GB1",
+        databasePassword: "websysF17GB1!!",
+        databaseConnectionLimit: 10,
+        databaseName: "websysF17GB1",
+        sqlScript: "websys.sql",
+        port: 7001,
+        secret: "secretkey"
+    }
 };
-var secret = null;
+
+var params = null;
 var server = null;
 var pool = null;
 
 
-function start(port, databaseName, sqlScript) {
-    databaseExists(databaseName, function(exists) {
+function start() {
+    databaseExists(params.databaseName, function(exists) {
         if (!exists) {
-            fs.readFile(__dirname + "/" + sqlScript, 'utf8', function (error, data) {
+            fs.readFile(__dirname + "/" + params.sqlScript, 'utf8', function (error, data) {
                 if (error) {
                     console.error("Reading the SQL script file failed");
                     throw error;      
@@ -50,7 +69,7 @@ function start(port, databaseName, sqlScript) {
                     multipleStatements: true
                 });
                 connection.connect();
-                connection.query(data, function (error, results) {
+                connection.query(data, function (error) {
                     if (error) {
                         console.error("The SQL script did not execute successfully");
                         throw error;
@@ -60,7 +79,7 @@ function start(port, databaseName, sqlScript) {
                         host: params.databaseHost,
                         user: params.databaseUser,
                         password: params.databasePassword,
-                        database: databaseName
+                        database: params.databaseName
                     });
                     console.log("Database created and connection pool configured");
                 });
@@ -72,13 +91,13 @@ function start(port, databaseName, sqlScript) {
                 host: params.databaseHost,
                 user: params.databaseUser,
                 password: params.databasePassword,
-                database: databaseName
+                database: params.databaseName
             });
             console.log("Database found and connection pool configured");
         }
     });
-    server = app.listen(port, function () {
-        console.log("Server listening at %s:%s", params.databaseHost, port);
+    server = app.listen(params.port, function () {
+        console.log("Server listening at %s:%s", params.databaseHost, params.port);
     });
 }
 
@@ -88,12 +107,17 @@ function stop() {
 }
 
 if (require.main === module) {
-    if (process.argv.length > 2 && process.argv[2] === "test") {
-        secret = params.serverTestSecret;
-        start(params.serverTestPort, params.databaseTestName, params.sqlTestScript);
+    if (process.argv.length > 2) {
+        if (process.argv[2] === "test") {
+            params = parameters.test;
+            start();
+        } else if (process.argv[2] === "websys") {
+            params = parameters.websys;
+            start();
+        }
     } else {
-        secret = params.serverSecret;
-        start(params.serverPort, params.databaseName, params.sqlScript);
+        params = parameters.main;
+        start();
     }
 }
 
@@ -162,7 +186,7 @@ app.post('/bills', function (req, res) {
     // TODO see how to transport picture
     // TODO check for picture format
 
-    jwt.verify(token, secret, function (error, decoded) {
+    jwt.verify(token, params.secret, function (error, decoded) {
       if (error) {
         return res.status(401).send("Token is invalid");
       }
@@ -328,7 +352,7 @@ app.get('/bills', function (req, res) {
     if (!token) {
         return res.status(400).send("Token is missing from x-access-token in headers");
     }
-    jwt.verify(token, secret, function (error, decoded) {
+    jwt.verify(token, params.secret, function (error, decoded) {
       if (error) {
         return res.status(401).send("Token is invalid");
       }
@@ -410,7 +434,7 @@ app.get('/bills/:billID', function (req, res) {
         return res.status(400).send("billID is invalid");
     }
 
-    jwt.verify(token, secret, function (error, decoded) {
+    jwt.verify(token, params.secret, function (error, decoded) {
       if (error) {
         return res.status(401).send("Token is invalid");
       }
@@ -603,7 +627,7 @@ app.post('/login', function (req, res) {
             if (digest !== result[0].digest) {
               return res.status(401).send("Incorrect email or password");
             }
-            var token = jwt.sign({userID: result[0].id}, secret);
+            var token = jwt.sign({userID: result[0].id}, params.secret);
             // deterministic creation so multiple logins possible
             res.status(200).json({userID: result[0].id, token: token});
           });
@@ -759,7 +783,7 @@ app.post('/users', function (req, res) {
                             });
                             return;
                           }
-                          var token = jwt.sign({userID: userID}, secret);
+                          var token = jwt.sign({userID: userID}, params.secret);
                           connection.commit(function (error) {
                             connection.release();
                             if (error) {
