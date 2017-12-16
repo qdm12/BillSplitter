@@ -56,7 +56,7 @@
     ```bash
     mysqladmin -u root -p password password
     ```
-1. From this directory (*backend*), launch MySQL with:
+1. From the *backend* directory, launch MySQL with:
     ```bash
     mysql -u root -p
     ```
@@ -77,16 +77,15 @@
 ## Testing
 
 1. Make sure you have [**NodeJS**](https://nodejs.org/en/download/) installed, [**MySQL Community Server**]((https://dev.mysql.com/downloads/mysql/) installed and [**MySQL Workbench**](https://dev.mysql.com/downloads/workbench/) installed.
-1. Make sure the MySQL `root` password is `password`. If not set, set it with a terminal with:
-    ```bash
-    mysqladmin -u root -p password password
-    ```
+1. Make sure you have the *billsplitter* database setup. See the [MySQL database section](https://github.com/qdm12/BillSplitter/blob/master/backend/readme.md#mysql-database) otherwise.
 1. From the *backend* directory, install the required dependencies with:
     ```bash
     npm install
     ```
 
-### End-to-end automated tests
+### A) End-to-end automated tests
+
+Make sure you did the initial instructions of this Testing section first.
 
 This allows you to test the server by sending HTTP requests to it on a temporary test database automatically created and destroyed. It tests every HTTP routes in every possible conditions. The tests are written using *mocha* and *chai* in [**tests/server-test.js**](tests/server-test.js) 
 
@@ -106,7 +105,9 @@ This allows you to test the server by sending HTTP requests to it on a temporary
     mocha tests
     ```
 
-### Manual HTML button testing
+### B) Manual HTML button testing
+
+Make sure you did the initial instructions of this Testing section first.
 
 This allows you to see a HTML / Javascript webpage communicating with the backend. Each request to the server is coded in one of the functions in the HTML file [**tests/client.html**](tests/client.html) 
 
@@ -133,5 +134,7 @@ This allows you to see a HTML / Javascript webpage communicating with the backen
 1. You can now click on buttons to produce responses
 
 ### Unit automated tests
+
+Make sure you did the initial instructions of this Testing section first.
 
 ### Further work
