@@ -661,6 +661,264 @@ describe('Server PUT /bills/web/:link', function() {
 });
 
 
+// Update bill as a registered user
+describe('Server PUT /bills/:billID', function() {
+    before(function(done) {
+        setUpDatabase(this, done);
+    });
+    it('No body provided', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/1', {});
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Token is missing from x-access-token in headers");
+    });
+    it('Token is missing', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/1', {
+            json: {
+                bill: {
+                    name: "New name",
+                    done: false,
+                    users: [{id:1}, {id:2}, {id:3}], // Added Carol (id 3)
+                    tempUsers: [{id:1}],
+                    consumers: [
+                        { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
+                        { item_id: 2, user_id: 2, temp_user_id: null, paid: true },
+                        { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: 2, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: null, temp_user_id: 1, paid: true },
+                        { item_id: 2, user_id: 3, temp_user_id: null, paid: true }
+                    ]
+                }
+            }
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Token is missing from x-access-token in headers");
+    });
+    it('Bill ID is not a number (character)', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/a', {
+            headers: {
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzI4MjIxNX0.yBmaWqLBtfThJF9oNMN6Imhn8OfgXyUwseM_nmxJZi0"
+            },
+            json: {
+                bill: {
+                    name: "New name",
+                    done: false,
+                    users: [{id:1}, {id:2}, {id:3}], // Added Carol (id 3)
+                    tempUsers: [{id:1}],
+                    consumers: [
+                        { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
+                        { item_id: 2, user_id: 2, temp_user_id: null, paid: true },
+                        { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: 2, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: null, temp_user_id: 1, paid: true },
+                        { item_id: 2, user_id: 3, temp_user_id: null, paid: true }
+                    ]
+                }
+            }
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("URL parameter billID is invalid");
+    });
+    it('Bill ID is 0', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/0', {
+            headers: {
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzI4MjIxNX0.yBmaWqLBtfThJF9oNMN6Imhn8OfgXyUwseM_nmxJZi0"
+            },
+            json: {
+                bill: {
+                    name: "New name",
+                    done: false,
+                    users: [{id:1}, {id:2}, {id:3}], // Added Carol (id 3)
+                    tempUsers: [{id:1}],
+                    consumers: [
+                        { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
+                        { item_id: 2, user_id: 2, temp_user_id: null, paid: true },
+                        { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: 2, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: null, temp_user_id: 1, paid: true },
+                        { item_id: 2, user_id: 3, temp_user_id: null, paid: true }
+                    ]
+                }
+            }
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("URL parameter billID is invalid");
+    });
+    it('Bill ID is over 2147483647', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/2147483648', {
+            headers: {
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzI4MjIxNX0.yBmaWqLBtfThJF9oNMN6Imhn8OfgXyUwseM_nmxJZi0"
+            },
+            json: {
+                bill: {
+                    name: "New name",
+                    done: false,
+                    users: [{id:1}, {id:2}, {id:3}], // Added Carol (id 3)
+                    tempUsers: [{id:1}],
+                    consumers: [
+                        { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
+                        { item_id: 2, user_id: 2, temp_user_id: null, paid: true },
+                        { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: 2, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: null, temp_user_id: 1, paid: true },
+                        { item_id: 2, user_id: 3, temp_user_id: null, paid: true }
+                    ]
+                }
+            }
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("URL parameter billID is invalid");
+    });
+    it('Token is invalid', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/1', {
+            headers: {
+                'x-access-token': "XXXXXXXXX"
+            },
+            json: {
+                bill: {
+                    name: "New name",
+                    done: false,
+                    users: [{id:1}, {id:2}, {id:3}], // Added Carol (id 3)
+                    tempUsers: [{id:1}],
+                    consumers: [
+                        { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
+                        { item_id: 2, user_id: 2, temp_user_id: null, paid: true },
+                        { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: 2, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: null, temp_user_id: 1, paid: true },
+                        { item_id: 2, user_id: 3, temp_user_id: null, paid: true }
+                    ]
+                }
+            }
+        });
+        expect(res.statusCode).to.equal(401);
+        expect(res.body.toString('utf-8')).to.equal("Token is invalid");
+    });
+    it('User ID does not exist anymore', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/1', {
+            headers: {
+                // token for user ID 256
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjI1NiwiaWF0IjoxNTEzMjgyMjkyfQ.HAVz-a60xp-AJdPmtXozfl2wOABodAdtEf21EKgGtVI"
+            },
+            json: {
+                bill: {
+                    name: "New name",
+                    done: false,
+                    users: [{id:1}, {id:2}, {id:3}], // Added Carol (id 3)
+                    tempUsers: [{id:1}],
+                    consumers: [
+                        { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
+                        { item_id: 2, user_id: 2, temp_user_id: null, paid: true },
+                        { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: 2, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: null, temp_user_id: 1, paid: true },
+                        { item_id: 2, user_id: 3, temp_user_id: null, paid: true }
+                    ]
+                }
+            }
+        });
+        expect(res.statusCode).to.equal(401);
+        expect(res.body.toString('utf-8')).to.equal("User ID does not exist");
+    });
+    it('No bill (wrong token)', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/1', {
+            headers: {
+                // token for user ID 4
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjQsImlhdCI6MTUxMzI4MjI4OH0.vCoORSsgfk2-s3xuppO4Fm8GOOhIqiJyDoTih2BiT34"
+            },
+            json: {
+                bill: {
+                    name: "New name",
+                    done: false,
+                    users: [{id:1}, {id:2}, {id:3}], // Added Carol (id 3)
+                    tempUsers: [{id:1}],
+                    consumers: [
+                        { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
+                        { item_id: 2, user_id: 2, temp_user_id: null, paid: true },
+                        { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: 2, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: null, temp_user_id: 1, paid: true },
+                        { item_id: 2, user_id: 3, temp_user_id: null, paid: true }
+                    ]
+                }
+            }
+        });
+        expect(res.statusCode).to.equal(204);
+        expect(res.body.toString('utf-8')).to.equal("");
+    });
+    it('Bill JSON parameter is malformed', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/1', {
+            headers: {
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzI4MjIxNX0.yBmaWqLBtfThJF9oNMN6Imhn8OfgXyUwseM_nmxJZi0"
+            },
+            json: {
+                bill: "abc"
+            }
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("The bill JSON parameter is malformed or not an object");
+    });
+    it('Missing element in bill JSON object', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/1', {
+            headers: {
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzI4MjIxNX0.yBmaWqLBtfThJF9oNMN6Imhn8OfgXyUwseM_nmxJZi0"
+            },
+            json: {
+                bill: {
+                    name: "New name",
+                    done: false,
+                    users: [{id:1}, {id:2}, {id:3}], // Added Carol (id 3)
+                    tempUsers: [{id:1}],
+                    consumers: [
+                        { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
+                        { item_id: 2, user_id: 2, temp_user_id: null, paid: true },
+                        { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 3, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: null, temp_user_id: 1, paid: true },
+                        { item_id: 2, user_id: 3, temp_user_id: null, paid: true }
+                    ]
+                }
+            }
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("The consumer object 4 is missing its user_id property");
+    });
+    it('Success', function() {
+        var res = request('PUT', 'http://localhost:8001/bills/1', {
+            headers: {
+                'x-access-token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzI4MjIxNX0.yBmaWqLBtfThJF9oNMN6Imhn8OfgXyUwseM_nmxJZi0"
+            },
+            json: {
+                bill: {
+                    name: "New name",
+                    done: false,
+                    users: [{id:1}, {id:2}, {id:3}], // Added Carol (id 3)
+                    tempUsers: [{id:1}],
+                    consumers: [
+                        { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
+                        { item_id: 2, user_id: 2, temp_user_id: null, paid: true },
+                        { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: 2, temp_user_id: null, paid: false },
+                        { item_id: 3, user_id: null, temp_user_id: 1, paid: true },
+                        { item_id: 2, user_id: 3, temp_user_id: null, paid: true }
+                    ]
+                }
+            }
+        });
+        expect(res.statusCode).to.equal(200);
+        expect(res.body.toString('utf-8')).to.equal("Bill updated");
+    });
+});
+
+
 // Create temporary user
 describe('Server POST /tempusers', function() {
     before(function(done) {
