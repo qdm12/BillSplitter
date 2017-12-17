@@ -7,9 +7,9 @@
 "tip": 5,
 "link": "2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL",
 "done": 0,
-"users": [{"id":1, "username":"Alice Smith"}, {"id":2, "username":"Bob Builder"}],
-"tempUsers": [{"id":1, "username":"John Jacob"}],
-"items": [{"id":1, "name":"Pizza A", "amount":10.5}, {"id":2, "name":"Pizza B", "amount":14}, {"id":3, "name":"Fries", "amount":6.24}],
+"users": [{"id":1, "username":"Alice"}, {"id":2, "username":"Bob"}],
+"tempUsers": [{"id":1, "username":"John"}],
+"items": [{"id":1, "name":"PizzaA", "amount":10.5}, {"id":2, "name":"PizzaB", "amount":14}, {"id":3, "name":"Fries", "amount":6.24}],
 "consumers": [
         {"item_id": 1, "user_id": 1, "temp_user_id": null, "paid": 0 },
         {"item_id": 1, "user_id": null, "temp_user_id": 1, "paid": 0 },
