@@ -1,4 +1,7 @@
 /*jslint white:true */
+/*global
+console, process, require, module
+*/
 module.exports = {
     start: start,
     stop: stop
@@ -47,7 +50,7 @@ var parameters = {
         databaseName: "websysF17GB1",
         sqlScript: "websys.sql",
         port: 7001,
-        secret: "secretkey"
+        secret: "secretkey" // TODO read from environment
     }
 };
 
@@ -118,7 +121,7 @@ if (require.main === module) {
             start();
         }
     } else {
-        params = parameters.main;
+        params = parameters.local;
         start();
     }
 }
@@ -1031,9 +1034,8 @@ app.put('/bills/web/:link', function (req, res) {
           // we add it to the object for clarity
           bill.id = result[0].id;
           bill.link = link;
-          if (bill.name === undefined || bill.done === undefined || 
-            bill.users === undefined || bill.tempUsers === undefined ||
-            bill.consumers === undefined) {
+          if (bill.name === undefined || bill.done === undefined || bill.users === undefined ||
+              bill.tempUsers === undefined || bill.consumers === undefined) {
             return res.status(400).send("The bill object provided is missing top level properties");
           }
           if (typeof bill.name !== "string" || bill.name.length > 50) {
@@ -1131,19 +1133,12 @@ app.put('/bills/web/:link', function (req, res) {
                   });
                   return res.status(500).send("Our database is having troubles");
                 }
-                var values = [];
-                for(i = 0; i < bill.users.length; i += 1) {
-                  values.push([bill.id, bill.users[i].id, null]);
-                }
-                for(i = 0; i < bill.tempUsers.length; i += 1) {
-                  values.push([bill.id, null, bill.tempUsers[i].id]);
-                }
-                connection.query( // TODO check that unique works here
-                  "INSERT IGNORE INTO bills_users (bill_id, user_id, temp_user_id) VALUES ?",
-                  [values],
+                connection.query(
+                  "DELETE FROM bills_users WHERE bill_id = ?",
+                  [bill.id],
                   function (error) {
                     if (error) {
-                      console.warn("The users can't be inserted in the bills_users table:", error, "\n");
+                      console.warn("The bill data in bills_users can't be deleted:", error, "\n");
                       connection.rollback(function (error) {
                         connection.release();
                         if (error) {
@@ -1154,21 +1149,19 @@ app.put('/bills/web/:link', function (req, res) {
                       });
                       return res.status(500).send("Our database is having troubles");
                     }
-                    values = [];
-                    for(i = 0; i < bill.consumers.length; i += 1) {
-                      values.push([
-                          bill.consumers[i].item_id,
-                          bill.consumers[i].user_id,
-                          bill.consumers[i].temp_user_id,
-                          bill.consumers[i].paid
-                        ]);
+                    var values = [];
+                    for(i = 0; i < bill.users.length; i += 1) {
+                      values.push([bill.id, bill.users[i].id, null]);
                     }
-                    connection.query( // TODO check that unique works here
-                      "INSERT IGNORE INTO items_consumers (item_id, user_id, temp_user_id, paid) VALUES ?",
+                    for(i = 0; i < bill.tempUsers.length; i += 1) {
+                      values.push([bill.id, null, bill.tempUsers[i].id]);
+                    }
+                    connection.query(
+                      "INSERT INTO bills_users (bill_id, user_id, temp_user_id) VALUES ?",
                       [values],
                       function (error) {
                         if (error) {
-                          console.warn("The consumers data can't be inserted in the items_consumers table:", error, "\n");
+                          console.warn("The users can't be inserted in the bills_users table:", error, "\n");
                           connection.rollback(function (error) {
                             connection.release();
                             if (error) {
@@ -1179,14 +1172,59 @@ app.put('/bills/web/:link', function (req, res) {
                           });
                           return res.status(500).send("Our database is having troubles");
                         }
-                        connection.commit(function (error) {
-                          connection.release();
-                          if (error) {
-                            console.warn("The transaction sequence could not be committed:", error, "\n");
-                            return res.status(500).send("Our database is having troubles");
+                        connection.query(
+                          "DELETE FROM items_consumers WHERE item_id IN (SELECT id FROM items WHERE bill_id = ?)",
+                          [bill.id],
+                          function (error) {
+                            if (error) {
+                              console.warn("The bill data in items_consumers can't be deleted:", error, "\n");
+                              connection.rollback(function (error) {
+                                connection.release();
+                                if (error) {
+                                  console.warn("The transaction sequence could not be rollbacked:", error, "\n");
+                                } else {
+                                  console.log("Rolling back database query\n");
+                                }
+                              });
+                              return res.status(500).send("Our database is having troubles");
+                            }
+                            values = [];
+                            for(i = 0; i < bill.consumers.length; i += 1) {
+                              values.push([
+                                  bill.consumers[i].item_id,
+                                  bill.consumers[i].user_id,
+                                  bill.consumers[i].temp_user_id,
+                                  bill.consumers[i].paid
+                              ]);
+                            }
+                            connection.query(
+                              "INSERT INTO items_consumers (item_id, user_id, temp_user_id, paid) VALUES ?",
+                              [values],
+                              function (error) {
+                                if (error) {
+                                  console.warn("The consumers data can't be inserted in the items_consumers table:", error, "\n");
+                                  connection.rollback(function (error) {
+                                    connection.release();
+                                    if (error) {
+                                      console.warn("The transaction sequence could not be rollbacked:", error, "\n");
+                                    } else {
+                                      console.log("Rolling back database query\n");
+                                    }
+                                  });
+                                  return res.status(500).send("Our database is having troubles");
+                                }
+                                connection.commit(function (error) {
+                                  connection.release();
+                                  if (error) {
+                                    console.warn("The transaction sequence could not be committed:", error, "\n");
+                                    return res.status(500).send("Our database is having troubles");
+                                  }
+                                  res.status(200).send("Bill updated");
+                                });
+                              }
+                            );
                           }
-                          res.status(200).send("Bill updated");
-                        });
+                        );
                       }
                     );
                   }
