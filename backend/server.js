@@ -1,24 +1,154 @@
 /*jslint white:true */
+/*global
+console, process, require, module
+*/
+module.exports = {
+    start: start,
+    stop: stop
+};
+
+var fs = require('fs');
 var path = require('path');
 var express = require('express');
 var bodyParser = require('body-parser');
+var cors = require('cors');
 var app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(cors());
 var validator = require('validator');
 var mysql = require('mysql');
 var jwt = require('jsonwebtoken');
 var Scrypt = require('scrypt-async');
 
-var secret = "secretkey"; // Used for token generation and verification
-// TODO store secret in environment variable
-var tokenExpiration = 99999999; // a lot
+var parameters = {
+    local: {
+        databaseHost: "localhost",
+        databaseUser: "root",
+        databasePassword: "password",
+        databaseConnectionLimit: 10,
+        databaseName: "billsplitter",
+        sqlScript: "local.sql",
+        port: 8000,
+        secret: "secretkey"
+    },
+    test: {
+        databaseHost: "localhost",
+        databaseUser: "root",
+        databasePassword: "password",
+        databaseConnectionLimit: 10,
+        databaseName: "billsplittertest",
+        sqlScript: "tests/test.sql",
+        port: 8001,
+        secret: "TestSecret"
+    },
+    websys: {
+        databaseHost: "localhost",
+        databaseUser: "websysF17GB1",
+        databasePassword: "websysF17GB1!!",
+        databaseConnectionLimit: 10,
+        databaseName: "websysF17GB1",
+        sqlScript: "websys.sql",
+        port: 7001,
+        secret: "secretkey" // TODO read from environment
+    }
+};
 
+var params = null;
 var server = null;
 var pool = null;
 
-// All body of HTTP requests must be encoded in x-www-form-urlencoded
 
+function start() {
+    databaseExists(params.databaseName, function(exists) {
+        if (!exists) {
+            fs.readFile(__dirname + "/" + params.sqlScript, 'utf8', function (error, data) {
+                if (error) {
+                    console.error("Reading the SQL script file failed");
+                    throw error;      
+                }              
+                var connection = mysql.createConnection({
+                    host: params.databaseHost,
+                    user: params.databaseUser,
+                    password: params.databasePassword,
+                    multipleStatements: true
+                });
+                connection.connect();
+                connection.query(data, function (error) {
+                    if (error) {
+                        console.error("The SQL script did not execute successfully");
+                        throw error;
+                    }
+                    pool = mysql.createPool({
+                        connectionLimit: params.databaseConnectionLimit,
+                        host: params.databaseHost,
+                        user: params.databaseUser,
+                        password: params.databasePassword,
+                        database: params.databaseName
+                    });
+                    console.log("Database created and connection pool configured");
+                });
+                connection.end();
+            });
+        } else {
+            pool = mysql.createPool({
+                connectionLimit: params.databaseConnectionLimit,
+                host: params.databaseHost,
+                user: params.databaseUser,
+                password: params.databasePassword,
+                database: params.databaseName
+            });
+            console.log("Database found and connection pool configured");
+        }
+    });
+    server = app.listen(params.port, function () {
+        console.log("Server listening at %s:%s", params.databaseHost, params.port);
+    });
+}
+
+function stop() {
+    server.close();
+    pool.end();
+}
+
+if (require.main === module) {
+    if (process.argv.length > 2) {
+        if (process.argv[2] === "test") {
+            params = parameters.test;
+            start();
+        } else if (process.argv[2] === "websys") {
+            params = parameters.websys;
+            start();
+        }
+    } else {
+        params = parameters.local;
+        start();
+    }
+}
+
+function databaseExists(databaseName, callback) {
+    var connection = mysql.createConnection({
+        host: params.databaseHost,
+        user: params.databaseUser,
+        password: params.databasePassword
+    });
+    connection.connect();
+    connection.query(
+        "SHOW DATABASES LIKE ?",
+        [databaseName],
+        function (error, results) {
+            if (error) {
+                console.error("The database existence check failed:", error);
+                callback(false);
+            } else if (results.length === 0) {
+                callback(false);
+            } else {
+                callback(true);
+            }
+        }
+    );
+    connection.end();
+}
 
 /* ******************************
 *********************************
@@ -61,7 +191,7 @@ app.post('/bills', function (req, res) {
     // TODO see how to transport picture
     // TODO check for picture format
 
-    jwt.verify(token, secret, function (error, decoded) {
+    jwt.verify(token, params.secret, function (error, decoded) {
       if (error) {
         return res.status(401).send("Token is invalid");
       }
@@ -227,7 +357,7 @@ app.get('/bills', function (req, res) {
     if (!token) {
         return res.status(400).send("Token is missing from x-access-token in headers");
     }
-    jwt.verify(token, secret, function (error, decoded) {
+    jwt.verify(token, params.secret, function (error, decoded) {
       if (error) {
         return res.status(401).send("Token is invalid");
       }
@@ -309,7 +439,7 @@ app.get('/bills/:billID', function (req, res) {
         return res.status(400).send("billID is invalid");
     }
 
-    jwt.verify(token, secret, function (error, decoded) {
+    jwt.verify(token, params.secret, function (error, decoded) {
       if (error) {
         return res.status(401).send("Token is invalid");
       }
@@ -502,7 +632,7 @@ app.post('/login', function (req, res) {
             if (digest !== result[0].digest) {
               return res.status(401).send("Incorrect email or password");
             }
-            var token = jwt.sign({userID: result[0].id}, secret);
+            var token = jwt.sign({userID: result[0].id}, params.secret);
             // deterministic creation so multiple logins possible
             res.status(200).json({userID: result[0].id, token: token});
           });
@@ -658,7 +788,7 @@ app.post('/users', function (req, res) {
                             });
                             return;
                           }
-                          var token = jwt.sign({userID: userID}, secret);
+                          var token = jwt.sign({userID: userID}, params.secret);
                           connection.commit(function (error) {
                             connection.release();
                             if (error) {
@@ -853,7 +983,7 @@ app.get('/bills/web/:link', function (req, res) {
           if (result.length === 0) {
             return res.status(404).send("Link provided does not exist");
           }
-          res.status(200).sendFile(path.join(__dirname + '/dynamic/Dynamic_webpage_gen3.html'));
+          res.status(200).sendFile(path.join(__dirname + '/dynamic/Dynamic_webpage_gen4.html'));
         }
       );
     });
@@ -904,9 +1034,8 @@ app.put('/bills/web/:link', function (req, res) {
           // we add it to the object for clarity
           bill.id = result[0].id;
           bill.link = link;
-          if (bill.name === undefined || bill.done === undefined || 
-            bill.users === undefined || bill.tempUsers === undefined ||
-            bill.consumers === undefined) {
+          if (bill.name === undefined || bill.done === undefined || bill.users === undefined ||
+              bill.tempUsers === undefined || bill.consumers === undefined) {
             return res.status(400).send("The bill object provided is missing top level properties");
           }
           if (typeof bill.name !== "string" || bill.name.length > 50) {
@@ -1004,19 +1133,12 @@ app.put('/bills/web/:link', function (req, res) {
                   });
                   return res.status(500).send("Our database is having troubles");
                 }
-                var values = [];
-                for(i = 0; i < bill.users.length; i += 1) {
-                  values.push([bill.id, bill.users[i].id, null]);
-                }
-                for(i = 0; i < bill.tempUsers.length; i += 1) {
-                  values.push([bill.id, null, bill.tempUsers[i].id]);
-                }
-                connection.query( // TODO check that unique works here
-                  "INSERT IGNORE INTO bills_users (bill_id, user_id, temp_user_id) VALUES ?",
-                  [values],
+                connection.query(
+                  "DELETE FROM bills_users WHERE bill_id = ?",
+                  [bill.id],
                   function (error) {
                     if (error) {
-                      console.warn("The users can't be inserted in the bills_users table:", error, "\n");
+                      console.warn("The bill data in bills_users can't be deleted:", error, "\n");
                       connection.rollback(function (error) {
                         connection.release();
                         if (error) {
@@ -1027,21 +1149,19 @@ app.put('/bills/web/:link', function (req, res) {
                       });
                       return res.status(500).send("Our database is having troubles");
                     }
-                    values = [];
-                    for(i = 0; i < bill.consumers.length; i += 1) {
-                      values.push([
-                          bill.consumers[i].item_id,
-                          bill.consumers[i].user_id,
-                          bill.consumers[i].temp_user_id,
-                          bill.consumers[i].paid
-                        ]);
+                    var values = [];
+                    for(i = 0; i < bill.users.length; i += 1) {
+                      values.push([bill.id, bill.users[i].id, null]);
                     }
-                    connection.query( // TODO check that unique works here
-                      "INSERT IGNORE INTO items_consumers (item_id, user_id, temp_user_id, paid) VALUES ?",
+                    for(i = 0; i < bill.tempUsers.length; i += 1) {
+                      values.push([bill.id, null, bill.tempUsers[i].id]);
+                    }
+                    connection.query(
+                      "INSERT INTO bills_users (bill_id, user_id, temp_user_id) VALUES ?",
                       [values],
                       function (error) {
                         if (error) {
-                          console.warn("The consumers data can't be inserted in the items_consumers table:", error, "\n");
+                          console.warn("The users can't be inserted in the bills_users table:", error, "\n");
                           connection.rollback(function (error) {
                             connection.release();
                             if (error) {
@@ -1052,14 +1172,59 @@ app.put('/bills/web/:link', function (req, res) {
                           });
                           return res.status(500).send("Our database is having troubles");
                         }
-                        connection.commit(function (error) {
-                          connection.release();
-                          if (error) {
-                            console.warn("The transaction sequence could not be committed:", error, "\n");
-                            return res.status(500).send("Our database is having troubles");
+                        connection.query(
+                          "DELETE FROM items_consumers WHERE item_id IN (SELECT id FROM items WHERE bill_id = ?)",
+                          [bill.id],
+                          function (error) {
+                            if (error) {
+                              console.warn("The bill data in items_consumers can't be deleted:", error, "\n");
+                              connection.rollback(function (error) {
+                                connection.release();
+                                if (error) {
+                                  console.warn("The transaction sequence could not be rollbacked:", error, "\n");
+                                } else {
+                                  console.log("Rolling back database query\n");
+                                }
+                              });
+                              return res.status(500).send("Our database is having troubles");
+                            }
+                            values = [];
+                            for(i = 0; i < bill.consumers.length; i += 1) {
+                              values.push([
+                                  bill.consumers[i].item_id,
+                                  bill.consumers[i].user_id,
+                                  bill.consumers[i].temp_user_id,
+                                  bill.consumers[i].paid
+                              ]);
+                            }
+                            connection.query(
+                              "INSERT INTO items_consumers (item_id, user_id, temp_user_id, paid) VALUES ?",
+                              [values],
+                              function (error) {
+                                if (error) {
+                                  console.warn("The consumers data can't be inserted in the items_consumers table:", error, "\n");
+                                  connection.rollback(function (error) {
+                                    connection.release();
+                                    if (error) {
+                                      console.warn("The transaction sequence could not be rollbacked:", error, "\n");
+                                    } else {
+                                      console.log("Rolling back database query\n");
+                                    }
+                                  });
+                                  return res.status(500).send("Our database is having troubles");
+                                }
+                                connection.commit(function (error) {
+                                  connection.release();
+                                  if (error) {
+                                    console.warn("The transaction sequence could not be committed:", error, "\n");
+                                    return res.status(500).send("Our database is having troubles");
+                                  }
+                                  res.status(200).send("Bill updated");
+                                });
+                              }
+                            );
                           }
-                          res.status(200).send("Bill updated");
-                        });
+                        );
                       }
                     );
                   }
@@ -1072,42 +1237,117 @@ app.put('/bills/web/:link', function (req, res) {
     });
 });
 
+
+/* ******************************
+*********************************
+POST /tempusers
+*********************************
+Required URL parameters:
+Required body parameters: name, dynamic link
+*********************************
+Reponds: object (id only)
+*********************************
+********************************* */
+app.post('/tempusers', function (req, res) {
+    // Parses body of request
+    var name = req.body.name;
+    var link = req.body.link;
+    if (!name || !link) {
+        return res.status(400).send("Body is missing some parameter(s)");
+    }
+    if ((typeof link !== "string") || (typeof link == "string" && link.length !== 40)) {
+        return res.status(400).send("Link provided is invalid");
+    }
+    if (typeof name !== "string") {
+        return res.status(400).send("The name provided is not a string");
+    }
+    if (name.length < 3) {
+        return res.status(400).send("The name provided is too short");
+    }
+    if (name.length > 20) {
+        return res.status(400).send("The name provided is too long");
+    }
+    pool.getConnection(function(error, connection) {
+        if (error) {
+          console.warn("Could not obtain connection from pool\n");
+          return res.status(500).send("Our server is having troubles");
+        }
+        connection.query(
+          "SELECT id FROM bills WHERE link = ? LIMIT 1",
+          [link],
+          function (error, result) {
+            if (error) {
+              connection.release();
+              console.warn("The bills table can't be searched:", error, "\n");
+              return res.status(500).send("Our database is having troubles");
+            }
+            if (result.length === 0) {
+              connection.release();
+              return res.status(404).send("Link provided does not exist");
+            }
+            connection.beginTransaction(function (error) {
+              if (error) {
+                connection.release();
+                console.warn("The database transaction sequence could not be started:", error, "\n");
+                return res.status(500).send("Our server is having troubles");
+              }
+              connection.query(
+                "INSERT INTO temp_users (name) VALUES ?",
+                [[[name]]],
+                function (error) {
+                  if (error) {
+                    console.warn("The temporary user can't be created in the table temp_users:", error, "\n");
+                    connection.rollback(function (error) {
+                      connection.release();
+                      if (error) {
+                        console.warn("The transaction sequence could not be rollbacked:", error, "\n");
+                      } else {
+                        console.log("Rolling back database query\n");
+                      }
+                    });
+                    return res.status(500).send("Our database is having troubles");
+                  }
+                  connection.query(
+                    "SELECT MAX(id) AS tempUserID FROM temp_users WHERE name = ? LIMIT 3",
+                    [name],
+                    function (error, results) {
+                      if (error) {
+                        console.warn("The temporary user can't be found in the table temp_users:", error, "\n");
+                        connection.rollback(function (error) {
+                          connection.release();
+                          if (error) {
+                            console.warn("The transaction sequence could not be rollbacked:", error, "\n");
+                          } else {
+                            console.log("Rolling back database query\n");
+                          }
+                        });
+                        return res.status(500).send("Our database is having troubles");
+                      }
+                      connection.commit(function (error) {
+                        connection.release();
+                        if (error) {
+                          console.warn("The transaction sequence could not be committed:", error, "\n");
+                          return res.status(500).send("Our database is having troubles");
+                        }
+                        res.status(201).send({id: results[0].tempUserID});
+                      });
+                    }
+                  );
+                }
+              );
+            });
+          }
+        );
+    });
+});
+
 /*
 TODO
-- Create temp user
-- Test PUT /bills/web/:link to change the bill
+- Test temp user
 - switch to camelcase
 - Delete account
 - get user ID from username
-- Remove people with PUT, enhance the PUT bill
 */
-
-function start(port, database) {
-    pool = mysql.createPool({
-        connectionLimit: 10,
-        host: "localhost",
-        user: "root",
-        password: "password",
-        database: database
-    });
-    server = app.listen(port, function () {
-        console.log("Server listening at localhost:%s", port);
-    });
-}
-
-function stop() {
-    server.close();
-    pool.end();
-}
-
-if (require.main === module) {
-    if (process.argv.length > 2 && process.argv[2] === "test") {
-        secret = "TestSecret";
-        start(8001, "billsplittertest");
-    } else {
-        start(8000, "billsplitter");
-    }
-}
 
 function randomString(length) {
     var s = "";
@@ -1131,7 +1371,3 @@ function dbTimeToTimeObj(databaseTimestamp) {
         year: dateArray[3]
     };
 }
-
-module.exports = {
-    stop: stop
-};

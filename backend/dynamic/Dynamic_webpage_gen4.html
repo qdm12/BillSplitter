@@ -60,7 +60,7 @@ crossorigin="anonymous">
 											 payloadName = ui.draggable.text();
 											 //Check by class if user is a regular user or tempUser
 											 if ($(payload).hasClass("user")){
-												 tempPush = {"item_id": targetID, "user_id": payloadID, "temp_user_id": null, paid: false};
+												 tempPush = {"item_id": Number(targetID), "user_id": Number(payloadID), "temp_user_id": null, paid: false};
 												 //console.log("user class");
 												 //Generate new replacement user for the one user dragged.
 												 $('<div />', { id: payloadID, class: "user person", text: payloadName, width: "50px"}).appendTo('.people');
@@ -68,7 +68,7 @@ crossorigin="anonymous">
 												 $('.person').draggable({containment: ".wrapper", scroll: false, snap: ".item", snapMode: "inner", revert: "invalid"});
 																		  }
 											 else if ($(payload).hasClass("tempUser")) {
-												 tempPush = {"item_id": targetID, "user_id": null, "temp_user_id": payloadID, paid: false}
+												 tempPush = {"item_id": Number(targetID), "user_id": null, "temp_user_id": Number(payloadID), paid: false}
 												 //console.log("tempUser class");
 												 //Generate new replacement user for the one user dragged.
 												 $('<div />', { id: payloadID, class: "tempUser person", text: payloadName, width: "50px"}).appendTo('.people');

@@ -15,8 +15,8 @@ before(function() { // takes some ~1 second for the first request for some reaso
 });
 
 // Testing of server
-describe('Server GET /', function() {
-    it('Simple GET', function() {
+describe('Server GET /ping', function() {
+    it('GET /ping', function() {
         var res = request('GET', 'http://localhost:8001/ping');
         expect(res.statusCode).to.equal(200);
         expect(res.body.toString('utf-8')).to.equal("pong");
@@ -327,7 +327,7 @@ describe('Server POST /login', function() {
         expect(res.statusCode).to.equal(200);
         var credentials = JSON.parse(res.body.toString('utf-8'));
         expect(credentials.userID).to.equal(1);
-        expect(credentials.token.length).to.equal(143); // token is randomly generated
+        expect(credentials.token.length).to.equal(120); // token is randomly generated
     });
 });
 
@@ -433,7 +433,7 @@ describe('Server POST /users', function() {
         expect(res.statusCode).to.equal(201);
         var credentials = JSON.parse(res.body.toString('utf-8'));
         expect(credentials.userID).to.equal(5);
-        expect(credentials.token.length).to.equal(143); // token is randomly generated
+        expect(credentials.token.length).to.equal(120); // token is randomly generated
     });
 });
 
@@ -657,5 +657,75 @@ describe('Server PUT /bills/web/:link', function() {
         });
         expect(res.statusCode).to.equal(200);
         expect(res.body.toString('utf-8')).to.equal("Bill updated");
+    });
+});
+
+
+// Create temporary user
+describe('Server POST /tempusers', function() {
+    before(function(done) {
+        setUpDatabase(this, done);
+    });
+    it('No body is provided', function() {
+        var res = request('POST', 'http://localhost:8001/tempusers', {});
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Body is missing some parameter(s)");
+    });
+    it('Body is missing parameters', function() {
+        var res = request('POST', 'http://localhost:8001/tempusers', {
+            json: {}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Body is missing some parameter(s)");
+    });
+    it('Body is missing the name parameter', function() {
+        var res = request('POST', 'http://localhost:8001/tempusers', {
+            json: {link: "2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL"}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Body is missing some parameter(s)");
+    });
+    it('Body is missing the link parameter', function() {
+        var res = request('POST', 'http://localhost:8001/tempusers', {
+            json: {name: "michael"}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Body is missing some parameter(s)");
+    });
+    it('Link parameter is invalid (integer)', function() {
+        var res = request('POST', 'http://localhost:8001/tempusers', {
+            json: {name: "michael", link: 1}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("Link provided is invalid");
+    });
+    it('Name is too short', function() {
+        var res = request('POST', 'http://localhost:8001/tempusers', {
+            json: {name: "ab", link: "2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL"}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("The name provided is too short");
+    });
+    it('Name is too long', function() {
+        var res = request('POST', 'http://localhost:8001/tempusers', {
+            json: {name: "aaaaaaaaaaaaaaaaaaaaa", link: "2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL"}
+        });
+        expect(res.statusCode).to.equal(400);
+        expect(res.body.toString('utf-8')).to.equal("The name provided is too long");
+    });
+    it('Link does not exist', function() {
+        var res = request('POST', 'http://localhost:8001/tempusers', {
+            json: {name: "michael", link: "XXXXHtGDh44bMtW4VbngW3XxPQwqIQucnAUMXXXX"}
+        });
+        expect(res.statusCode).to.equal(404);
+        expect(res.body.toString('utf-8')).to.equal("Link provided does not exist");
+    });
+    it('Success', function() {
+        var res = request('POST', 'http://localhost:8001/tempusers', {
+            json: {name: "michael", link: "2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL"}
+        });
+        expect(res.statusCode).to.equal(201);
+        var tempUser = JSON.parse(res.body.toString('utf-8'));
+        expect(tempUser).to.eql({id: 3});
     });
 });
