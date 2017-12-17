@@ -11,6 +11,7 @@
 <button onclick="getDynamicHTML()">Dynamic HTML</button>
 <button onclick="getBillDetailsByLink()">Get bill details from its link</button>
 <button onclick="updateBillByLink()">Update bill details from its link</button>
+<button onclick="createTemporaryUser()">Create temporary user with a link of a bill</button>
 
 <script>
 var serverHost = "websys3.stern.nyu.edu";
@@ -116,7 +117,6 @@ function getBillDetailsByLink() {
     http.send();
 }
 
-
 function updateBillByLink() {
     var body = {
         bill: {
@@ -137,6 +137,22 @@ function updateBillByLink() {
     };
     var http = new XMLHttpRequest();
     http.open("PUT", serverURL + "/bills/web/2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL", true);
+    http.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+    http.onreadystatechange = function() { // callback function
+        if(http.readyState == XMLHttpRequest.DONE) {
+            alert("Server answered with HTTP status code " + http.status + ": " + http.responseText);
+        }
+    }
+    http.send(JSON.stringify(body));
+}
+
+function createTemporaryUser() {
+    var body = {
+        name: "michael",
+        link: "2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL"
+    };
+    var http = new XMLHttpRequest();
+    http.open("POST", serverURL + "/tempusers", true);
     http.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
     http.onreadystatechange = function() { // callback function
         if(http.readyState == XMLHttpRequest.DONE) {

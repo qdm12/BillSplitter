@@ -1237,14 +1237,116 @@ app.put('/bills/web/:link', function (req, res) {
     });
 });
 
+
+/* ******************************
+*********************************
+POST /tempusers
+*********************************
+Required URL parameters:
+Required body parameters: name, dynamic link
+*********************************
+Reponds: object (id only)
+*********************************
+********************************* */
+app.post('/tempusers', function (req, res) {
+    // Parses body of request
+    var name = req.body.name;
+    var link = req.body.link;
+    if (!name || !link) {
+        return res.status(400).send("Body is missing some parameter(s)");
+    }
+    if ((typeof link !== "string") || (typeof link == "string" && link.length !== 40)) {
+        return res.status(400).send("Link provided is invalid");
+    }
+    if (typeof name !== "string") {
+        return res.status(400).send("The name provided is not a string");
+    }
+    if (name.length < 3) {
+        return res.status(400).send("The name provided is too short");
+    }
+    if (name.length > 20) {
+        return res.status(400).send("The name provided is too long");
+    }
+    pool.getConnection(function(error, connection) {
+        if (error) {
+          console.warn("Could not obtain connection from pool\n");
+          return res.status(500).send("Our server is having troubles");
+        }
+        connection.query(
+          "SELECT id FROM bills WHERE link = ? LIMIT 1",
+          [link],
+          function (error, result) {
+            if (error) {
+              connection.release();
+              console.warn("The bills table can't be searched:", error, "\n");
+              return res.status(500).send("Our database is having troubles");
+            }
+            if (result.length === 0) {
+              connection.release();
+              return res.status(404).send("Link provided does not exist");
+            }
+            connection.beginTransaction(function (error) {
+              if (error) {
+                connection.release();
+                console.warn("The database transaction sequence could not be started:", error, "\n");
+                return res.status(500).send("Our server is having troubles");
+              }
+              connection.query(
+                "INSERT INTO temp_users (name) VALUES ?",
+                [[[name]]],
+                function (error) {
+                  if (error) {
+                    console.warn("The temporary user can't be created in the table temp_users:", error, "\n");
+                    connection.rollback(function (error) {
+                      connection.release();
+                      if (error) {
+                        console.warn("The transaction sequence could not be rollbacked:", error, "\n");
+                      } else {
+                        console.log("Rolling back database query\n");
+                      }
+                    });
+                    return res.status(500).send("Our database is having troubles");
+                  }
+                  connection.query(
+                    "SELECT MAX(id) AS tempUserID FROM temp_users WHERE name = ? LIMIT 3",
+                    [name],
+                    function (error, results) {
+                      if (error) {
+                        console.warn("The temporary user can't be found in the table temp_users:", error, "\n");
+                        connection.rollback(function (error) {
+                          connection.release();
+                          if (error) {
+                            console.warn("The transaction sequence could not be rollbacked:", error, "\n");
+                          } else {
+                            console.log("Rolling back database query\n");
+                          }
+                        });
+                        return res.status(500).send("Our database is having troubles");
+                      }
+                      connection.commit(function (error) {
+                        connection.release();
+                        if (error) {
+                          console.warn("The transaction sequence could not be committed:", error, "\n");
+                          return res.status(500).send("Our database is having troubles");
+                        }
+                        res.status(201).send({id: results[0].tempUserID});
+                      });
+                    }
+                  );
+                }
+              );
+            });
+          }
+        );
+    });
+});
+
 /*
 TODO
-- Create temp user
-- Test PUT /bills/web/:link to change the bill
+- Test temp user
 - switch to camelcase
 - Delete account
 - get user ID from username
-- Remove people with PUT, enhance the PUT bill
 */
 
 function randomString(length) {
