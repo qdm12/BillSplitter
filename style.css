@@ -382,11 +382,17 @@ html, body {
 
 .items{
 	position: relative;
-	top: 1.25%;
-/*	margin-top: 9% 5rem;*/
+/*	top: 1.25%;*/
 	max-height: 85%;
 	overflow-y: scroll;
 	width: 100%;
+}
+
+.wrapper{
+	position: relative;
+	top:17%;
+	max-height: 85%;
+	overflow-y: scroll;
 }
 
 .container{
