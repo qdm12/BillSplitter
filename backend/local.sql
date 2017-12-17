@@ -13,6 +13,7 @@ CREATE TABLE users (
 CREATE TABLE temp_users (
     id INTEGER AUTO_INCREMENT,
     name VARCHAR(20) NOT NULL,
+    bill_id INTEGER NOT NULL,
     PRIMARY KEY(id, name)
 );
 
@@ -72,8 +73,8 @@ INSERT INTO users (email, username, digest, salt)
 VALUES ("carol@c.com", "Carol", "2j4y0HVYYbrWdwh+NzklBaPEXSJ7TaD6g+LzcrQ5RVY=", "=gaxTRjS");
 
 -- TEMP USERS
-INSERT INTO temp_users (name) VALUES ("John");
-INSERT INTO temp_users (name) VALUES ("Gleb");
+INSERT INTO temp_users (name, bill_id) VALUES ("John", 1);
+INSERT INTO temp_users (name, bill_id) VALUES ("Gleb", 2);
 
 -- FIRST BILL
 BEGIN;
