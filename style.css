@@ -94,7 +94,7 @@ html, body {
     background: linear-gradient(280deg, #b0ffe9, #a9caff, #ffd2bf);
     background-size:250%;
     animation: background_animation 9s ease-in-out infinite;
-}
+}s
 */
 #identification #identificationError {
     position:absolute;
@@ -252,19 +252,21 @@ html, body {
 
 #bill #scan {
 	text-align: center;
+	left: 25%;
+	right: 25%;
 	font-family: 'Spectral SC', serif;
-	font-size: 5vmin;
+	font-weight: 550;
+	font-size:7vmin;
 	position: absolute;
-    width: 20%;
-    left: 40%;
-	right: 40%;
+    width: 50%;
+	min-width: 4rem;
     top: 40%;
     height:5%;
     background: #0077B2;
     border: 5px solid #000;
 	color:black;
     border-radius: #FFF;
-    padding-bottom: 2%;
+    padding-bottom: 3%;
 	padding-top: 1%;
 }
 
