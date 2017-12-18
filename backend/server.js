@@ -694,7 +694,7 @@ app.post('/users', function (req, res) {
         return res.status(400).send("Your email address is invalid");
     }
     email = validator.normalizeEmail(email);
-    if (username.length < 4) {
+    if (username.length < 3) {
         return res.status(400).send("Username is too short");
     }
     if (username.length > 40) {
@@ -1688,7 +1688,7 @@ app.get('/users/:username', function (req, res) {
     var username = req.params.username;
 
     username = validator.trim(username);
-    if (username.length < 4) {
+    if (username.length < 3) {
         return res.status(400).send("Username is too short");
     }
     if (username.length > 40) {
