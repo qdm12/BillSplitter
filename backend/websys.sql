@@ -79,10 +79,19 @@ INSERT INTO users (email, username, digest, salt)
 VALUES ("bob@b.com", "Bob", "2j4y0HVYYbrWdwh+NzklBaPEXSJ7TaD6g+LzcrQ5RVY=", "=gaxTRjS");
 INSERT INTO users (email, username, digest, salt)
 VALUES ("carol@c.com", "Carol", "2j4y0HVYYbrWdwh+NzklBaPEXSJ7TaD6g+LzcrQ5RVY=", "=gaxTRjS");
+INSERT INTO users (email, username, digest, salt)
+VALUES ("rose@r.com", "Rose", "2j4y0HVYYbrWdwh+NzklBaPEXSJ7TaD6g+LzcrQ5RVY=", "=gaxTRjS");
+INSERT INTO users (email, username, digest, salt)
+VALUES ("jack@j.com", "Jack", "2j4y0HVYYbrWdwh+NzklBaPEXSJ7TaD6g+LzcrQ5RVY=", "=gaxTRjS");
+
 
 -- TEMP USERS
 INSERT INTO temp_users (name, bill_id) VALUES ("John", 1);
 INSERT INTO temp_users (name, bill_id) VALUES ("Gleb", 2);
+INSERT INTO temp_users (name, bill_id) VALUES ("Mini", 3);
+INSERT INTO temp_users (name, bill_id) VALUES ("John", 3);
+INSERT INTO temp_users (name, bill_id) VALUES ("John", 4);
+INSERT INTO temp_users (name, bill_id) VALUES ("Cherry", 4);
 
 -- FIRST BILL
 BEGIN;
@@ -119,3 +128,41 @@ INSERT INTO bills_users (bill_id, user_id) VALUES ((SELECT MAX(id) FROM bills), 
 INSERT INTO bills_users (bill_id, temp_user_id) VALUES ((SELECT MAX(id) FROM bills), 2); -- Gleb
 -- No consumers yet
 COMMIT;
+
+
+-- THIRD BILL
+BEGIN;
+INSERT INTO bills (time, address, restaurant, name, tax, tip, link) 
+VALUES ("2017-12-01 00:00:01", "1 Penn Plaza", "Charlie's Grill Sub", "Charlie's House", 22.64, 1.85, "VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL");
+INSERT INTO items (bill_id, name, amount) VALUES ((SELECT MAX(id) FROM bills), "Reg Steak", 6.75);
+INSERT INTO items (bill_id, name, amount) VALUES ((SELECT MAX(id) FROM bills), "Reg Steak", 6.75);
+INSERT INTO items (bill_id, name, amount) VALUES ((SELECT MAX(id) FROM bills), "SM Veggie", 4.50);
+INSERT INTO items (bill_id, name, amount) VALUES ((SELECT MAX(id) FROM bills), "Cheese Bacon Fries", 2.79);
+INSERT INTO bills_users (bill_id, user_id) VALUES ((SELECT MAX(id) FROM bills), 2); -- Bob
+INSERT INTO bills_users (bill_id, user_id) VALUES ((SELECT MAX(id) FROM bills), 4); -- Rose
+INSERT INTO bills_users (bill_id, temp_user_id) VALUES ((SELECT MAX(id) FROM bills), 1); -- John
+INSERT INTO bills_users (bill_id, temp_user_id) VALUES ((SELECT MAX(id) FROM bills), 3); -- Mini
+INSERT INTO items_consumers (item_id, user_id) VALUES (10, 2); -- Bob eats Reg steak
+INSERT INTO items_consumers (item_id, user_id) VALUES (11, 4); -- Rose eats Reg steak
+INSERT INTO items_consumers (item_id, temp_user_id) VALUES (12, 1); -- John eats SM Veggie
+INSERT INTO items_consumers (item_id, temp_user_id) VALUES (13, 3); -- Mini eats cheese fries
+COMMIT;
+
+
+-- FOURTH BILL
+BEGIN;
+INSERT INTO bills (time, address, restaurant, name, tax, tip, link) 
+VALUES ("2017-12-01 00:00:01", "180 10th Street", "Prime Food Market", "Prime Market", 36.83, 2.37, "WVxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL");
+INSERT INTO items (bill_id, name, amount) VALUES ((SELECT MAX(id) FROM bills), "Malai Koft", 7.49);
+INSERT INTO items (bill_id, name, amount) VALUES ((SELECT MAX(id) FROM bills), "Chicken Tikka", 8.99);
+INSERT INTO items (bill_id, name, amount) VALUES ((SELECT MAX(id) FROM bills), "Chicken Palak", 17.98);
+INSERT INTO bills_users (bill_id, user_id) VALUES ((SELECT MAX(id) FROM bills), 1); -- Alice
+INSERT INTO bills_users (bill_id, user_id) VALUES ((SELECT MAX(id) FROM bills), 2); -- Bob
+INSERT INTO bills_users (bill_id, temp_user_id) VALUES ((SELECT MAX(id) FROM bills), 4); -- Cherry
+INSERT INTO bills_users (bill_id, temp_user_id) VALUES ((SELECT MAX(id) FROM bills), 1); -- John
+INSERT INTO items_consumers (item_id, user_id) VALUES (14, 2); -- Bob eats Malai Koft
+INSERT INTO items_consumers (item_id, user_id) VALUES (16, 1); -- Alice eats half Chicken palak
+INSERT INTO items_consumers (item_id, temp_user_id) VALUES (16, 4); -- Cherry eats half Chicken Palak
+INSERT INTO items_consumers (item_id, temp_user_id) VALUES (15, 1); -- John eats Chicken tikka
+COMMIT;
+

@@ -11,24 +11,10 @@ var serverHost = "websys3.stern.nyu.edu";
 var serverPort = 7001;
 var serverURL = "http://" + serverHost + ":" + serverPort;
 
-var currentScreen = "identification"; // that depends if user is logged in
+var currentScreen = "history"; // that depends if user is logged in
 var cred = null;
-
-function readURL(input) {
-    if (input.files && input.files[0]) {
-        var reader = new FileReader();
-        reader.onload = function (e) {
-            console.log(e.target.result);
-            $('#preview').attr('src', e.target.result);
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-
-$("#inputFile").change(function() {
-    console.log("x");
-    //readURL(this); TODO
-});
+// Alice credentials
+cred = {userID: 1, token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzM2MTE1Mn0.ADJM99Kok8zmUeaiu0hCZLtIPvSKEBfGg_uaTKx5zpM"}; // TODO to remove
 
 function configureNavigationBar() {
     console.log("Current screen is now", currentScreen);
@@ -242,6 +228,39 @@ function configureIdentificationScreen() {
         };
         http.send(JSON.stringify(body));
     });
+}
+
+function populateHistory() {
+    var http = new XMLHttpRequest();
+    http.open("GET", serverURL + "/bills", true);
+    http.setRequestHeader('x-access-token', cred.token);
+    http.onreadystatechange = function() { // callback function
+        if(http.readyState == XMLHttpRequest.DONE) {
+            if (http.status !== 200) {
+                alert(http.status + ": " + http.responseText);
+                return;
+            }
+            var billIDs = JSON.parse(http.responseText);
+            var http = new XMLHttpRequest();
+            var i;
+            var bills = [];
+            for(i = 0; i < billIDs.length; i += 1) { // TODO problem async
+                http.open("GET", serverURL + "/bills/" + billIDs[i], true);
+                http.setRequestHeader('x-access-token', cred.token);
+                http.onreadystatechange = function() { // callback function
+                    if(http.readyState == XMLHttpRequest.DONE) {
+                        if (http.status !== 200) {
+                            alert(http.status + ": " + http.responseText);
+                            return;
+                        }
+                        bills.push(JSON.parse(http.responseText));
+                    }
+                };
+                http.send();
+            }
+        }
+    };
+    http.send();
 }
 
 $(document).ready(function() { // Executes secondly
