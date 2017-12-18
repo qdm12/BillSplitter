@@ -1186,6 +1186,18 @@ app.put('/bills/web/:link', function (req, res) {
                       [values],
                       function (error) {
                         if (error) {
+                          if (error.code === "ER_DUP_ENTRY") { // duplicate entry
+                            console.log("The users can't be inserted in the bills_users table because there are duplicates\n");
+                            connection.rollback(function (error) {
+                              connection.release();
+                              if (error) {
+                                console.warn("The transaction sequence could not be rollbacked:", error, "\n");
+                              } else {
+                                console.log("Rolling back database query\n");
+                              }
+                            });
+                            return res.status(400).send("This user already exists for this bill");
+                          }
                           console.warn("The users can't be inserted in the bills_users table:", error, "\n");
                           connection.rollback(function (error) {
                             connection.release();
@@ -1463,6 +1475,18 @@ app.put('/bills/:billID', function (req, res) {
                             [values],
                             function (error) {
                               if (error) {
+                                if (error.code === "ER_DUP_ENTRY") { // duplicate entry
+                                  console.log("The users can't be inserted in the bills_users table because there are duplicates\n");
+                                  connection.rollback(function (error) {
+                                    connection.release();
+                                    if (error) {
+                                      console.warn("The transaction sequence could not be rollbacked:", error, "\n");
+                                    } else {
+                                      console.log("Rolling back database query\n");
+                                    }
+                                  });
+                                  return res.status(400).send("This user already exists for this bill");
+                                }
                                 console.warn("The users can't be inserted in the bills_users table:", error, "\n");
                                 connection.rollback(function (error) {
                                   connection.release();
