@@ -287,7 +287,7 @@ app.post('/bills', function (req, res) {
                   connection.query(
                     "SELECT id AS lastid FROM bills WHERE link = ?",
                     [link], // we use link as MAX(id) might fail with concurrent connections
-                    function (error, s) {
+                    function (error, results) {
                       if (error) {
                         console.warn("The bills table could not be searched:", error);
                         connection.rollback(function (error) {
@@ -643,7 +643,7 @@ app.post('/login', function (req, res) {
             console.warn("The users table can't be searched:", error, "\n");
             return res.status(500).send("Our database is having troubles");
           }
-          if (result.length === 0) { // email does not exist
+          if (results.length === 0) { // email does not exist
             return res.status(401).send("Incorrect email or password");
           }
           Scrypt(password, results[0].salt, {N:16384, r:8, p:1, dkLen:32, encoding:'base64'}, function (digest) {
@@ -1004,7 +1004,7 @@ app.get('/bills/web/:link', function (req, res) {
           if (results.length === 0) {
             return res.status(404).send("Link provided does not exist");
           }
-          res.status(200).sendFile(path.join(__dirname + '../dynamic.html'));
+          res.status(200).sendFile(path.join(__dirname + '/../dynamic.html'));
         }
       );
     });
@@ -1658,7 +1658,7 @@ Required body parameters: username
 Reponds: object (id only)
 *********************************
 ********************************* */
-app.get('/users/username', function (req, res) {
+app.get('/users/:username', function (req, res) {
     // TODO add authentication with token perhaps
     // Parses URL parameters of request
     var username = req.params.username;

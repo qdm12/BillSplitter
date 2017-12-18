@@ -987,3 +987,17 @@ describe('Server POST /tempusers', function() {
         expect(tempUser).to.eql({id: 3});
     });
 });
+
+
+// Get user ID from username
+describe('Server GET /users/username', function() {
+    before(function(done) {
+        setUpDatabase(this, done);
+    });
+    it('Success', function() {
+        var res = request('GET', 'http://localhost:8001/users/Alice');
+        expect(res.statusCode).to.equal(200);
+        var user = JSON.parse(res.body.toString('utf-8'));
+        expect(user).to.eql({id: 1});
+    });
+});
