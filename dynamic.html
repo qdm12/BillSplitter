@@ -143,264 +143,211 @@ html, body {
 <div id="items"></div>
 
 <script>
-// TODO get data
-data = {
-    id: 1,
-    time: {sec:'01', min:'00', hour:'00', day:'01', month:'Dec', year:'2017' },
-    address: '196 W Third Avenue',
-    restaurant: 'Pizza\'o\'ven',
-    name: 'Birthday pizza',
-    tax: 19.67,
-    tip: 5,
-    link: '2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL',
-    done: false,
-    users: [{id:1, username:'Alice'}, {id:2, username:'Bob'}],
-    tempUsers: [{id:1, username:'John'}],
-    items: [{id:1, name:'PizzaA', amount:10.5}, {id:2, name:'PizzaB', amount:14}, {id:3, name:'Fries', amount:6.24}],
-    consumers: [
-        { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
-        { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
-        { item_id: 2, user_id: 2, temp_user_id: null, paid: true },
-        { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
-        { item_id: 3, user_id: 2, temp_user_id: null, paid: false },
-        { item_id: 3, user_id: null, temp_user_id: 1, paid: false }
-    ]
-};
-
-
 var i, j, k;
-$("#description #billname").text(data.name);
-$("#description #restaurant").text(data.restaurant);
-$("#description #address").text(data.address);
-$("#description #time").text(data.time.day+" "+data.time.month+" "+data.time.year+" at "+data.time.hour+":"+data.time.min);
-$("#description #tip").text("$" + data.tip);
-$("#description #tax").text(data.tax + "%");
-if (data.done) {
-    $("#description #billname").css({
-        "text-decoration": "line-through",
-        color: "red"
-    });
-    $("#description").css({
-        background: "rgb(255, 170, 170)"
-    });
-    $("#description #done").text("This bill will be deleted in 24 hours");
-}
-
-usersPerItem = {};
-for (i = 0; i < data.consumers.length; i += 1) {
-    if (!usersPerItem[data.consumers[i].item_id]) {
-        usersPerItem[data.consumers[i].item_id] = 0;
+var serverHost = "websys3.stern.nyu.edu";
+var serverPort = 7001;
+// var serverHost = "localhost";
+// var serverPort = 8000;
+var serverURL = "http://" + serverHost + ":" + serverPort;
+var link = document.location.href;
+link = link.substring(link.length - 48);
+link = "2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL"; // TODO remove
+var http = new XMLHttpRequest();
+http.open("GET", serverURL + "/bills/web/" + link + "/details", true);
+http.onreadystatechange = function() { // callback function
+  if(http.readyState == XMLHttpRequest.DONE) {
+    if (http.status !== 200) {
+      alert(http.status + ": " + http.responseText);    
     }
-    usersPerItem[data.consumers[i].item_id] += 1;
-}
-
-var userOwn, UIusername;
-for(i = 0; i < data.users.length; i += 1) {
-    $("#users").append('<div id="user'+ data.users[i].id +'" class="user"></div>');
-    UIusername = data.users[i].username;
-    if (UIusername.length > 6) {
-        UIusername = UIusername.substring(0,6) + "."
-    }
-    $("#users #user"+data.users[i].id).append('<div class="username">' + data.users[i].username + '</div>');
-    userOwn = 0;
-    for(j = 0; j < data.consumers.length; j += 1) {
-        if (data.consumers[j].user_id === data.users[i].id) {
-            for(k = 0; k < data.items.length; k += 1) {
-                if (data.items[k].id === data.consumers[j].item_id) {
-                    userOwn += (data.items[k].amount / usersPerItem[data.items[k].id]);
-                }
-            }
-        }
-    }
-    userOwn *= 1 + data.tax / 100;
-    userOwn += data.tip / (data.users.length + data.tempUsers.length);
-    $("#users #user"+data.users[i].id).append('<div class="userown">$' + userOwn.toFixed(2) + '</div>');
-}
-for(i = 0; i < data.tempUsers.length; i += 1) {
-    $("#users").append('<div id="tempUser'+ data.tempUsers[i].id +'" class="user" style="background:grey;"></div>');
-    UIusername = data.tempUsers[i].username;
-    if (UIusername.length > 6) {
-        UIusername = UIusername.substring(0,6) + "."
-    }
-    $("#users #tempUser"+data.tempUsers[i].id).append('<div class="username">' + data.tempUsers[i].username + '</div>');
-    userOwn = 0;
-    for(j = 0; j < data.consumers.length; j += 1) {
-        if (data.consumers[j].temp_user_id === data.tempUsers[i].id && !data.consumers[j].paid) {
-            for(k = 0; k < data.items.length; k += 1) {
-                if (data.items[k].id === data.consumers[j].item_id) {
-                    userOwn += (data.items[k].amount / usersPerItem[data.items[k].id]);
-                }
-            }
-        }
-    }
-    userOwn *= 1 + data.tax / 100;
-    userOwn += data.tip / (data.users.length + data.tempUsers.length);
-    $("#users #tempUser"+data.tempUsers[i].id).append('<div class="userown">$' + userOwn.toFixed(2) + '</div>');
-}
-
-var itemPaid = false;
-var amount = 0;
-for(i = 0; i < data.items.length; i += 1) {
-    $("#items").append('<div id="item'+ data.items[i].id +'" class="item"></div>');
-    $("#items #item"+data.items[i].id).append('<div class="itemname">' + data.items[i].name + '</div>');
-    amount = data.items[i].amount * (1 + data.tax / 100);
-    $("#items #item"+data.items[i].id).append('<div class="itemprice">$' + amount.toFixed(2) + '</div>');
-    itemPaid = true;
-    for(j = 0; j < data.consumers.length; j += 1) {
-        if (data.consumers[j].item_id === data.items[i].id) {
-            if (!data.consumers[j].paid) {
-                itemPaid = false;
-            }
-            var copy;
-            if (data.consumers[j].user_id != null) { // user
-                copy = $("#users #user"+data.consumers[j].user_id).clone();
-            } else { // temp user
-                copy = $("#users #tempUser"+data.consumers[j].temp_user_id).clone();
-            }
-            copy.children().remove(".userown"); // removes the $ owned
-            $("#items #item"+data.items[i].id).append(copy);
-        }
-    }
-    if (itemPaid) {
-        $("#items #item"+data.items[i].id + " .itemprice").css({
-            color: "yellow",
+    var data = JSON.parse(http.responseText);
+    $("#description #billname").text(data.name);
+    $("#description #restaurant").text(data.restaurant);
+    $("#description #address").text(data.address);
+    $("#description #time").text(data.time.day+" "+data.time.month+" "+data.time.year+" at "+data.time.hour+":"+data.time.min);
+    $("#description #tip").text("$" + data.tip);
+    $("#description #tax").text(data.tax + "%");
+    if (data.done) {
+        $("#description #billname").css({
             "text-decoration": "line-through",
+            color: "red"
         });
+        $("#description").css({
+            background: "rgb(255, 170, 170)"
+        });
+        $("#description #done").text("This bill will be deleted in 24 hours");
     }
+
+    usersPerItem = {};
+    for (i = 0; i < data.consumers.length; i += 1) {
+        if (!usersPerItem[data.consumers[i].item_id]) {
+            usersPerItem[data.consumers[i].item_id] = 0;
+        }
+        usersPerItem[data.consumers[i].item_id] += 1;
+    }
+
+    var userOwn, UIusername;
+    for(i = 0; i < data.users.length; i += 1) {
+        $("#users").append('<div id="user'+ data.users[i].id +'" class="user"></div>');
+        UIusername = data.users[i].username;
+        if (UIusername.length > 6) {
+            UIusername = UIusername.substring(0,6) + "."
+        }
+        $("#users #user"+data.users[i].id).append('<div class="username">' + data.users[i].username + '</div>');
+        userOwn = 0;
+        for(j = 0; j < data.consumers.length; j += 1) {
+            if (data.consumers[j].user_id === data.users[i].id) {
+                for(k = 0; k < data.items.length; k += 1) {
+                    if (data.items[k].id === data.consumers[j].item_id) {
+                        userOwn += (data.items[k].amount / usersPerItem[data.items[k].id]);
+                    }
+                }
+            }
+        }
+        userOwn *= 1 + data.tax / 100;
+        userOwn += data.tip / (data.users.length + data.tempUsers.length);
+        $("#users #user"+data.users[i].id).append('<div class="userown">$' + userOwn.toFixed(2) + '</div>');
+    }
+    for(i = 0; i < data.tempUsers.length; i += 1) {
+        $("#users").append('<div id="tempUser'+ data.tempUsers[i].id +'" class="user" style="background:grey;"></div>');
+        UIusername = data.tempUsers[i].username;
+        if (UIusername.length > 6) {
+            UIusername = UIusername.substring(0,6) + "."
+        }
+        $("#users #tempUser"+data.tempUsers[i].id).append('<div class="username">' + data.tempUsers[i].username + '</div>');
+        userOwn = 0;
+        for(j = 0; j < data.consumers.length; j += 1) {
+            if (data.consumers[j].temp_user_id === data.tempUsers[i].id && !data.consumers[j].paid) {
+                for(k = 0; k < data.items.length; k += 1) {
+                    if (data.items[k].id === data.consumers[j].item_id) {
+                        userOwn += (data.items[k].amount / usersPerItem[data.items[k].id]);
+                    }
+                }
+            }
+        }
+        userOwn *= 1 + data.tax / 100;
+        userOwn += data.tip / (data.users.length + data.tempUsers.length);
+        $("#users #tempUser"+data.tempUsers[i].id).append('<div class="userown">$' + userOwn.toFixed(2) + '</div>');
+    }
+
+    var itemPaid = false;
+    var amount = 0;
+    for(i = 0; i < data.items.length; i += 1) {
+        $("#items").append('<div id="item'+ data.items[i].id +'" class="item"></div>');
+        $("#items #item"+data.items[i].id).append('<div class="itemname">' + data.items[i].name + '</div>');
+        amount = data.items[i].amount * (1 + data.tax / 100);
+        $("#items #item"+data.items[i].id).append('<div class="itemprice">$' + amount.toFixed(2) + '</div>');
+        itemPaid = true;
+        for(j = 0; j < data.consumers.length; j += 1) {
+            if (data.consumers[j].item_id === data.items[i].id) {
+                if (!data.consumers[j].paid) {
+                    itemPaid = false;
+                }
+                var copy;
+                if (data.consumers[j].user_id != null) { // user
+                    copy = $("#users #user"+data.consumers[j].user_id).clone();
+                } else { // temp user
+                    copy = $("#users #tempUser"+data.consumers[j].temp_user_id).clone();
+                }
+                copy.children().remove(".userown"); // removes the $ owned
+                $("#items #item"+data.items[i].id).append(copy);
+            }
+        }
+        if (itemPaid) {
+            $("#items #item"+data.items[i].id + " .itemprice").css({
+                color: "yellow",
+                "text-decoration": "line-through",
+            });
+        }
+    }
+
+
+    $('.user').draggable({
+        helper:"clone"
+    });
+    $('.item').droppable({
+        drop: function(event, ui) {
+            if ($(this).has("#"+$(ui.draggable).attr('id')).length === 1) {
+                // user is already in there
+                $(this).children("#"+$(ui.draggable).attr('id')).effect("highlight", {}, 500);
+                return;
+            }
+
+            var isUserTemp = $(ui.draggable).attr("id").match("^tempUser");
+
+            // Updates the data
+            if (isUserTemp) {
+                data.consumers.push({
+                    item_id: $(this).attr("id").substring(4),
+                    user_id: null,
+                    temp_user_id: $(ui.draggable).attr("id").substring(8)
+                });
+            } else { // registered user
+                data.consumers.push({
+                    item_id: $(this).attr("id").substring(4),
+                    user_id: $(ui.draggable).attr("id").substring(4),
+                    temp_user_id: null
+                });
+            }
+
+            // Updates the UI
+            var copy = $(ui.draggable).clone();
+            copy.children().remove(".userown"); // removes the $ owned
+            $(this).append(copy);
+            copy.effect("highlight", {}, 500);
+            $(this).effect("highlight", {}, 1000);
+
+            usersPerItem[$(this).attr("id").substring(4)] += 1;
+            var userOwn;
+            for(i = 0; i < data.users.length; i += 1) {
+                userOwn = 0;
+                for(j = 0; j < data.consumers.length; j += 1) {
+                    if (data.consumers[j].user_id === data.users[i].id) {
+                        for(k = 0; k < data.items.length; k += 1) {
+                            if (data.items[k].id === data.consumers[j].item_id) {
+                                userOwn += (data.items[k].amount / usersPerItem[data.items[k].id]);
+                            }
+                        }
+                    }
+                }
+                userOwn *= 1 + data.tax / 100;
+                userOwn += data.tip / (data.users.length + data.tempUsers.length);
+                var userOwnElement = $("#users #user"+data.users[i].id + " .userown");
+                if (userOwnElement.text() != "$" + userOwn.toFixed(2)) {
+                    userOwnElement.effect("highlight", {}, 500);
+                }
+                userOwnElement.text("$" + userOwn.toFixed(2));
+            }
+            for(i = 0; i < data.tempUsers.length; i += 1) {
+                userOwn = 0;
+                for(j = 0; j < data.consumers.length; j += 1) {
+                    if (data.consumers[j].temp_user_id === data.tempUsers[i].id && !data.consumers[j].paid) {
+                        for(k = 0; k < data.items.length; k += 1) {
+                            if (data.items[k].id === data.consumers[j].item_id) {
+                                userOwn += (data.items[k].amount / usersPerItem[data.items[k].id]);
+                            }
+                        }
+                    }
+                }
+                userOwn *= 1 + data.tax / 100;
+                userOwn += data.tip / (data.users.length + data.tempUsers.length);
+                var userOwnElement = $("#users #tempUser"+data.tempUsers[i].id + " .userown");
+                if (userOwnElement.text() != "$" + userOwn.toFixed(2)) {
+                    userOwnElement.effect("highlight", {}, 500);
+                }
+                userOwnElement.text("$" + userOwn.toFixed(2));
+            }
+        }
+    });
+  }
 }
+http.send();
 
 
-$('.user').draggable({
-    helper:"clone"
-});
-$('.item').droppable({
-    drop: function(event, ui) {
-        if ($(this).has("#"+$(ui.draggable).attr('id')).length === 1) {
-            // user is already in there
-            $(this).children("#"+$(ui.draggable).attr('id')).effect("highlight", {}, 500);
-            return;
-        }
 
-        var isUserTemp = $(ui.draggable).attr("id").match("^tempUser");
 
-        // Updates the data
-        if (isUserTemp) {
-            data.consumers.push({
-                item_id: $(this).attr("id").substring(4),
-                user_id: null,
-                temp_user_id: $(ui.draggable).attr("id").substring(8)
-            });
-        } else { // registered user
-            data.consumers.push({
-                item_id: $(this).attr("id").substring(4),
-                user_id: $(ui.draggable).attr("id").substring(4),
-                temp_user_id: null
-            });
-        }
 
-        // Updates the UI
-        var copy = $(ui.draggable).clone();
-        copy.children().remove(".userown"); // removes the $ owned
-        $(this).append(copy);
-        copy.effect("highlight", {}, 500);
-        $(this).effect("highlight", {}, 1000);
-
-        usersPerItem[$(this).attr("id").substring(4)] += 1;
-        var userOwn;
-        for(i = 0; i < data.users.length; i += 1) {
-            userOwn = 0;
-            for(j = 0; j < data.consumers.length; j += 1) {
-                if (data.consumers[j].user_id === data.users[i].id) {
-                    for(k = 0; k < data.items.length; k += 1) {
-                        if (data.items[k].id === data.consumers[j].item_id) {
-                            userOwn += (data.items[k].amount / usersPerItem[data.items[k].id]);
-                        }
-                    }
-                }
-            }
-            userOwn *= 1 + data.tax / 100;
-            userOwn += data.tip / (data.users.length + data.tempUsers.length);
-            var userOwnElement = $("#users #user"+data.users[i].id + " .userown");
-            if (userOwnElement.text() != "$" + userOwn.toFixed(2)) {
-                userOwnElement.effect("highlight", {}, 500);
-            }
-            userOwnElement.text("$" + userOwn.toFixed(2));
-        }
-        for(i = 0; i < data.tempUsers.length; i += 1) {
-            userOwn = 0;
-            for(j = 0; j < data.consumers.length; j += 1) {
-                if (data.consumers[j].temp_user_id === data.tempUsers[i].id && !data.consumers[j].paid) {
-                    for(k = 0; k < data.items.length; k += 1) {
-                        if (data.items[k].id === data.consumers[j].item_id) {
-                            userOwn += (data.items[k].amount / usersPerItem[data.items[k].id]);
-                        }
-                    }
-                }
-            }
-            userOwn *= 1 + data.tax / 100;
-            userOwn += data.tip / (data.users.length + data.tempUsers.length);
-            var userOwnElement = $("#users #tempUser"+data.tempUsers[i].id + " .userown");
-            if (userOwnElement.text() != "$" + userOwn.toFixed(2)) {
-                userOwnElement.effect("highlight", {}, 500);
-            }
-            userOwnElement.text("$" + userOwn.toFixed(2));
-        }
-    }
-});
 
 // TODO add user
 // TODO add temp user
-/*
-$('.wrapper').append($('<div/>', {class: 'items'}));
-$('header').append($('<div/>', {class: 'users'}));
-$.each(data.items, function(i, val) {
-    $('<div />', { id: val["id"], class: "item", text: val["name"]}).appendTo('.items');
-    $('.item').droppable({
-        accept: ".person",
-        drop: function(event, ui) {
-            targetID = event.target.id;
-            targetName = $(event.target).text();
-            payload = ui.draggable;
-            payloadID = ui.draggable.prop("id");
-            payloadName = ui.draggable.text();
-            //Check by class if user is a regular user or tempUser
-            if ($(payload).hasClass("user")){
-                tempPush = {"item_id": Number(targetID), "user_id": Number(payloadID), "temp_user_id": null, paid: false};
-                //Generate new replacement user for the one user dragged.
-                $('<div />', { id: payloadID, class: "user person", text: payloadName}).appendTo('.users');
-                $('.person').draggable({snap: ".item", snapMode: "inner", revert: "invalid"});
-            } else if ($(payload).hasClass("tempUser")) {
-                tempPush = {"item_id": Number(targetID), "user_id": null, "temp_user_id": Number(payloadID), paid: false}
-                // Generate new replacement user for the one user dragged.
-                $('<div />', { id: payloadID, class: "tempUser person", text: payloadName}).appendTo('.users');
-                $('.person').draggable({snap: ".item", snapMode: "inner", revert: "invalid"});
-            };
-            if (!(tempPush in consumers)) {
-                consumers.push(tempPush);
-            };            
-            bill["name"] = "New name";
-            bill["done"] = false;
-            bill["users"] = sendUsers;
-            bill["tempUsers"] = sendTempUsers;
-            bill["consumers"] = consumers;
-            console.log("Bill:"+JSON.stringify(bill))
-        }
-    });
-});
-
-//Create regular user list.
-$.each(data.users, function(index, value) {
-    $('<div/>', { id: value["id"], class: "user person", text: value["username"]}).appendTo('.users');;
-    $('.person').draggable({containment: ".wrapper", scroll: false, snap: ".item", snapMode: "inner", revert: "invalid"});
-    sendUsers.push({"id":value["id"]});
-});
-
-//Create temp user list.
-$.each(data.tempUsers, function(index, value) {
-    $('<div/>', { id: value["id"], class: "tempUser person", text: value["username"]}).appendTo('.users');
-    $('.person').draggable({containment: ".wrapper", scroll: false, snap: ".item", snapMode: "inner", revert: "invalid"});
-    sendTempUsers.push({"id":value["id"]});
-});
-*/
 </script>
 </html>
