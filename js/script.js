@@ -1,12 +1,3 @@
-/* var isMobile = false;
-if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-	isMobile = true;
-}
-if(isMobile){
-    console.log('Mobile detected');
-} else {
-    console.log('Desktop detected.');
-} */
 var serverHost = "websys3.stern.nyu.edu";
 var serverPort = 7001;
 var serverURL = "http://" + serverHost + ":" + serverPort;
