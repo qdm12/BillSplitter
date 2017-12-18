@@ -118,6 +118,38 @@ html, body {
     float: right;
     color: rgb(132, 235, 132);
 }
+#addUserContainer, #addNameContainer {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    margin-top: 0;
+    font-size: 4vh;
+    border: 3px solid rgb(206, 255, 141);
+    color: rgb(0, 0, 0);
+}
+#fieldUser, #fieldName {
+    padding: 3%;
+    float: left;
+    width: 75%;
+	transition:all 0.4s;
+    -webkit-transition:all 0.4s;
+    -moz-transition:all 0.4s;
+    -o-transition:all 0.4s;
+    -ms-transition:all 0.4s;
+}
+#fieldUser:focus, #fieldName:focus {
+    background: rgba(211, 255, 202, 0.753);
+}
+#submitUser, #submitName {
+    float: right;
+    width: 25%;
+    display: flex;
+    justify-content: center;
+    color: rgb(22, 255, 41);
+    background-color: rgb(78, 197, 124);
+}
+
+
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js" type="text/javascript"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" type="text/javascript"></script>
@@ -134,38 +166,84 @@ html, body {
         <div id="time">12/31/1999 23:59:59</div>
     </div>
     <div id="billright">
-        <div id="tip">Tip: $4.67</div>
-        <div id="tax">Tax: $8</div>
+        <div id="tip">Tip: $0</div>
+        <div id="tax">Tax: $0</div>
     </div>
     <div id="done" style="position:absolute;left:25%;width:100%;color:rgb(255, 0, 0)"></div>
 </div>
-<div id="users"></div>
+<div id="users">
+    <div id="addUserContainer">
+        <input id="fieldUser" type="text" placeholder="Add user" maxlength="40">
+        <div id="submitUser">+</div>
+    </div>
+    <div id="addNameContainer">
+        <input id="fieldName" type="text" placeholder="Add name" maxlength="20">
+        <div id="submitName">+</div>
+    </div>
+</div>
 <div id="items"></div>
 
 <script>
+var data = null;
+var usersPerItem = {};
 var i, j, k;
 var serverHost = "websys3.stern.nyu.edu";
 var serverPort = 7001;
-// var serverHost = "localhost";
-// var serverPort = 8000;
 var serverURL = "http://" + serverHost + ":" + serverPort;
 var link = document.location.href;
 link = link.substring(link.length - 48);
 link = "2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL"; // TODO remove
+
+function updateDatabase() {
+    var i;
+    var users = [], tempUsers = [];
+    for(i = 0; i < data.users.length; i += 1) {
+        users.push({id: data.users[i].id});
+    }
+    for(i = 0; i < data.tempUsers.length; i += 1) {
+        tempUsers.push({id: data.tempUsers[i].id});
+    }
+    var body = {
+        bill: {
+            name: data.name,
+            done: data.done,
+            users: users,
+            tempUsers: tempUsers,
+            consumers: data.consumers
+        }
+    };
+    var http = new XMLHttpRequest();
+    http.open("PUT", serverURL + "/bills/web/" + link, true);
+    http.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+    http.onreadystatechange = function() { // callback function
+        if(http.readyState == XMLHttpRequest.DONE) {
+            if (http.status !== 200) {
+                alert(http.status + ": " + http.responseText);
+                return;
+            }
+            console.log("Database updated");
+        }
+    }
+    http.send(JSON.stringify(body));
+}
+
+
+
 var http = new XMLHttpRequest();
 http.open("GET", serverURL + "/bills/web/" + link + "/details", true);
 http.onreadystatechange = function() { // callback function
   if(http.readyState == XMLHttpRequest.DONE) {
     if (http.status !== 200) {
-      alert(http.status + ": " + http.responseText);    
+      alert(http.status + ": " + http.responseText);
+      return;
     }
-    var data = JSON.parse(http.responseText);
+    data = JSON.parse(http.responseText);
     $("#description #billname").text(data.name);
     $("#description #restaurant").text(data.restaurant);
     $("#description #address").text(data.address);
     $("#description #time").text(data.time.day+" "+data.time.month+" "+data.time.year+" at "+data.time.hour+":"+data.time.min);
-    $("#description #tip").text("$" + data.tip);
-    $("#description #tax").text(data.tax + "%");
+    $("#description #tip").text("Tip: $" + data.tip);
+    $("#description #tax").text("Tax: " + data.tax + "%");
     if (data.done) {
         $("#description #billname").css({
             "text-decoration": "line-through",
@@ -177,7 +255,6 @@ http.onreadystatechange = function() { // callback function
         $("#description #done").text("This bill will be deleted in 24 hours");
     }
 
-    usersPerItem = {};
     for (i = 0; i < data.consumers.length; i += 1) {
         if (!usersPerItem[data.consumers[i].item_id]) {
             usersPerItem[data.consumers[i].item_id] = 0;
@@ -192,7 +269,7 @@ http.onreadystatechange = function() { // callback function
         if (UIusername.length > 6) {
             UIusername = UIusername.substring(0,6) + "."
         }
-        $("#users #user"+data.users[i].id).append('<div class="username">' + data.users[i].username + '</div>');
+        $("#users #user"+data.users[i].id).append('<div class="username">' + UIusername + '</div>');
         userOwn = 0;
         for(j = 0; j < data.consumers.length; j += 1) {
             if (data.consumers[j].user_id === data.users[i].id) {
@@ -213,7 +290,7 @@ http.onreadystatechange = function() { // callback function
         if (UIusername.length > 6) {
             UIusername = UIusername.substring(0,6) + "."
         }
-        $("#users #tempUser"+data.tempUsers[i].id).append('<div class="username">' + data.tempUsers[i].username + '</div>');
+        $("#users #tempUser"+data.tempUsers[i].id).append('<div class="username">' + UIusername + '</div>');
         userOwn = 0;
         for(j = 0; j < data.consumers.length; j += 1) {
             if (data.consumers[j].temp_user_id === data.tempUsers[i].id && !data.consumers[j].paid) {
@@ -260,11 +337,82 @@ http.onreadystatechange = function() { // callback function
         }
     }
 
+    $("#users #addUserContainer #submitUser").click(function() {
+        var username = $("#users #addUserContainer #fieldUser").val();
+        var http = new XMLHttpRequest();
+        http.open("GET", serverURL + "/users/" + username, true);
+        http.onreadystatechange = function() { // callback function
+            if(http.readyState == XMLHttpRequest.DONE) {
+                if (http.status !== 200) {
+                  alert(http.status + ": " + http.responseText);
+                  return;
+                }
+                var userID = JSON.parse(http.responseText).id;
 
-    $('.user').draggable({
+                // Update local data
+                data.users.push({id:userID, username:username});
+                
+                // Update UI
+                var i = data.users.length - 1;
+                $("#users").append('<div id="user'+ data.users[i].id +'" class="user"></div>');
+                var UIusername = data.users[i].username;
+                if (UIusername.length > 6) {
+                    UIusername = UIusername.substring(0,6) + "."
+                }
+                $("#users #user"+data.users[i].id).append('<div class="username">' + UIusername + '</div>');
+                var userOwn = data.tip / (data.users.length + data.tempUsers.length);
+                $("#users #user"+data.users[i].id).append('<div class="userown">$' + userOwn.toFixed(2) + '</div>');
+                
+                // Update database
+                updateDatabase();
+            }
+        }
+        http.send();
+    });
+
+    $("#users #addNameContainer #submitName").click(function() {
+        var name = $("#users #addNameContainer #fieldName").val();
+        var body = {
+            name: name,
+            link: link
+        };
+        var http = new XMLHttpRequest();
+        http.open("POST", serverURL + "/tempusers", true);
+        http.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+        http.onreadystatechange = function() { // callback function
+            if(http.readyState == XMLHttpRequest.DONE) {
+                if (http.status !== 201) {
+                  alert(http.status + ": " + http.responseText);
+                  return;
+                }
+                var tempUserID = JSON.parse(http.responseText).id;
+
+                // Update local data
+                data.tempUsers.push({id:tempUserID, username:name});
+                
+                // Update UI
+                var i = data.tempUsers.length - 1;
+                $("#users").append('<div id="tempUser'+ data.tempUser[i].id +'" class="user"></div>');
+                var UIusername = data.tempUser[i].username;
+                if (UIusername.length > 6) {
+                    UIusername = UIusername.substring(0,6) + "."
+                }
+                $("#users #user"+data.tempUser[i].id).append('<div class="username">' + UIusername + '</div>');
+                var userOwn = data.tip / (data.users.length + data.tempUsers.length);
+                $("#users #user"+data.tempUser[i].id).append('<div class="userown">$' + userOwn.toFixed(2) + '</div>');
+
+                // Update database
+                updateDatabase();
+            }
+        }
+        http.send(JSON.stringify(body));
+    });
+
+
+    $('#users .user').draggable({
         helper:"clone"
     });
-    $('.item').droppable({
+    $('#items .item').droppable({
         drop: function(event, ui) {
             if ($(this).has("#"+$(ui.draggable).attr('id')).length === 1) {
                 // user is already in there
@@ -336,18 +484,11 @@ http.onreadystatechange = function() { // callback function
                 }
                 userOwnElement.text("$" + userOwn.toFixed(2));
             }
+            updateDatabase();
         }
     });
   }
 }
 http.send();
-
-
-
-
-
-
-// TODO add user
-// TODO add temp user
 </script>
 </html>

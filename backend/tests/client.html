@@ -13,6 +13,7 @@
 <button onclick="updateBillByLink()">Update bill details from its link</button>
 <button onclick="updateBillByID()">Update bill details as a registered user</button>
 <button onclick="createTemporaryUser()">Create temporary user with a link of a bill</button>
+<button onclick="getUserIDOfUser()">Get user ID from username</button>
 
 <script>
 var serverHost = "websys3.stern.nyu.edu";
@@ -192,6 +193,17 @@ function createTemporaryUser() {
         }
     }
     http.send(JSON.stringify(body));
+}
+
+function getUserIDOfUser() {
+    var http = new XMLHttpRequest();
+    http.open("GET", serverURL + "/users/Alice", true);
+    http.onreadystatechange = function() { // callback function
+        if(http.readyState == XMLHttpRequest.DONE) {
+            alert("Server answered with HTTP status code " + http.status + ": " + http.responseText);
+        }
+    }
+    http.send();
 }
 </script>
 

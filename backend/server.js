@@ -226,13 +226,13 @@ app.post('/bills', function (req, res) {
         connection.query(
           "SELECT 1 FROM users WHERE id = ? LIMIT 1",
           [userID],
-          function (error, result) {
+          function (error, results) {
             if (error) {
               connection.release();
               console.warn("The users table can't be searched:", error, "\n");
               return res.status(500).send("Our database is having troubles");    
             }
-            if (result.length === 0) { // user ID does not exist
+            if (results.length === 0) { // user ID does not exist
               connection.release();
               console.log("User ID", userID, "does not exist\n");
               return res.status(401).send("User ID does not exist");
@@ -287,7 +287,7 @@ app.post('/bills', function (req, res) {
                   connection.query(
                     "SELECT id AS lastid FROM bills WHERE link = ?",
                     [link], // we use link as MAX(id) might fail with concurrent connections
-                    function (error, result) {
+                    function (error, s) {
                       if (error) {
                         console.warn("The bills table could not be searched:", error);
                         connection.rollback(function (error) {
@@ -300,7 +300,7 @@ app.post('/bills', function (req, res) {
                         });
                         return res.status(500).send("Our database is having troubles");
                       }
-                      var billID = result[0].lastid;
+                      var billID = results[0].lastid;
                       var values = [];
                       items.forEach(function (item) {
                         values.push([billID, item.name, item.amount]);
@@ -393,13 +393,13 @@ app.get('/bills', function (req, res) {
           connection.query(
               "SELECT 1 FROM users WHERE id = ? LIMIT 1",
               [userID],
-              function (error, result) {
+              function (error, results) {
                   if (error) {
                       connection.release();
                       console.warn("The users table can't be searched:", error, "\n");
                       return res.status(500).send("Our database is having troubles");
                   }
-                  if (result.length === 0) { // User ID does not exist
+                  if (results.length === 0) { // User ID does not exist
                       connection.release();
                       console.log("User ID", userID, "does not exist\n");
                       return res.status(401).send("User ID does not exist");
@@ -407,19 +407,19 @@ app.get('/bills', function (req, res) {
                   connection.query(
                       "SELECT bill_id FROM bills_users WHERE user_id = ?",
                       [userID],
-                      function (error, result) {
+                      function (error, results) {
                           connection.release();
                           if (error) {
                               console.warn("The bills_users table can't be searched:", error, "\n");
                               return res.status(500).send("Our database is having troubles");
                           }
-                          if (result.length === 0) {
+                          if (results.length === 0) {
                               return res.status(204).send(); // no bill yet
                           }
                           var billsIDs = [];
                           var i;
-                          for (i = 0; i < result.length; i += 1) {
-                            billsIDs.push(result[i].bill_id);
+                          for (i = 0; i < results.length; i += 1) {
+                            billsIDs.push(results[i].bill_id);
                           }
                           res.status(200).json(billsIDs);
                       }
@@ -472,13 +472,13 @@ app.get('/bills/:billID', function (req, res) {
         connection.query(
           "SELECT 1 FROM users WHERE id = ? LIMIT 1",
           [userID],
-          function (error, result) {
+          function (error, results) {
             if (error) {
               connection.release();
               console.warn("The users table can't be searched:", error, "\n");
               return res.status(500).send("Our database is having troubles");
             }
-            if (result.length === 0) { // User ID does not exist
+            if (results.length === 0) { // User ID does not exist
               connection.release();
               console.log("User ID", userID, "does not exist\n");
               return res.status(401).send("User ID does not exist");
@@ -486,31 +486,31 @@ app.get('/bills/:billID', function (req, res) {
             connection.query( // this also makes sure the user belongs to that bill
               "SELECT bills.* FROM bills, bills_users WHERE bills.id = ? AND bills.id = bills_users.bill_id AND bills_users.user_id = ?",
               [billID, userID],
-              function (error, result) {
+              function (error, results) {
                 if (error) {
                   connection.release();
                   console.warn("The bills / bills_users table can't be searched:", error, "\n");
                   return res.status(500).send("Our database is having troubles");
                 }
-                if (result.length === 0) {
+                if (results.length === 0) {
                   connection.release();
                   return res.status(204).send();
                 }
                 var bill = {
-                  id: result[0].id,
-                  link: result[0].link,
-                  address: result[0].address,
-                  restaurant: result[0].restaurant,
-                  name: result[0].name,
-                  time: dbTimeToTimeObj(result[0].time),
-                  tax: result[0].tax,
-                  tip: result[0].tip,
-                  done: Boolean(Number(result[0].done))
+                  id: results[0].id,
+                  link: results[0].link,
+                  address: results[0].address,
+                  restaurant: results[0].restaurant,
+                  name: results[0].name,
+                  time: dbTimeToTimeObj(results[0].time),
+                  tax: results[0].tax,
+                  tip: results[0].tip,
+                  done: Boolean(Number(results[0].done))
                 };
                 connection.query(
                   "SELECT bills_users.user_id, users.username FROM bills_users, users WHERE bills_users.bill_id = ? AND bills_users.user_id = users.id",
                   [billID],
-                  function (error, result) {
+                  function (error, results) {
                     if (error) {
                       connection.release();
                       console.warn("The bills_users / users table can't be searched:", error, "\n");
@@ -518,61 +518,61 @@ app.get('/bills/:billID', function (req, res) {
                     }
                     bill.users = [];
                     var i;
-                    for(i = 0; i < result.length; i += 1) {
+                    for(i = 0; i < results.length; i += 1) {
                         bill.users.push({
-                            id: result[i].user_id,
-                            username: result[i].username
+                            id: results[i].user_id,
+                            username: results[i].username
                         });
                     }
                     connection.query(
                       "SELECT bills_users.temp_user_id, temp_users.name FROM bills_users, temp_users WHERE bills_users.bill_id = ? AND bills_users.temp_user_id = temp_users.id",
                       [billID],
-                      function (error, result) {
+                      function (error, results) {
                         if (error) {
                           connection.release();
                           console.warn("The bills_users / temp_users table can't be searched:", error, "\n");
                           return res.status(500).send("Our database is having troubles");
                         }
                         bill.tempUsers = [];
-                        for(i = 0; i < result.length; i += 1) {
+                        for(i = 0; i < results.length; i += 1) {
                             bill.tempUsers.push({
-                                id: result[i].temp_user_id,
-                                username: result[i].name
+                                id: results[i].temp_user_id,
+                                username: results[i].name
                             });
                         }
                         connection.query(
                           "SELECT id, name, amount FROM items WHERE items.bill_id = ?",
                           [billID],
-                          function (error, result) {
+                          function (error, results) {
                             if (error) {
                               connection.release();
                               console.warn("The items table can't be searched:", error, "\n");
                               return res.status(500).send("Our database is having troubles");
                             }
                             bill.items = [];
-                            for(i = 0; i < result.length; i += 1) {
+                            for(i = 0; i < results.length; i += 1) {
                                 bill.items.push({
-                                    id: result[i].id,
-                                    name: result[i].name,
-                                    amount: result[i].amount
+                                    id: results[i].id,
+                                    name: results[i].name,
+                                    amount: results[i].amount
                                 });
                             }
                             connection.query(
                               "SELECT items_consumers.* FROM items_consumers, items WHERE items.bill_id = ? AND items.id = items_consumers.item_id",
                               [billID],
-                              function (error, result) {
+                              function (error, results) {
                                 if (error) {
                                   connection.release();
                                   console.warn("The items_consumers table can't be searched:", error, "\n");
                                   return res.status(500).send("Our database is having troubles");
                                 }
                                 bill.consumers = [];
-                                for(i = 0; i < result.length; i += 1) {
+                                for(i = 0; i < results.length; i += 1) {
                                     bill.consumers.push({
-                                        item_id: result[i].item_id,
-                                        user_id: result[i].user_id,
-                                        temp_user_id: result[i].temp_user_id,
-                                        paid: Boolean(Number(result[i].paid))
+                                        item_id: results[i].item_id,
+                                        user_id: results[i].user_id,
+                                        temp_user_id: results[i].temp_user_id,
+                                        paid: Boolean(Number(results[i].paid))
                                     });
                                 }
                                 res.status(200).json(bill);
@@ -637,7 +637,7 @@ app.post('/login', function (req, res) {
       connection.query(
         "SELECT id, digest, salt FROM users WHERE email = ? LIMIT 1",
         [email],
-        function (error, result) {
+        function (error, results) {
           connection.release();
           if (error) {
             console.warn("The users table can't be searched:", error, "\n");
@@ -646,13 +646,13 @@ app.post('/login', function (req, res) {
           if (result.length === 0) { // email does not exist
             return res.status(401).send("Incorrect email or password");
           }
-          Scrypt(password, result[0].salt, {N:16384, r:8, p:1, dkLen:32, encoding:'base64'}, function (digest) {
-            if (digest !== result[0].digest) {
+          Scrypt(password, results[0].salt, {N:16384, r:8, p:1, dkLen:32, encoding:'base64'}, function (digest) {
+            if (digest !== results[0].digest) {
               return res.status(401).send("Incorrect email or password");
             }
-            var token = jwt.sign({userID: result[0].id}, params.secret);
+            var token = jwt.sign({userID: results[0].id}, params.secret);
             // deterministic creation so multiple logins possible
-            res.status(200).json({userID: result[0].id, token: token});
+            res.status(200).json({userID: results[0].id, token: token});
           });
         }
       );
@@ -715,26 +715,26 @@ app.post('/users', function (req, res) {
       connection.query(
         "SELECT 1 FROM users WHERE email = ? LIMIT 1",
         [email],
-        function (error, result) {
+        function (error, results) {
           if (error) {
             connection.release();
             console.warn("The users table can't be searched:", error, "\n");
             return res.status(500).send("Our database is having troubles");
           }
-          if (result.length > 0) {
+          if (results.length > 0) {
             connection.release();
             return res.status(409).send("Email is already registered");
           }
           connection.query(
             "SELECT 1 FROM users WHERE username = ? LIMIT 1",
             [username],
-            function (error, result) {
+            function (error, results) {
               if (error) {
                 connection.release();
                 console.warn("The users table can't be searched:", error, "\n");
                 return res.status(500).send("Our database is having troubles");
               }
-              if (result.length > 0) {
+              if (results.length > 0) {
                 connection.release();
                 return res.status(409).send("Username is already registered");
               }
@@ -767,7 +767,7 @@ app.post('/users', function (req, res) {
                       connection.query(
                         "SELECT id FROM users WHERE email = ?",
                         [email],
-                        function (error, result) {
+                        function (error, results) {
                           if (error) {
                             console.warn("The users table can't be searched:", error);
                             connection.rollback(function (error) {
@@ -780,8 +780,8 @@ app.post('/users', function (req, res) {
                             });
                             return res.status(500).send("Our database is having troubles");
                           }
-                          if (result.length !== 1) {
-                            console.warn("The database returned", result.length, "users with the email", email);
+                          if (results.length !== 1) {
+                            console.warn("The database returned", results.length, "users with the email", email);
                             connection.rollback(function (error) {
                               connection.release();
                               if (error) {
@@ -793,7 +793,7 @@ app.post('/users', function (req, res) {
                             });
                             return;
                           }
-                          var userID = result[0].id;
+                          var userID = results[0].id;
                           if (isNaN(userID)) {
                             console.warn("The user ID", userID, "is not an integer");
                             connection.rollback(function (error) {
@@ -854,20 +854,20 @@ app.get('/bills/web/:link/details', function (req, res) {
       connection.query(
         "SELECT id FROM bills WHERE link = ? LIMIT 1",
         [link],
-        function (error, result) {
+        function (error, results) {
           connection.release();
           if (error) {
             console.warn("The bills table can't be searched:", error, "\n");
             return res.status(500).send("Our database is having troubles");
           }
-          if (result.length === 0) {
+          if (results.length === 0) {
               return res.status(404).send("Link provided does not exist");
           }
-          var billID = result[0].id;
+          var billID = results[0].id;
           connection.query(
             "SELECT * FROM bills WHERE id = ?",
             [billID],
-            function (error, result) {
+            function (error, results) {
               if (error) {
                 connection.release();
                 console.warn("The bills table can't be searched:", error, "\n");
@@ -875,20 +875,20 @@ app.get('/bills/web/:link/details', function (req, res) {
               }
               // Bill exists for sure
               var bill = {
-                id: result[0].id,
-                link: result[0].link,
-                address: result[0].address,
-                restaurant: result[0].restaurant,
-                name: result[0].name,
-                time: dbTimeToTimeObj(result[0].time),
-                tax: result[0].tax,
-                tip: result[0].tip,
-                done: Boolean(Number(result[0].done))
+                id: results[0].id,
+                link: results[0].link,
+                address: results[0].address,
+                restaurant: results[0].restaurant,
+                name: results[0].name,
+                time: dbTimeToTimeObj(results[0].time),
+                tax: results[0].tax,
+                tip: results[0].tip,
+                done: Boolean(Number(results[0].done))
               };
               connection.query(
                 "SELECT bills_users.user_id, users.username FROM bills_users, users WHERE bills_users.bill_id = ? AND bills_users.user_id = users.id",
                 [billID],
-                function (error, result) {
+                function (error, results) {
                   if (error) {
                     connection.release();
                     console.warn("The bills_users / users table can't be searched:", error, "\n");
@@ -896,61 +896,61 @@ app.get('/bills/web/:link/details', function (req, res) {
                   }
                   bill.users = [];
                   var i;
-                  for(i = 0; i < result.length; i += 1) {
+                  for(i = 0; i < results.length; i += 1) {
                       bill.users.push({
-                          id: result[i].user_id,
-                          username: result[i].username
+                          id: results[i].user_id,
+                          username: results[i].username
                       });
                   }
                   connection.query(
                     "SELECT bills_users.temp_user_id, temp_users.name FROM bills_users, temp_users WHERE bills_users.bill_id = ? AND bills_users.temp_user_id = temp_users.id",
                     [billID],
-                    function (error, result) {
+                    function (error, results) {
                       if (error) {
                         connection.release();
                         console.warn("The bills_users / temp_users table can't be searched:", error, "\n");
                         return res.status(500).send("Our database is having troubles");
                       }
                       bill.tempUsers = [];
-                      for(i = 0; i < result.length; i += 1) {
+                      for(i = 0; i < results.length; i += 1) {
                           bill.tempUsers.push({
-                              id: result[i].temp_user_id,
-                              username: result[i].name
+                              id: results[i].temp_user_id,
+                              username: results[i].name
                           });
                       }
                       connection.query(
                         "SELECT id, name, amount FROM items WHERE items.bill_id = ?",
                         [billID],
-                        function (error, result) {
+                        function (error, results) {
                           if (error) {
                             connection.release();
                             console.warn("The items table can't be searched:", error, "\n");
                             return res.status(500).send("Our database is having troubles");
                           }
                           bill.items = [];
-                          for(i = 0; i < result.length; i += 1) {
+                          for(i = 0; i < results.length; i += 1) {
                               bill.items.push({
-                                  id: result[i].id,
-                                  name: result[i].name,
-                                  amount: result[i].amount
+                                  id: results[i].id,
+                                  name: results[i].name,
+                                  amount: results[i].amount
                               });
                           }
                           connection.query(
                             "SELECT items_consumers.* FROM items_consumers, items WHERE items.bill_id = ? AND items.id = items_consumers.item_id",
                             [billID],
-                            function (error, result) {
+                            function (error, results) {
                               if (error) {
                                 connection.release();
                                 console.warn("The items_consumers table can't be searched:", error, "\n");
                                 return res.status(500).send("Our database is having troubles");
                               }
                               bill.consumers = [];
-                              for(i = 0; i < result.length; i += 1) {
+                              for(i = 0; i < results.length; i += 1) {
                                   bill.consumers.push({
-                                      item_id: result[i].item_id,
-                                      user_id: result[i].user_id,
-                                      temp_user_id: result[i].temp_user_id,
-                                      paid: Boolean(Number(result[i].paid))
+                                      item_id: results[i].item_id,
+                                      user_id: results[i].user_id,
+                                      temp_user_id: results[i].temp_user_id,
+                                      paid: Boolean(Number(results[i].paid))
                                   });
                               }
                               res.status(200).json(bill);
@@ -995,16 +995,16 @@ app.get('/bills/web/:link', function (req, res) {
       connection.query(
         "SELECT 1 FROM bills WHERE link = ? LIMIT 1",
         [link],
-        function (error, result) {
+        function (error, results) {
           connection.release();
           if (error) {
             console.warn("The bills table can't be searched:", error, "\n");
             return res.status(500).send("Our database is having troubles");
           }
-          if (result.length === 0) {
+          if (results.length === 0) {
             return res.status(404).send("Link provided does not exist");
           }
-          res.status(200).sendFile(path.join(__dirname + '/dynamic/Dynamic_webpage_gen4.html'));
+          res.status(200).sendFile(path.join(__dirname + '../dynamic.html'));
         }
       );
     });
@@ -1041,13 +1041,13 @@ app.put('/bills/web/:link', function (req, res) {
       connection.query(
         "SELECT id FROM bills WHERE link = ? LIMIT 1",
         [link],
-        function (error, result) {
+        function (error, results) {
           if (error) {
             connection.release();
             console.warn("The bills table can't be searched:", error, "\n");
             return res.status(500).send("Our database is having troubles");
           }
-          if (result.length === 0) {
+          if (results.length === 0) {
             connection.release();
             return res.status(404).send("Link provided does not exist");
           }
@@ -1055,7 +1055,7 @@ app.put('/bills/web/:link', function (req, res) {
             return res.status(400).send("The bill JSON parameter is malformed or not an object");
           }
           // we add it to the object for clarity
-          bill.id = result[0].id;
+          bill.id = results[0].id;
           bill.link = link;
           if (bill.name === undefined || bill.done === undefined || bill.users === undefined ||
               bill.tempUsers === undefined || bill.consumers === undefined) {
@@ -1077,6 +1077,7 @@ app.put('/bills/web/:link', function (req, res) {
             return res.status(400).send("The bill object consumers property is not an array");
           }
           var i;
+          // TODO Check that all user IDs actually exist !
           for(i = 0; i < bill.users.length; i += 1) {
             if (bill.users[i].id === undefined) {
                 return res.status(400).send("The user object "+i+" is missing its id property");
@@ -1088,6 +1089,7 @@ app.put('/bills/web/:link', function (req, res) {
                 return res.status(400).send("The user object "+i+" id property is not in the correct range");
             }
           }
+          // TODO Check that all temp user IDs actually exist !
           for(i = 0; i < bill.tempUsers.length; i += 1) {
             if (bill.tempUsers[i].id === undefined) {
                 return res.status(400).send("The tempUser object "+i+" is missing its id property");
@@ -1305,13 +1307,13 @@ app.put('/bills/:billID', function (req, res) {
         connection.query(
           "SELECT 1 FROM users WHERE id = ? LIMIT 1",
           [userID],
-          function (error, result) {
+          function (error, results) {
             if (error) {
               connection.release();
               console.warn("The users table can't be searched:", error, "\n");
               return res.status(500).send("Our database is having troubles");    
             }
-            if (result.length === 0) { // user ID does not exist
+            if (results.length === 0) { // user ID does not exist
               connection.release();
               console.log("User ID", userID, "does not exist\n");
               return res.status(401).send("User ID does not exist");
@@ -1319,13 +1321,13 @@ app.put('/bills/:billID', function (req, res) {
             connection.query(
               "SELECT 1 FROM bills, bills_users WHERE bills.id = ? AND bills_users.user_id = ? AND bills_users.bill_id = bills.id LIMIT 1",
               [billID, userID],
-              function (error, result) {
+              function (error, results) {
                 if (error) {
                   connection.release();
                   console.warn("The bills / bills_users table can't be searched:", error, "\n");
                   return res.status(500).send("Our database is having troubles");
                 }
-                if (result.length === 0) {
+                if (results.length === 0) {
                   connection.release();
                   return res.status(204).send();
                 }
@@ -1578,17 +1580,17 @@ app.post('/tempusers', function (req, res) {
         connection.query(
           "SELECT id FROM bills WHERE link = ? LIMIT 1",
           [link],
-          function (error, result) {
+          function (error, results) {
             if (error) {
               connection.release();
               console.warn("The bills table can't be searched:", error, "\n");
               return res.status(500).send("Our database is having troubles");
             }
-            if (result.length === 0) {
+            if (results.length === 0) {
               connection.release();
               return res.status(404).send("Link provided does not exist");
             }
-            var billID = result[0].id;
+            var billID = results[0].id;
             connection.beginTransaction(function (error) {
               if (error) {
                 connection.release();
@@ -1645,10 +1647,56 @@ app.post('/tempusers', function (req, res) {
     });
 });
 
+
+/* ******************************
+*********************************
+GET /users/username
+*********************************
+Required URL parameters:
+Required body parameters: username
+*********************************
+Reponds: object (id only)
+*********************************
+********************************* */
+app.get('/users/username', function (req, res) {
+    // TODO add authentication with token perhaps
+    // Parses URL parameters of request
+    var username = req.params.username;
+
+    username = validator.trim(username);
+    if (username.length < 4) {
+        return res.status(400).send("Username is too short");
+    }
+    if (username.length > 40) {
+        return res.status(400).send("Username is too long");
+    }
+    pool.getConnection(function(error, connection) {
+        if (error) {
+          console.warn("Could not obtain connection from pool\n");
+          return res.status(500).send("Our server is having troubles");
+        }
+        connection.query(
+          "SELECT id FROM users WHERE username = ? LIMIT 1",
+          [username],
+          function (error, results) {
+            if (error) {
+              connection.release();
+              console.warn("The users table can't be searched:", error, "\n");
+              return res.status(500).send("Our database is having troubles");
+            }
+            if (results.length === 0) {
+              connection.release();
+              return res.status(404).send("Username does not exist");
+            }
+            res.status(200).send({id: results[0].id});
+          }
+        );
+    });
+});
+
 /*
 TODO
-- Test temp user
 - switch to camelcase
 - Delete account
-- get user ID from username
+// TODO the user should accept procedure to be added
 */
