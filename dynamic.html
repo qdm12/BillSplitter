@@ -29,17 +29,26 @@ html, body {
 	font-size: 6vmin;
 }
 #description {
-    position: absolute;
+    position: relative;
     width: 100%;
     left: 0%;
     top: 8%;
     height: 12%;
     background-color: rgb(176, 255, 255);
+    font-family: arial;
+    font-size: 3.5vmin;
 }
-#description .descriptor {
-    position: static;
-    display: inline;
-    margin-left: 5%;
+#description #billname {
+    padding-top:1%;
+    display: flex;
+    justify-content: center;
+    font-size: 4.5vmin;
+}
+#description #billright {
+    float: right;
+}
+#description #billleft {
+    float: left;
 }
 
 #users {
@@ -50,20 +59,30 @@ html, body {
     height: 92%;
     background-color: rgb(176, 230, 255);
     overflow-y: scroll;
+    font-family: arial;
 }
 .user {
-    width: 40%;
+    position: relative;
+    width: 50%;
     margin: auto;
     margin-top: 20%;
     z-index: 1;
-    display: flex;
-    justify-content: center;
     font-size: 2.6vh;
     padding: 5%;
     border-radius: 25%;
     border: 3px solid rgb(81, 83, 255);
     color: white;
     background-color: rgba(39, 126, 167, 0.534);
+}
+.username { /* to trim in JS */
+    display: flex;
+    justify-content: center;
+    color: white;
+}
+.userown {
+    display: flex;
+    justify-content: center;
+    color: rgb(21, 90, 21);
 }
 #items {
 	position: absolute;
@@ -73,20 +92,31 @@ html, body {
     height: 92%;
     background-color: rgb(153, 180, 238);
     overflow-y: scroll;
+    font-family: arial;
 }
 .item {
     width: 80%;
     margin: auto;
     margin-top: 5%;
     z-index: 1;
-    display: flex;
-    justify-content: center;
+    display:flow-root;
     font-size: 3vh;
     padding: 3%;
     border-radius: 5%;
     border: 3px solid rgb(2, 3, 75);
     color: white;
     background-color: rgba(47, 36, 199, 0.884);
+    overflow-wrap: break-word;
+}
+.itemname {
+    float: left;
+    color: white;
+    word-wrap: break-word;
+    width: 65%;
+}
+.itemprice {
+    float: right;
+    color: rgb(132, 235, 132);
 }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js" type="text/javascript"></script>
@@ -97,21 +127,37 @@ html, body {
 	<div id="topBar">BillSplitter</div>
 </header>
 <div id="description">
-    <div id="name" class="descriptor">Bill name</div>
-    <div id="restaurant" class="descriptor">Restaurant</div>
-    <div id="address" class="descriptor">Address</div>
-    <div id="time" class="descriptor">12/31/1999 23:59:59</div>
-    <div id="tip" class="descriptor">Tip: $4.67</div>
-    <div id="tax" class="descriptor">Tax: $8</div>
-    <div id="done" class="descriptor">DONE</div>
+    <div id="billname">Bill name</div>
+    <div id="billleft">
+        <div id="restaurant">Restaurant</div>
+        <div id="address">Address</div>
+        <div id="time">12/31/1999 23:59:59</div>
+    </div>
+    <div id="billright">
+        <div id="tip">Tip: $4.67</div>
+        <div id="tax">Tax: $8</div>
+        <div id="done">DONE</div>
+    </div>
 </div>
 <div id="users">
-    <div class="user">Mike ($45)</div>
-    <div class="user">Mike ($23)</div>
+    <div class="user">
+        <div class="username">aaaaaaaa</div>
+        <div class="userown">$45.58</div>
+    </div>
+    <div class="user">
+        <div class="username">John</div>
+        <div class="userown">$7.58</div>
+    </div>
 </div>
 <div id="items">
-    <div class="item">PizzaA $4.78</div>
-    <div class="item">PizzaB $67.8</div>
+    <div class="item">
+        <div class="itemname">PizzaA</div>
+        <div class="itemprice">$451.78</div>
+    </div>
+    <div class="item">
+        <div class="itemname">PizzaB</div>
+        <div class="itemprice">$18.78</div>
+    </div>
 </div>
 
 <script>
