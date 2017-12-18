@@ -8,7 +8,7 @@ if(isMobile){
     console.log('Desktop detected.');
 } */
 
-var currentScreen = "identification"; // that depends if user is logged in
+var currentScreen = "bill"; // that depends if user is logged in
 
 function configureNavigationBar() {
     console.log("Current screen is now", currentScreen);
@@ -16,28 +16,28 @@ function configureNavigationBar() {
         if (currentScreen != "bill") {
             currentScreen = "bill";
             $(".screen").hide();
-            $("#bill").show({duration:500, easing:"swing"});
+            $("#bill").show();
         }
     });
     $("#historyButton").click(function(){
         if (currentScreen != "history") {
             currentScreen = "history";
             $(".screen").hide();
-            $("#history").show({duration:500, easing:"swing"});
+            $("#history").show();
         }
     });
     $("#profileButton").click(function(){
         if (currentScreen != "profile") {
             currentScreen = "profile";
             $(".screen").hide();
-            $("#profile").show({duration:500, easing:"swing"});
+            $("#profile").show();
         }
     });
     $("#settingsButton").click(function(){
         if (currentScreen != "settings") {
             currentScreen = "settings";
             $(".screen").hide();
-            $("#settings").show({duration:500, easing:"swing"});
+            $("#settings").show();
         }
     });
 }
@@ -62,7 +62,7 @@ function identificationError(highlightIds, resetIds, error) {
 }
 
 function configureIdentificationScreen() {
-    $(navigation_bar).hide();
+    $(navigationBar).hide();
     $("#identificationError").hide();
     // defaults to signup
     $("#login").hide();
@@ -223,7 +223,7 @@ window.onload = function(){ // Executes first
     console.log('window is loaded');
     configureNavigationBar();
     $(".screen").hide();
-    $('#' + currentScreen).show({duration:250, easing:"swing"});
+    $('#' + currentScreen).show();
     if (currentScreen == "identification") {
         configureIdentificationScreen();
     }

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BillSplitter Dynamic</title>
+    <style>
+html, body {
+	margin:0;
+	padding:0;
+	height:100%;
+	font-family: 'Spectral SC', serif !important;
+}
+@font-face {
+    font-family: 'Spectral SC';
+    src: local('Spectral SC Regular'), local('SpectralSC-Regular'), url(https://fonts.gstatic.com/s/spectralsc/v2/yJ95fCBFs0v33GTJdYTk_4gp9Q8gbYrhqGlRav_IXfk.woff2) format('woff2');
+}
+#topBar {
+    position: absolute;
+    width: 100%;
+    height: 8%;
+	z-index: 1; /*on top of other layers*/
+    background: #dad2c8;
+    border-bottom: 2px solid black;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+	font-size: 6vmin;
+}
+#description {
+    position: absolute;
+    width: 100%;
+    left: 0%;
+    top: 8%;
+    height: 12%;
+    background-color: rgb(176, 255, 255);
+}
+#description .descriptor {
+    position: static;
+    display: inline;
+    margin-left: 5%;
+}
+
+#users {
+    position: absolute;
+    width: 35%;
+    left: 0%;
+    top: 20%;
+    height: 92%;
+    background-color: rgb(176, 230, 255);
+    overflow-y: scroll;
+}
+.user {
+    width: 40%;
+    margin: auto;
+    margin-top: 20%;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    font-size: 2.6vh;
+    padding: 5%;
+    border-radius: 25%;
+    border: 3px solid rgb(81, 83, 255);
+    color: white;
+    background-color: rgba(39, 126, 167, 0.534);
+}
+#items {
+	position: absolute;
+    width: 65%;
+    left: 35%;
+    top: 20%;
+    height: 92%;
+    background-color: rgb(153, 180, 238);
+    overflow-y: scroll;
+}
+.item {
+    width: 80%;
+    margin: auto;
+    margin-top: 5%;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    font-size: 3vh;
+    padding: 3%;
+    border-radius: 5%;
+    border: 3px solid rgb(2, 3, 75);
+    color: white;
+    background-color: rgba(47, 36, 199, 0.884);
+}
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js" type="text/javascript"></script>
+</head>
+<header>
+	<div id="topBar">BillSplitter</div>
+</header>
+<div id="description">
+    <div id="name" class="descriptor">Bill name</div>
+    <div id="restaurant" class="descriptor">Restaurant</div>
+    <div id="address" class="descriptor">Address</div>
+    <div id="time" class="descriptor">12/31/1999 23:59:59</div>
+    <div id="tip" class="descriptor">Tip: $4.67</div>
+    <div id="tax" class="descriptor">Tax: $8</div>
+    <div id="done" class="descriptor">DONE</div>
+</div>
+<div id="users">
+    <div class="user">Mike ($45)</div>
+    <div class="user">Mike ($23)</div>
+</div>
+<div id="items">
+    <div class="item">PizzaA $4.78</div>
+    <div class="item">PizzaB $67.8</div>
+</div>
+
+<script>
+// get data
+data = {
+    id: 1,
+    time: {sec:'01', min:'00', hour:'00', day:'01', month:'Dec', year:'2017' },
+    address: '196 W Third Avenue',
+    restaurant: 'Pizza\'o\'ven',
+    name: 'Birthday pizza',
+    tax: 19.67,
+    tip: 5,
+    link: '2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL',
+    done: false,
+    users: [{id:1, username:'Alice'}, {id:2, username:'Bob'}],
+    tempUsers: [{id:1, username:'John'}],
+    items: [{id:1, name:'PizzaA', amount:10.5}, {id:2, name:'PizzaB', amount:14}, {id:3, name:'Fries', amount:6.24}],
+    consumers: [
+        { item_id: 1, user_id: 1, temp_user_id: null, paid: false },
+        { item_id: 1, user_id: null, temp_user_id: 1, paid: false },
+        { item_id: 2, user_id: 2, temp_user_id: null, paid: false },
+        { item_id: 3, user_id: 1, temp_user_id: null, paid: false },
+        { item_id: 3, user_id: 2, temp_user_id: null, paid: false },
+        { item_id: 3, user_id: null, temp_user_id: 1, paid: false }
+    ]
+};
+
+
+
+/*
+$('.wrapper').append($('<div/>', {class: 'items'}));
+$('header').append($('<div/>', {class: 'users'}));
+$.each(data.items, function(i, val) {
+    $('<div />', { id: val["id"], class: "item", text: val["name"]}).appendTo('.items');
+    $('.item').droppable({
+        accept: ".person",
+        drop: function(event, ui) {
+            targetID = event.target.id;
+            targetName = $(event.target).text();
+            payload = ui.draggable;
+            payloadID = ui.draggable.prop("id");
+            payloadName = ui.draggable.text();
+            //Check by class if user is a regular user or tempUser
+            if ($(payload).hasClass("user")){
+                tempPush = {"item_id": Number(targetID), "user_id": Number(payloadID), "temp_user_id": null, paid: false};
+                //Generate new replacement user for the one user dragged.
+                $('<div />', { id: payloadID, class: "user person", text: payloadName}).appendTo('.users');
+                $('.person').draggable({snap: ".item", snapMode: "inner", revert: "invalid"});
+            } else if ($(payload).hasClass("tempUser")) {
+                tempPush = {"item_id": Number(targetID), "user_id": null, "temp_user_id": Number(payloadID), paid: false}
+                // Generate new replacement user for the one user dragged.
+                $('<div />', { id: payloadID, class: "tempUser person", text: payloadName}).appendTo('.users');
+                $('.person').draggable({snap: ".item", snapMode: "inner", revert: "invalid"});
+            };
+            if (!(tempPush in consumers)) {
+                consumers.push(tempPush);
+            };            
+            bill["name"] = "New name";
+            bill["done"] = false;
+            bill["users"] = sendUsers;
+            bill["tempUsers"] = sendTempUsers;
+            bill["consumers"] = consumers;
+            console.log("Bill:"+JSON.stringify(bill))
+        }
+    });
+});
+
+//Create regular user list.
+$.each(data.users, function(index, value) {
+    $('<div/>', { id: value["id"], class: "user person", text: value["username"]}).appendTo('.users');;
+    $('.person').draggable({containment: ".wrapper", scroll: false, snap: ".item", snapMode: "inner", revert: "invalid"});
+    sendUsers.push({"id":value["id"]});
+});
+
+//Create temp user list.
+$.each(data.tempUsers, function(index, value) {
+    $('<div/>', { id: value["id"], class: "tempUser person", text: value["username"]}).appendTo('.users');
+    $('.person').draggable({containment: ".wrapper", scroll: false, snap: ".item", snapMode: "inner", revert: "invalid"});
+    sendTempUsers.push({"id":value["id"]});
+});
+*/
+</script>
+</html>
