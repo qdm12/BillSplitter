@@ -159,18 +159,17 @@ html, body {
 	<div id="topBar">BillSplitter</div>
 </header>
 <div id="description">
-    <div id="billname">Bill name</div>
-    <div id="billleft">
-        <div id="restaurant">Restaurant</div>
-        <div id="address">Address</div>
-        <div id="time">12/31/1999 23:59:59</div>
+        <div id="billname">Bill name</div>
+        <div id="billleft">
+            <div id="restaurant">Restaurant</div>
+            <div id="address">Address</div>
+            <div id="time">12/31/1999 23:59:59</div>
+        </div>
+        <div id="billright">
+            <div id="tip">Tip: $0</div>
+            <div id="tax">Tax: $0</div>
+        </div>
     </div>
-    <div id="billright">
-        <div id="tip">Tip: $0</div>
-        <div id="tax">Tax: $0</div>
-    </div>
-    <div id="done" style="position:absolute;left:25%;width:100%;color:rgb(255, 0, 0)"></div>
-</div>
 <div id="users">
     <div id="addUserContainer">
         <input id="fieldUser" type="text" placeholder="Add user" maxlength="40">
@@ -194,7 +193,7 @@ var link = document.location.href;
 link = link.substring(link.length - 48);
 link = "2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL"; // TODO remove
 
-function updateDatabase() {
+function updateDatabase(dropZone, UIDraggable, callback) {
     var i;
     var users = [], tempUsers = [];
     for(i = 0; i < data.users.length; i += 1) {
@@ -222,6 +221,9 @@ function updateDatabase() {
                 return;
             }
             console.log("Database updated");
+            if (callback) {
+                callback(dropZone, UIDraggable);
+            }
         }
     }
     http.send(JSON.stringify(body));
@@ -351,20 +353,20 @@ http.onreadystatechange = function() { // callback function
 
                 // Update local data
                 data.users.push({id:userID, username:username});
-                
-                // Update UI
-                var i = data.users.length - 1;
-                $("#users").append('<div id="user'+ data.users[i].id +'" class="user"></div>');
-                var UIusername = data.users[i].username;
-                if (UIusername.length > 6) {
-                    UIusername = UIusername.substring(0,6) + "."
-                }
-                $("#users #user"+data.users[i].id).append('<div class="username">' + UIusername + '</div>');
-                var userOwn = data.tip / (data.users.length + data.tempUsers.length);
-                $("#users #user"+data.users[i].id).append('<div class="userown">$' + userOwn.toFixed(2) + '</div>');
-                
+
                 // Update database
-                updateDatabase();
+                updateDatabase(function() {
+                    // Update UI
+                    var i = data.users.length - 1;
+                    $("#users").append('<div id="user'+ data.users[i].id +'" class="user"></div>');
+                    var UIusername = data.users[i].username;
+                    if (UIusername.length > 6) {
+                        UIusername = UIusername.substring(0,6) + "."
+                    }
+                    $("#users #user"+data.users[i].id).append('<div class="username">' + UIusername + '</div>');
+                    var userOwn = data.tip / (data.users.length + data.tempUsers.length);
+                    $("#users #user"+data.users[i].id).append('<div class="userown">$' + userOwn.toFixed(2) + '</div>');
+                });
             }
         }
         http.send();
@@ -389,20 +391,19 @@ http.onreadystatechange = function() { // callback function
 
                 // Update local data
                 data.tempUsers.push({id:tempUserID, username:name});
-                
-                // Update UI
-                var i = data.tempUsers.length - 1;
-                $("#users").append('<div id="tempUser'+ data.tempUser[i].id +'" class="user"></div>');
-                var UIusername = data.tempUser[i].username;
-                if (UIusername.length > 6) {
-                    UIusername = UIusername.substring(0,6) + "."
-                }
-                $("#users #user"+data.tempUser[i].id).append('<div class="username">' + UIusername + '</div>');
-                var userOwn = data.tip / (data.users.length + data.tempUsers.length);
-                $("#users #user"+data.tempUser[i].id).append('<div class="userown">$' + userOwn.toFixed(2) + '</div>');
 
                 // Update database
-                updateDatabase();
+                updateDatabase(function () {
+                    var i = data.tempUsers.length - 1;
+                    $("#users").append('<div id="tempUser'+ data.tempUsers[i].id +'" class="user"></div>');
+                    var UIusername = data.tempUsers[i].username;
+                    if (UIusername.length > 6) {
+                        UIusername = UIusername.substring(0,6) + "."
+                    }
+                    $("#users #user"+data.tempUsers[i].id).append('<div class="username">' + UIusername + '</div>');
+                    var userOwn = data.tip / (data.users.length + data.tempUsers.length);
+                    $("#users #user"+data.tempUsers[i].id).append('<div class="userown">$' + userOwn.toFixed(2) + '</div>');
+                });
             }
         }
         http.send(JSON.stringify(body));
@@ -427,64 +428,68 @@ http.onreadystatechange = function() { // callback function
                 data.consumers.push({
                     item_id: $(this).attr("id").substring(4),
                     user_id: null,
-                    temp_user_id: $(ui.draggable).attr("id").substring(8)
+                    temp_user_id: $(ui.draggable).attr("id").substring(8),
+                    paid: false
                 });
             } else { // registered user
                 data.consumers.push({
                     item_id: $(this).attr("id").substring(4),
                     user_id: $(ui.draggable).attr("id").substring(4),
-                    temp_user_id: null
+                    temp_user_id: null,
+                    paid: false
                 });
             }
 
-            // Updates the UI
-            var copy = $(ui.draggable).clone();
-            copy.children().remove(".userown"); // removes the $ owned
-            $(this).append(copy);
-            copy.effect("highlight", {}, 500);
-            $(this).effect("highlight", {}, 1000);
+            // Update database
+            updateDatabase($(this), $(ui.draggable), function(DropZone, UIDraggable) {
+                // Updates the UI
+                var copy = UIDraggable.clone();
+                copy.children().remove(".userown"); // removes the $ owned
+                DropZone.append(copy);
+                copy.effect("highlight", {}, 500);
+                DropZone.effect("highlight", {}, 1000);
 
-            usersPerItem[$(this).attr("id").substring(4)] += 1;
-            var userOwn;
-            for(i = 0; i < data.users.length; i += 1) {
-                userOwn = 0;
-                for(j = 0; j < data.consumers.length; j += 1) {
-                    if (data.consumers[j].user_id === data.users[i].id) {
-                        for(k = 0; k < data.items.length; k += 1) {
-                            if (data.items[k].id === data.consumers[j].item_id) {
-                                userOwn += (data.items[k].amount / usersPerItem[data.items[k].id]);
+                usersPerItem[DropZone.attr("id").substring(4)] += 1;
+                var userOwn;
+                for(i = 0; i < data.users.length; i += 1) {
+                    userOwn = 0;
+                    for(j = 0; j < data.consumers.length; j += 1) {
+                        if (data.consumers[j].user_id === data.users[i].id) {
+                            for(k = 0; k < data.items.length; k += 1) {
+                                if (data.items[k].id === data.consumers[j].item_id) {
+                                    userOwn += (data.items[k].amount / usersPerItem[data.items[k].id]);
+                                }
                             }
                         }
                     }
+                    userOwn *= 1 + data.tax / 100;
+                    userOwn += data.tip / (data.users.length + data.tempUsers.length);
+                    var userOwnElement = $("#users #user"+data.users[i].id + " .userown");
+                    if (userOwnElement.text() != "$" + userOwn.toFixed(2)) {
+                        userOwnElement.effect("highlight", {}, 500);
+                    }
+                    userOwnElement.text("$" + userOwn.toFixed(2));
                 }
-                userOwn *= 1 + data.tax / 100;
-                userOwn += data.tip / (data.users.length + data.tempUsers.length);
-                var userOwnElement = $("#users #user"+data.users[i].id + " .userown");
-                if (userOwnElement.text() != "$" + userOwn.toFixed(2)) {
-                    userOwnElement.effect("highlight", {}, 500);
-                }
-                userOwnElement.text("$" + userOwn.toFixed(2));
-            }
-            for(i = 0; i < data.tempUsers.length; i += 1) {
-                userOwn = 0;
-                for(j = 0; j < data.consumers.length; j += 1) {
-                    if (data.consumers[j].temp_user_id === data.tempUsers[i].id && !data.consumers[j].paid) {
-                        for(k = 0; k < data.items.length; k += 1) {
-                            if (data.items[k].id === data.consumers[j].item_id) {
-                                userOwn += (data.items[k].amount / usersPerItem[data.items[k].id]);
+                for(i = 0; i < data.tempUsers.length; i += 1) {
+                    userOwn = 0;
+                    for(j = 0; j < data.consumers.length; j += 1) {
+                        if (data.consumers[j].temp_user_id === data.tempUsers[i].id && !data.consumers[j].paid) {
+                            for(k = 0; k < data.items.length; k += 1) {
+                                if (data.items[k].id === data.consumers[j].item_id) {
+                                    userOwn += (data.items[k].amount / usersPerItem[data.items[k].id]);
+                                }
                             }
                         }
                     }
+                    userOwn *= 1 + data.tax / 100;
+                    userOwn += data.tip / (data.users.length + data.tempUsers.length);
+                    var userOwnElement = $("#users #tempUser"+data.tempUsers[i].id + " .userown");
+                    if (userOwnElement.text() != "$" + userOwn.toFixed(2)) {
+                        userOwnElement.effect("highlight", {}, 500);
+                    }
+                    userOwnElement.text("$" + userOwn.toFixed(2));
                 }
-                userOwn *= 1 + data.tax / 100;
-                userOwn += data.tip / (data.users.length + data.tempUsers.length);
-                var userOwnElement = $("#users #tempUser"+data.tempUsers[i].id + " .userown");
-                if (userOwnElement.text() != "$" + userOwn.toFixed(2)) {
-                    userOwnElement.effect("highlight", {}, 500);
-                }
-                userOwnElement.text("$" + userOwn.toFixed(2));
-            }
-            updateDatabase();
+            });
         }
     });
   }

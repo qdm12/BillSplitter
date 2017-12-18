@@ -7,8 +7,28 @@ if(isMobile){
 } else {
     console.log('Desktop detected.');
 } */
+var serverHost = "websys3.stern.nyu.edu";
+var serverPort = 7001;
+var serverURL = "http://" + serverHost + ":" + serverPort;
 
-var currentScreen = "bill"; // that depends if user is logged in
+var currentScreen = "identification"; // that depends if user is logged in
+var cred = null;
+
+function readURL(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            console.log(e.target.result);
+            $('#preview').attr('src', e.target.result);
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+$("#inputFile").change(function() {
+    console.log("x");
+    //readURL(this); TODO
+});
 
 function configureNavigationBar() {
     console.log("Current screen is now", currentScreen);
@@ -138,41 +158,45 @@ function configureIdentificationScreen() {
             );
             return;
         }
-        $.post(
-            "http://localhost:8000/users",
-            {
-                email: EMAIL,
-                username: USER,
-                password: PASS1,
-            },
-            function(data, status) {
-                if (status == 400) {
+        var body = {email: EMAIL, password: PASS1, username: USER};
+        var http = new XMLHttpRequest();
+        http.open("POST", serverURL + "/users", true);
+        http.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+        http.onreadystatechange = function() { // callback function
+            if(http.readyState == XMLHttpRequest.DONE) {
+                if (http.status == 400) {
                     identificationError(
                         ["#signupEmail", "#signupUsername", "#signupPassword1", "#signupPassword2"],
                         [],
-                        data
+                        http.responseText
                     );
-                } else if (status == 409) {
-                    if (data.toLowerCase().indexOf("email") != -1) {
-                        identificationError(["#signupEmail"], [], data);
-                    } else if (data.toLowerCase().indexOf("username") != -1) {
-                        identificationError(["#signupUsername"], [], data);
-                    } else if (data.toLowerCase().indexOf("password") != -1) {
-                        identificationError(["#signupPassword1", "#signupPassword2"], [], data);
+                } else if (http.status == 409) {
+                    if (http.responseText.toLowerCase().indexOf("email") != -1) {
+                        identificationError(["#signupEmail"], [], http.responseText);
+                    } else if (http.responseText.toLowerCase().indexOf("username") != -1) {
+                        identificationError(["#signupUsername"], [], http.responseText);
+                    } else if (http.responseText.toLowerCase().indexOf("password") != -1) {
+                        identificationError(["#signupPassword1", "#signupPassword2"], [], http.responseText);
                     }
-                } else if (status == 201) {
-                    var token = data;
+                } else if (http.status == 201) {
+                    cred = JSON.parse(http.responseText);
+                    currentScreen = "bill";
+                    $(".screen").hide();
+                    $('#' + currentScreen).show();
+                    $(navigationBar).show();
                 } else {
-                    console.log("Unknown status code:", status);
+                    console.log("Unknown status code:", http.status);
                 }
             }
-        );
+        };
+        http.send(JSON.stringify(body));
     });
 
     // Login procedure
     $("#loginSubmit").click(function(){
-        var EMAIL = $("#loginEmail").value,
-        PASS = $("#loginPassword").value;
+        var EMAIL = $("#loginEmail").val(),
+        PASS = $("#loginPassword").val();
+        console.log("EMAIL:", EMAIL);
         EMAIL = validator.trim(EMAIL);
         PASS = validator.trim(PASS);
         if (!validator.isEmail(EMAIL)) {
@@ -187,31 +211,36 @@ function configureIdentificationScreen() {
             );
             return;
         }
-        $.post(
-            "http://localhost:8000/users/" + EMAIL,
-            {
-                password: PASS,
-            },
-            function(data, status) {
-                if (status == 400) {
+        var body = {email: EMAIL, password: PASS};
+        var http = new XMLHttpRequest();
+        http.open("POST", serverURL + "/login", true);
+        http.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+        http.onreadystatechange = function() { // callback function
+            if(http.readyState == XMLHttpRequest.DONE) {
+                if (http.status == 400) {
                     identificationError(
                         ["#loginEmail", "#loginPassword"],
                         [],
-                        data
+                        http.responseText
                     );
-                } else if (status == 401) {
+                } else if (http.status == 401) {
                     identificationError(
                         ["#loginEmail", "#loginPassword"],
                         ["#loginPassword"],
-                        data
+                        http.responseText
                     );
-                } else if (status == 200) {
-                    var token = data;
+                } else if (http.status == 200) {
+                    cred = JSON.parse(http.responseText);
+                    currentScreen = "bill";
+                    $(".screen").hide();
+                    $('#' + currentScreen).show();
+                    $(navigationBar).show();
                 } else {
-                    console.log("Unknown status code:", status);
+                    console.log("Unknown status code:", http.status);
                 }
             }
-        );
+        };
+        http.send(JSON.stringify(body));
     });
 }
 
