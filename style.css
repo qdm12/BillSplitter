@@ -3,7 +3,6 @@ html, body {
 	padding:0;
 	height:100%;
 	font-family: 'Spectral SC', serif !important;
-	overflow-y: hidden;
 }
 
 /* latin-ext */
@@ -233,16 +232,15 @@ html, body {
     top: 40%;
 }
 #identification #identificationBox #login #loginSubmit {
-    top: 75%;
+    top: 60%;
 	font-size:1.7vw;
 	font-family: 'Spectral SC', serif;
 	cursor: pointer;
 }
 #identification #identificationBox #login #loginForgot {
-    position:absolute;
-	left: 44%;
-    top:95%;
+	top: 80%;
 	cursor: pointer;
+	font-size:1vw;
 }
 #identification #identificationBox .error {
     color: rgba(255, 19, 19, 0.37);
