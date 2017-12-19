@@ -1004,7 +1004,7 @@ app.get('/bills/web/:link', function (req, res) {
           if (results.length === 0) {
             return res.status(404).send("Link provided does not exist");
           }
-          res.status(200).sendFile(path.join(__dirname + '/../dynamic.html'));
+          res.status(200).sendFile(path.join(__dirname + '/../dynamic/index.html'));
         }
       );
     });
