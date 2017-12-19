@@ -22,7 +22,11 @@
 
 ## Backend
 
-See the [backend documentation](backend/readme.md)
+- Based on NodeJS and MySQL
+- Implements a (almost) RESTful interface
+- Contains testing
+
+See the [backend documentation](backend/readme.md) for description, installation, running and testing
 
 ## Frontend
 
