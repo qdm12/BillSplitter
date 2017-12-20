@@ -316,7 +316,8 @@ function updateDatabase(dropZone, UIDraggable, callback) { // TODO give bill
         }
     };
     var http = new XMLHttpRequest();
-    http.open("PUT", serverURL + "/bills/web/" + link, true);
+    http.open("PUT", serverURL + "/bills/" + bill.id, true);
+    http.setRequestHeader('x-access-token', cred.token);
     http.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
     http.onreadystatechange = function() { // callback function
         if(http.readyState == XMLHttpRequest.DONE) {
@@ -333,7 +334,6 @@ function updateDatabase(dropZone, UIDraggable, callback) { // TODO give bill
     http.send(JSON.stringify(body));
 }
 
-var bill; // TODO remove
 function loadBillDynamic(billID) {
     var http = new XMLHttpRequest();
     http.open("GET", serverURL + "/bills/" + billID, true);
@@ -527,7 +527,7 @@ function loadBillDynamic(billID) {
                     $(this).children("#"+$(ui.draggable).attr('id')).effect("highlight", {}, 500);
                     return;
                 }
-    
+                var itemID = $(this).attr('id').substring(4);    
                 var isUserTemp = $(ui.draggable).attr("id").match("^tempUser");
     
                 // Updates the data

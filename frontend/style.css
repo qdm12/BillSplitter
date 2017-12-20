@@ -34,7 +34,7 @@ html, body {
 	grid-template-columns: 1fr 1fr 1fr 1fr;
     font-size: 4.4vmin;
     border-top: 2px solid black;
-	z-index: 1; /*on top of other layers*/
+	z-index: 2; /*on top of other layers*/
 	transition:all 0.4s;
     -webkit-transition:all 0.4s;
     -moz-transition:all 0.4s;
