@@ -2,10 +2,11 @@ var serverHost = "websys3.stern.nyu.edu";
 var serverPort = 7001;
 var serverURL = "http://" + serverHost + ":" + serverPort;
 
-var currentScreen = "history"; // that depends if user is logged in
+var currentScreen = "history"; // that depends if user is logged in TODO
 var cred = null;
 // Alice credentials
 cred = {userID: 1, token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzM2MTE1Mn0.ADJM99Kok8zmUeaiu0hCZLtIPvSKEBfGg_uaTKx5zpM"}; // TODO to remove
+
 
 function configureNavigationBar() {
     console.log("Current screen is now", currentScreen);
@@ -226,16 +227,16 @@ function timeObjectToHuman(obj) {
 }
 
 function populateHistory() {
-    var httpBillsIDs = new XMLHttpRequest();
-    httpBillsIDs.open("GET", serverURL + "/bills", true);
-    httpBillsIDs.setRequestHeader('x-access-token', cred.token);
-    httpBillsIDs.onreadystatechange = function() { // callback function
-        if(httpBillsIDs.readyState == XMLHttpRequest.DONE) {
-            if (httpBillsIDs.status !== 200) {
-                alert(httpBillsIDs.status + ": " + httpBillsIDs.responseText);
+    var http = new XMLHttpRequest();
+    http.open("GET", serverURL + "/bills", true);
+    http.setRequestHeader('x-access-token', cred.token);
+    http.onreadystatechange = function() { // callback function
+        if(http.readyState == XMLHttpRequest.DONE) {
+            if (http.status !== 200) {
+                alert(http.status + ": " + http.responseText);
                 return;
             }
-            var billIDs = JSON.parse(httpBillsIDs.responseText);
+            var billIDs = JSON.parse(http.responseText);
             for(var i = 0; i < billIDs.length; i += 1) {
                 var httpBill = new XMLHttpRequest();
                 httpBill.open("GET", serverURL + "/bills/" + billIDs[i], true);
@@ -271,7 +272,11 @@ function populateHistory() {
                                 $("#history #billOverview"+bill.id).append('<div class="billOverviewDetails"></div>');
                                 $("#history #billOverview"+bill.id).append('<div class="billOverviewShare">Share link</div>');
                                 $("#history #billOverview"+bill.id+" .billOverviewDetails").click(function() {
-                                    alert("to do");
+                                    $(".screen").hide();
+                                    currentScreen = "dynamicBill";
+                                    $("#dynamicBill").show();
+                                    var billID = $("button").closest("div").prop("id");
+                                    loadBillDynamic(bill.id);
                                 });
                                 $("#history #billOverview"+bill.id+" .billOverviewShare").click(function() {
                                     window.prompt("Link to share:", serverURL + "/bills/web/" + bill.link);
@@ -289,7 +294,317 @@ function populateHistory() {
             }
         }
     };
-    httpBillsIDs.send();
+    http.send();
+}
+
+function updateDatabase(dropZone, UIDraggable, callback) { // TODO give bill
+    var i;
+    var users = [], tempUsers = [];
+    for(i = 0; i < bill.users.length; i += 1) {
+        users.push({id: bill.users[i].id});
+    }
+    for(i = 0; i < bill.tempUsers.length; i += 1) {
+        tempUsers.push({id: bill.tempUsers[i].id});
+    }
+    var body = {
+        bill: {
+            name: bill.name,
+            done: bill.done,
+            users: users,
+            tempUsers: tempUsers,
+            consumers: bill.consumers
+        }
+    };
+    var http = new XMLHttpRequest();
+    http.open("PUT", serverURL + "/bills/web/" + link, true);
+    http.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+    http.onreadystatechange = function() { // callback function
+        if(http.readyState == XMLHttpRequest.DONE) {
+            if (http.status !== 200) {
+                alert(http.status + ": " + http.responseText);
+                return;
+            }
+            console.log("Database updated");
+            if (callback) {
+                callback(dropZone, UIDraggable);
+            }
+        }
+    }
+    http.send(JSON.stringify(body));
+}
+
+var bill; // TODO remove
+function loadBillDynamic(billID) {
+    var http = new XMLHttpRequest();
+    http.open("GET", serverURL + "/bills/" + billID, true);
+    http.setRequestHeader('x-access-token', cred.token);
+    http.onreadystatechange = function() { // callback function
+      if(http.readyState == XMLHttpRequest.DONE) {
+        if (http.status !== 200) {
+          alert(http.status + ": " + http.responseText);
+          return;
+        }
+        bill = JSON.parse(http.responseText);
+        $("#dynamicBill #description #billname").text(bill.name);
+        $("#dynamicBill #description #restaurant").text(bill.restaurant);
+        $("#dynamicBill #description #address").text(bill.address);
+        $("#dynamicBill #description #time").text(timeObjectToHuman(bill.time));
+        $("#dynamicBill #description #tip").text("Tip: $" + bill.tip);
+        $("#dynamicBill #description #tax").text("Tax: " + bill.tax + "%");
+        if (bill.done) {
+            $("#dynamicBill #description #billname").css({
+                "text-decoration": "line-through",
+                color: "red"
+            });
+            $("#dynamicBill #description").css({
+                background: "rgb(255, 170, 170)"
+            });
+            $("#dynamicBill #description #done").text("This bill will be deleted in 24 hours");
+        }
+
+        var usersPerItem = {};
+        for (i = 0; i < bill.consumers.length; i += 1) {
+            if (!usersPerItem[bill.consumers[i].item_id]) {
+                usersPerItem[bill.consumers[i].item_id] = 0;
+            }
+            usersPerItem[bill.consumers[i].item_id] += 1;
+        }
+
+        // Update the item prices including the tax
+        for (i = 0; i < bill.items.length; i += 1) {
+            bill.items[i].amount *= (1 + bill.tax / 100);
+        }
+
+        var userOwn, UIusername;
+        for(i = 0; i < bill.users.length; i += 1) {
+            $("#dynamicBill #users").append('<div id="user'+ bill.users[i].id +'" class="user"></div>');
+            UIusername = bill.users[i].username;
+            if (UIusername.length > 6) {
+                UIusername = UIusername.substring(0,6) + "."
+            }
+            $("#dynamicBill #users #user"+bill.users[i].id).append('<div class="username">' + UIusername + '</div>');
+            userOwn = 0;
+            for(j = 0; j < bill.consumers.length; j += 1) {
+                if (bill.consumers[j].user_id === bill.users[i].id) {
+                    for(k = 0; k < bill.items.length; k += 1) {
+                        if (bill.items[k].id === bill.consumers[j].item_id) {
+                            userOwn += (bill.items[k].amount / usersPerItem[bill.items[k].id]);
+                        }
+                    }
+                }
+            }
+            userOwn += bill.tip / (bill.users.length + bill.tempUsers.length);
+            $("#dynamicBill #users #user"+bill.users[i].id).append('<div class="userown">$' + userOwn.toFixed(2) + '</div>');
+        }
+        for(i = 0; i < bill.tempUsers.length; i += 1) {
+            $("#dynamicBill #users").append('<div id="tempUser'+ bill.tempUsers[i].id +'" class="user" style="background:grey;"></div>');
+            UIusername = bill.tempUsers[i].username;
+            if (UIusername.length > 6) {
+                UIusername = UIusername.substring(0,6) + "."
+            }
+            $("#dynamicBill #users #tempUser"+bill.tempUsers[i].id).append('<div class="username">' + UIusername + '</div>');
+            userOwn = 0;
+            for(j = 0; j < bill.consumers.length; j += 1) {
+                if (bill.consumers[j].temp_user_id === bill.tempUsers[i].id && !bill.consumers[j].paid) {
+                    for(k = 0; k < bill.items.length; k += 1) {
+                        if (bill.items[k].id === bill.consumers[j].item_id) {
+                            userOwn += (bill.items[k].amount / usersPerItem[bill.items[k].id]);
+                        }
+                    }
+                }
+            }
+            userOwn += bill.tip / (bill.users.length + bill.tempUsers.length);
+            $("#dynamicBill #users #tempUser"+bill.tempUsers[i].id).append('<div class="userown">$' + userOwn.toFixed(2) + '</div>');
+        }
+    
+        var itemPaid = false;
+        for(i = 0; i < bill.items.length; i += 1) {
+            $("#dynamicBill #items").append('<div id="item'+ bill.items[i].id +'" class="item"></div>');
+            $("#dynamicBill #items #item"+bill.items[i].id).append('<div class="itemname">' + bill.items[i].name + '</div>');
+            $("#dynamicBill #items #item"+bill.items[i].id).append('<div class="itemprice">$' + bill.items[i].amount.toFixed(2) + '</div>');
+            itemPaid = true;
+            for(j = 0; j < bill.consumers.length; j += 1) {
+                if (bill.consumers[j].item_id === bill.items[i].id) {
+                    if (!bill.consumers[j].paid) {
+                        itemPaid = false;
+                    }
+                    var copy;
+                    if (bill.consumers[j].user_id != null) { // user
+                        copy = $("#dynamicBill #users #user"+bill.consumers[j].user_id).clone();
+                    } else { // temp user
+                        copy = $("#dynamicBill #users #tempUser"+bill.consumers[j].temp_user_id).clone();
+                    }
+                    copy.children().remove(".userown"); // removes the $ owned
+                    $("#dynamicBill #items #item"+bill.items[i].id).append(copy);
+                }
+            }
+            if (itemPaid) {
+                $("#dynamicBill #items #item"+bill.items[i].id + " .itemprice").css({
+                    color: "yellow",
+                    "text-decoration": "line-through",
+                });
+            }
+        }
+    
+        $("#dynamicBill #users #addUserContainer #submitUser").click(function() {
+            var username = $("#dynamicBill #users #addUserContainer #fieldUser").val();
+            var http = new XMLHttpRequest();
+            http.open("GET", serverURL + "/users/" + username, true);
+            http.onreadystatechange = function() { // callback function
+                if(http.readyState == XMLHttpRequest.DONE) {
+                    if (http.status !== 200) {
+                      alert(http.status + ": " + http.responseText);
+                      return;
+                    }
+                    var userID = JSON.parse(http.responseText).id;
+    
+                    // Update local bill
+                    bill.users.push({id:userID, username:username});
+    
+                    // Update database
+                    updateDatabase(function() {
+                        // Update UI
+                        var i = bill.users.length - 1;
+                        $("#dynamicBill #users").append('<div id="user'+ bill.users[i].id +'" class="user"></div>');
+                        var UIusername = bill.users[i].username;
+                        if (UIusername.length > 6) {
+                            UIusername = UIusername.substring(0,6) + "."
+                        }
+                        $("#dynamicBill #users #user"+bill.users[i].id).append('<div class="username">' + UIusername + '</div>');
+                        var userOwn = bill.tip / (bill.users.length + bill.tempUsers.length);
+                        $("#dynamicBill #users #user"+bill.users[i].id).append('<div class="userown">$' + userOwn.toFixed(2) + '</div>');
+                    });
+                }
+            }
+            http.send();
+        });
+    
+        $("#dynamicBill #users #addNameContainer #submitName").click(function() {
+            var name = $("#dynamicBill #users #addNameContainer #fieldName").val();
+            var body = {
+                name: name,
+                link: link
+            };
+            var http = new XMLHttpRequest();
+            http.open("POST", serverURL + "/tempusers", true);
+            http.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+            http.onreadystatechange = function() { // callback function
+                if(http.readyState == XMLHttpRequest.DONE) {
+                    if (http.status !== 201) {
+                      alert(http.status + ": " + http.responseText);
+                      return;
+                    }
+                    var tempUserID = JSON.parse(http.responseText).id;
+    
+                    // Update local data
+                    bill.tempUsers.push({id:tempUserID, username:name});
+    
+                    // Update database
+                    updateDatabase(function () {
+                        var i = bill.tempUsers.length - 1;
+                        $("#dynamicBill #users").append('<div id="tempUser'+ bill.tempUsers[i].id +'" class="user"></div>');
+                        var UIusername = bill.tempUsers[i].username;
+                        if (UIusername.length > 6) {
+                            UIusername = UIusername.substring(0,6) + "."
+                        }
+                        $("#dynamicBill #users #user"+bill.tempUsers[i].id).append('<div class="username">' + UIusername + '</div>');
+                        var userOwn = bill.tip / (bill.users.length + bill.tempUsers.length);
+                        $("#dynamicBill #users #user"+bill.tempUsers[i].id).append('<div class="userown">$' + userOwn.toFixed(2) + '</div>');
+                    });
+                }
+            }
+            http.send(JSON.stringify(body));
+        });
+    
+    
+        $('#dynamicBill #users .user').draggable({
+            helper:"clone"
+        });
+        $('#dynamicBill #items .item').droppable({
+            drop: function(event, ui) {
+                if ($(this).has("#"+$(ui.draggable).attr('id')).length === 1) {
+                    // user is already in there
+                    $(this).children("#"+$(ui.draggable).attr('id')).effect("highlight", {}, 500);
+                    return;
+                }
+    
+                var isUserTemp = $(ui.draggable).attr("id").match("^tempUser");
+    
+                // Updates the data
+                if (isUserTemp) {
+                    bill.consumers.push({
+                        item_id: $(this).attr("id").substring(4),
+                        user_id: null,
+                        temp_user_id: $(ui.draggable).attr("id").substring(8),
+                        paid: false
+                    });
+                } else { // registered user
+                    bill.consumers.push({
+                        item_id: $(this).attr("id").substring(4),
+                        user_id: $(ui.draggable).attr("id").substring(4),
+                        temp_user_id: null,
+                        paid: false
+                    });
+                }
+    
+                // Update database
+                updateDatabase($(this), $(ui.draggable), function(DropZone, UIDraggable) {
+                    // Updates the UI
+                    var copy = UIDraggable.clone();
+                    copy.children().remove(".userown"); // removes the $ owned
+                    DropZone.append(copy);
+                    copy.effect("highlight", {}, 500);
+                    DropZone.effect("highlight", {}, 1000);
+                    var usersPerItem = {};
+                    for (i = 0; i < bill.consumers.length; i += 1) {
+                        if (!usersPerItem[bill.consumers[i].item_id]) {
+                            usersPerItem[bill.consumers[i].item_id] = 0;
+                        }
+                        usersPerItem[bill.consumers[i].item_id] += 1;
+                    }
+                    usersPerItem[DropZone.attr("id").substring(4)] += 1;
+                    var userOwn, userOwnElement;
+                    for(i = 0; i < bill.users.length; i += 1) {
+                        userOwn = 0;
+                        for(j = 0; j < bill.consumers.length; j += 1) {
+                            if (bill.consumers[j].user_id === bill.users[i].id) {
+                                for(k = 0; k < bill.items.length; k += 1) {
+                                    if (bill.items[k].id === bill.consumers[j].item_id) {
+                                        userOwn += (bill.items[k].amount / usersPerItem[bill.items[k].id]);
+                                    }
+                                }
+                            }
+                        }
+                        userOwn += bill.tip / (bill.users.length + bill.tempUsers.length);
+                        userOwnElement = $("#dynamicBill #users #user"+bill.users[i].id + " .userown");
+                        if (userOwnElement.text() != "$" + userOwn.toFixed(2)) {
+                            userOwnElement.effect("highlight", {}, 500);
+                        }
+                        userOwnElement.text("$" + userOwn.toFixed(2));
+                    }
+                    for(i = 0; i < bill.tempUsers.length; i += 1) {
+                        userOwn = 0;
+                        for(j = 0; j < bill.consumers.length; j += 1) {
+                            if (bill.consumers[j].temp_user_id === bill.tempUsers[i].id && !bill.consumers[j].paid) {
+                                for(k = 0; k < bill.items.length; k += 1) {
+                                    if (bill.items[k].id === bill.consumers[j].item_id) {
+                                        userOwn += (bill.items[k].amount / usersPerItem[bill.items[k].id]);
+                                    }
+                                }
+                            }
+                        }
+                        userOwn += bill.tip / (bill.users.length + bill.tempUsers.length);
+                        userOwnElement = $("#dynamicBill #users #tempUser"+bill.tempUsers[i].id + " .userown");
+                        if (userOwnElement.text() != "$" + userOwn.toFixed(2)) {
+                            userOwnElement.effect("highlight", {}, 500);
+                        }
+                        userOwnElement.text("$" + userOwn.toFixed(2));
+                    }
+                });
+            }
+        });
+      }
+    }
 }
 
 $(document).ready(function() { // Executes secondly

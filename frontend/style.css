@@ -298,6 +298,128 @@ html, body {
     background: rgb(206, 255, 201);
 }
 
+#dynamicBill #description {
+    position: relative;
+    width: 100%;
+    left: 0%;
+    top: 8%;
+    height: 12%;
+    background-color: rgb(176, 255, 255);
+    font-family: arial;
+    font-size: 3.5vmin;
+}
+#dynamicBill #description #billname {
+    padding-top:1%;
+    display: flex;
+    justify-content: center;
+    font-size: 4.5vmin;
+}
+#dynamicBill #description #billright {
+    float: right;
+}
+#dynamicBill #description #billleft {
+    float: left;
+}
+
+#dynamicBill #users {
+    margin-top: 12.7%;
+    width: 35%;
+    left: 0%;
+    top: 20%;
+    height: 92%;
+    background-color: rgb(176, 230, 255);
+    overflow-y: scroll;
+    font-family: arial;
+}
+#dynamicBill .user {
+    position: relative;
+    display: inline-block;
+    margin-top: 2vh;
+    margin-left: 3vw;
+    z-index: 1;
+    font-size: 2.6vh;
+    padding: 5%;
+    border-radius: 25%;
+    border: 3px solid rgb(81, 83, 255);
+    color: white;
+    background-color: rgba(39, 126, 167, 0.534);
+}
+#dynamicBill .username {
+    display: flex;
+    justify-content: center;
+    color: white;
+}
+#dynamicBill .userown {
+    display: flex;
+    justify-content: center;
+    color: rgb(21, 90, 21);
+}
+#dynamicBill #items {
+	position: absolute;
+    width: 65%;
+    left: 35%;
+    top: 20%;
+    height: 92%;
+    background-color: rgb(153, 180, 238);
+    overflow-y: scroll;
+    font-family: arial;
+}
+#dynamicBill .item {
+    width: 80%;
+    margin: auto;
+    margin-top: 5%;
+    z-index: 1;
+    display:flow-root;
+    font-size: 3vh;
+    padding: 3%;
+    border-radius: 5%;
+    border: 3px solid rgb(2, 3, 75);
+    color: white;
+    background-color: rgba(47, 36, 199, 0.884);
+    overflow-wrap: break-word;
+}
+#dynamicBill .itemname {
+    float: left;
+    color: white;
+    word-wrap: break-word;
+    width: 65%;
+}
+#dynamicBill .itemprice {
+    float: right;
+    color: rgb(132, 235, 132);
+}
+#dynamicBill #addUserContainer, #addNameContainer {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    margin-top: 0;
+    font-size: 4vh;
+    border: 3px solid rgb(206, 255, 141);
+    color: rgb(0, 0, 0);
+}
+#dynamicBill #fieldUser, #fieldName {
+    padding: 3%;
+    float: left;
+    width: 75%;
+	transition:all 0.4s;
+    -webkit-transition:all 0.4s;
+    -moz-transition:all 0.4s;
+    -o-transition:all 0.4s;
+    -ms-transition:all 0.4s;
+}
+#dynamicBill #fieldUser:focus, #fieldName:focus {
+    background: rgba(211, 255, 202, 0.753);
+}
+#dynamicBill #submitUser, #submitName {
+    float: right;
+    width: 25%;
+    display: flex;
+    justify-content: center;
+    color: rgb(22, 255, 41);
+    background-color: rgb(78, 197, 124);
+}
+
+
 #profile {
     background: #D65D53;
 }

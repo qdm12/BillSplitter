@@ -5,6 +5,8 @@
     <title>BillSplitter</title>
     <link rel="stylesheet" type="text/css" href="style.css">
     <script src="js/jquery.min.js" type="text/javascript"></script>
+    <script src="js/jquery-ui.min.js" type="text/javascript"></script>
+    <script src="js/jquery.ui.touch-punch.min.js" type="text/javascript"></script>
     <script src="js/validator.min.js" type="text/javascript"></script>
     <script src="js/script.js" type="text/javascript"></script>
 </head>
@@ -51,6 +53,32 @@
 
     <div id="history" class="screen">
     </div>
+    <div id="dynamicBill" class="screen">
+        <div id="description">
+            <div id="billname">Bill name</div>
+            <div id="billleft">
+                <div id="restaurant">Restaurant</div>
+                <div id="address">Address</div>
+                <div id="time">12/31/1999 23:59:59</div>
+            </div>
+            <div id="billright">
+                <div id="tip">Tip: $0</div>
+                <div id="tax">Tax: $0</div>
+            </div>
+        </div>
+        <div id="users">
+            <div id="addUserContainer">
+                <input id="fieldUser" type="text" placeholder="Add user" maxlength="40">
+                <div id="submitUser">+</div>
+            </div>
+            <div id="addNameContainer">
+                <input id="fieldName" type="text" placeholder="Add name" maxlength="20">
+                <div id="submitName">+</div>
+            </div>
+        </div>
+        <div id="items"></div>
+    </div>
+
 
     <div id="profile" class="screen">
     </div>
