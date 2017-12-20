@@ -2,10 +2,10 @@ var serverHost = "websys3.stern.nyu.edu";
 var serverPort = 7001;
 var serverURL = "http://" + serverHost + ":" + serverPort;
 
-var currentScreen = "identification"; // that depends if user is logged in TODO
+var currentScreen = "history"; // TODO that depends if user is logged in TODO
 var cred = null;
-// Alice credentials
-cred = {userID: 1, token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzM2MTE1Mn0.ADJM99Kok8zmUeaiu0hCZLtIPvSKEBfGg_uaTKx5zpM"}; // TODO to remove
+// Alice credentials TODO
+cred = {userID: 1, token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzM2MTE1Mn0.ADJM99Kok8zmUeaiu0hCZLtIPvSKEBfGg_uaTKx5zpM"};
 
 
 function configureNavigationBar() {

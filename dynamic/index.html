@@ -186,7 +186,8 @@ var i, j, k;
 var serverHost = "websys3.stern.nyu.edu";
 var serverPort = 7001;
 var serverURL = "http://" + serverHost + ":" + serverPort;
-var link = document.location.href.substring(link.length - 40);
+var link = document.location.href;
+link = link.substring(link.length - 40);
 link = "2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL"; // TODO comment for local testing
 
 function updateDatabase(dropZone, UIDraggable, callback) {
