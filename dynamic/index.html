@@ -188,7 +188,7 @@ var serverPort = 7001;
 var serverURL = "http://" + serverHost + ":" + serverPort;
 var link = document.location.href;
 link = link.substring(link.length - 40);
-// link = "2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL"; // TODO comment for local testing
+// link = "2VxFHtGDh44bMtW4VbngW3XxPQwqIQucnAUM6ZHL"; // uncomment for local testing
 
 function updateDatabase(dropZone, UIDraggable, callback) {
     var i;
@@ -312,13 +312,16 @@ http.onreadystatechange = function() { // callback function
     }
 
     var itemPaid = false;
+    var foundConsumer = false;
     for(i = 0; i < data.items.length; i += 1) {
         $("#items").append('<div id="item'+ data.items[i].id +'" class="item"></div>');
         $("#items #item"+data.items[i].id).append('<div class="itemname">' + data.items[i].name + '</div>');
         $("#items #item"+data.items[i].id).append('<div class="itemprice">$' + data.items[i].amount.toFixed(2) + '</div>');
         itemPaid = true;
+        foundConsumer = false;
         for(j = 0; j < data.consumers.length; j += 1) {
             if (data.consumers[j].item_id === data.items[i].id) {
+                foundConsumer = true;
                 if (!data.consumers[j].paid) {
                     itemPaid = false;
                 }
@@ -332,7 +335,7 @@ http.onreadystatechange = function() { // callback function
                 $("#items #item"+data.items[i].id).append(copy);
             }
         }
-        if (itemPaid) {
+        if (itemPaid && foundConsumer) {
             $("#items #item"+data.items[i].id + " .itemprice").css({
                 color: "yellow",
                 "text-decoration": "line-through",
@@ -427,19 +430,18 @@ http.onreadystatechange = function() { // callback function
             // Updates the data
             if (isUserTemp) {
                 data.consumers.push({
-                    item_id: $(this).attr("id").substring(4),
+                    item_id: Number($(this).attr("id").substring(4)),
                     user_id: null,
-                    temp_user_id: $(ui.draggable).attr("id").substring(8),
+                    temp_user_id: Number($(ui.draggable).attr("id").substring(8)),
                     paid: false
                 });
             } else { // registered user
                 data.consumers.push({
-                    item_id: $(this).attr("id").substring(4),
-                    user_id: $(ui.draggable).attr("id").substring(4),
+                    item_id: Number($(this).attr("id").substring(4)),
+                    user_id: Number($(ui.draggable).attr("id").substring(4)),
                     temp_user_id: null,
                     paid: false
                 });
-            }
 
             // Update database
             updateDatabase($(this), $(ui.draggable), function(DropZone, UIDraggable) {

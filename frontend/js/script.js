@@ -419,14 +419,17 @@ function loadBillDynamic(billID) {
         }
 
         var itemPaid = false;
+        var foundConsumer = false;
         $("#dynamicBill #items").find(".item").remove();
         for(i = 0; i < bill.items.length; i += 1) {
             $("#dynamicBill #items").append('<div id="item'+ bill.items[i].id +'" class="item"></div>');
             $("#dynamicBill #items #item"+bill.items[i].id).append('<div class="itemname">' + bill.items[i].name + '</div>');
             $("#dynamicBill #items #item"+bill.items[i].id).append('<div class="itemprice">$' + bill.items[i].amount.toFixed(2) + '</div>');
             itemPaid = true;
+            foundConsumer = false;
             for(j = 0; j < bill.consumers.length; j += 1) {
                 if (bill.consumers[j].item_id === bill.items[i].id) {
+                    foundConsumer = true;
                     if (!bill.consumers[j].paid) {
                         itemPaid = false;
                     }
@@ -440,14 +443,14 @@ function loadBillDynamic(billID) {
                     $("#dynamicBill #items #item"+bill.items[i].id).append(copy);
                 }
             }
-            if (itemPaid) {
+            if (itemPaid && foundConsumer) {
                 $("#dynamicBill #items #item"+bill.items[i].id + " .itemprice").css({
                     color: "yellow",
                     "text-decoration": "line-through",
                 });
             }
         }
-    
+
         $("#dynamicBill #users #addUserContainer #submitUser").click(function() {
             var username = $("#dynamicBill #users #addUserContainer #fieldUser").val();
             var http = new XMLHttpRequest();
@@ -459,10 +462,10 @@ function loadBillDynamic(billID) {
                       return;
                     }
                     var userID = JSON.parse(http.responseText).id;
-    
+
                     // Update local bill
                     bill.users.push({id:userID, username:username});
-    
+
                     // Update database
                     updateDatabase(function() {
                         // Update UI
@@ -480,7 +483,7 @@ function loadBillDynamic(billID) {
             }
             http.send();
         });
-    
+
         $("#dynamicBill #users #addNameContainer #submitName").click(function() {
             var name = $("#dynamicBill #users #addNameContainer #fieldName").val();
             var body = {
@@ -497,10 +500,10 @@ function loadBillDynamic(billID) {
                       return;
                     }
                     var tempUserID = JSON.parse(http.responseText).id;
-    
+
                     // Update local data
                     bill.tempUsers.push({id:tempUserID, username:name});
-    
+
                     // Update database
                     updateDatabase(function () {
                         var i = bill.tempUsers.length - 1;
@@ -529,26 +532,26 @@ function loadBillDynamic(billID) {
                     $(this).children("#"+$(ui.draggable).attr('id')).effect("highlight", {}, 500);
                     return;
                 }
-                var itemID = $(this).attr('id').substring(4);    
-                var isUserTemp = $(ui.draggable).attr("id").match("^tempUser");
-    
+                var itemID = $(this).attr('id').substring(4);
+
                 // Updates the data
+                var isUserTemp = $(ui.draggable).attr("id").match("^tempUser");
                 if (isUserTemp) {
                     bill.consumers.push({
-                        item_id: $(this).attr("id").substring(4),
+                        item_id: Number($(this).attr("id").substring(4)),
                         user_id: null,
-                        temp_user_id: $(ui.draggable).attr("id").substring(8),
+                        temp_user_id: Number($(ui.draggable).attr("id").substring(8)),
                         paid: false
                     });
                 } else { // registered user
                     bill.consumers.push({
-                        item_id: $(this).attr("id").substring(4),
-                        user_id: $(ui.draggable).attr("id").substring(4),
+                        item_id: Number($(this).attr("id").substring(4)),
+                        user_id: Number($(ui.draggable).attr("id").substring(4)),
                         temp_user_id: null,
                         paid: false
                     });
                 }
-    
+
                 // Update database
                 updateDatabase($(this), $(ui.draggable), function(DropZone, UIDraggable) {
                     // Updates the UI
@@ -581,8 +584,8 @@ function loadBillDynamic(billID) {
                         userOwnElement = $("#dynamicBill #users #user"+bill.users[i].id + " .userown");
                         if (userOwnElement.text() != "$" + userOwn.toFixed(2)) {
                             userOwnElement.effect("highlight", {}, 500);
+                            userOwnElement.text("$" + userOwn.toFixed(2));
                         }
-                        userOwnElement.text("$" + userOwn.toFixed(2));
                     }
                     for(i = 0; i < bill.tempUsers.length; i += 1) {
                         userOwn = 0;
@@ -599,14 +602,14 @@ function loadBillDynamic(billID) {
                         userOwnElement = $("#dynamicBill #users #tempUser"+bill.tempUsers[i].id + " .userown");
                         if (userOwnElement.text() != "$" + userOwn.toFixed(2)) {
                             userOwnElement.effect("highlight", {}, 500);
+                            userOwnElement.text("$" + userOwn.toFixed(2));
                         }
-                        userOwnElement.text("$" + userOwn.toFixed(2));
                     }
                 });
             }
         });
       }
-    }
+    };
     http.send();
 }
 
