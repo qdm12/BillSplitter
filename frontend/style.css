@@ -263,35 +263,39 @@ html, body {
 }
 
 #history {
-    background-color: rgb(193, 226, 255);
+    background-color: rgb(233, 245, 255);
     padding-top:12%;
 }
 
-#history #billOverview {
+#history .billOverview {
     position: relative;
     width: 90%;
     margin-left: 3%;
     margin-top: 3%;
     height: 20%;
     padding: 2%;
-    background-color: rgb(208, 255, 253);
+    background-color: rgb(213, 230, 229);
     font-family: arial;
 }
 
-#history #billOverviewDetails {
+#history .billOverviewDetails {
     float:left;
-    font-size: 4.5vmin;
-    background:rgb(215, 215, 255);
+    width: 70%;
+    height: 100%;
+    overflow-wrap: break-word;
+    font-size: 3vmin;
+    background:rgb(202, 202, 212);
 }
 
-#history #billOverviewAccess {
+#history .billOverviewShare {
     float:right;
-    font-size: 7vmin;
+    font-size: 5vmin;
     display: flex;
-    justify-content: center;
-    width: 35%;
-    height: 20vh;
-    background: rgb(151, 255, 142);
+    justify-content:center;
+    flex-direction:column; /* column | row */
+    width: 25%;
+    height: 100%;
+    background: rgb(206, 255, 201);
 }
 
 #profile {

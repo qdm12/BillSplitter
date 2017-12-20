@@ -2,7 +2,7 @@ var serverHost = "websys3.stern.nyu.edu";
 var serverPort = 7001;
 var serverURL = "http://" + serverHost + ":" + serverPort;
 
-var currentScreen = "identification"; // that depends if user is logged in
+var currentScreen = "history"; // that depends if user is logged in
 var cred = null;
 // Alice credentials
 cred = {userID: 1, token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOjEsImlhdCI6MTUxMzM2MTE1Mn0.ADJM99Kok8zmUeaiu0hCZLtIPvSKEBfGg_uaTKx5zpM"}; // TODO to remove
@@ -22,6 +22,7 @@ function configureNavigationBar() {
             $(".screen").hide();
             $("#history").show();
         }
+        populateHistory();
     });
     $("#profileButton").click(function(){
         if (currentScreen != "profile") {
@@ -220,38 +221,75 @@ function configureIdentificationScreen() {
         http.send(JSON.stringify(body));
     });
 }
+function timeObjectToHuman(obj) {
+    return obj.day+" "+obj.month+" "+obj.year+" at "+obj.hour+":"+obj.min;
+}
 
 function populateHistory() {
-    var http = new XMLHttpRequest();
-    http.open("GET", serverURL + "/bills", true);
-    http.setRequestHeader('x-access-token', cred.token);
-    http.onreadystatechange = function() { // callback function
-        if(http.readyState == XMLHttpRequest.DONE) {
-            if (http.status !== 200) {
-                alert(http.status + ": " + http.responseText);
+    var httpBillsIDs = new XMLHttpRequest();
+    httpBillsIDs.open("GET", serverURL + "/bills", true);
+    httpBillsIDs.setRequestHeader('x-access-token', cred.token);
+    httpBillsIDs.onreadystatechange = function() { // callback function
+        if(httpBillsIDs.readyState == XMLHttpRequest.DONE) {
+            if (httpBillsIDs.status !== 200) {
+                alert(httpBillsIDs.status + ": " + httpBillsIDs.responseText);
                 return;
             }
-            var billIDs = JSON.parse(http.responseText);
-            var http = new XMLHttpRequest();
-            var i;
-            var bills = [];
-            for(i = 0; i < billIDs.length; i += 1) { // TODO problem async
-                http.open("GET", serverURL + "/bills/" + billIDs[i], true);
-                http.setRequestHeader('x-access-token', cred.token);
-                http.onreadystatechange = function() { // callback function
-                    if(http.readyState == XMLHttpRequest.DONE) {
-                        if (http.status !== 200) {
-                            alert(http.status + ": " + http.responseText);
-                            return;
+            var billIDs = JSON.parse(httpBillsIDs.responseText);
+            for(var i = 0; i < billIDs.length; i += 1) {
+                var httpBill = new XMLHttpRequest();
+                httpBill.open("GET", serverURL + "/bills/" + billIDs[i], true);
+                httpBill.setRequestHeader('x-access-token', cred.token);
+                httpBill.onreadystatechange = (function(http) { // callback function
+                    return function() {
+                        if(http.readyState == XMLHttpRequest.DONE) {
+                            if (http.status !== 200) {
+                                alert(http.status + ": " + http.responseText);
+                                return;
+                            }
+                            var bill = JSON.parse(http.responseText);
+                            console.log(bill);
+                            var total = 0;
+                            var j;
+                            for (j = 0; j < bill.items.length; j += 1) {
+                                total += bill.items[j].amount;
+                            }
+                            total *= (1 + bill.tax / 100);
+                            total += bill.tip;
+                            var participants = "";
+                            for (j = 0; j < bill.users.length; j += 1) {
+                                participants += bill.users[j].username + ", ";
+                            }
+                            for (j = 0; j < bill.tempUsers.length; j += 1) {
+                                participants += bill.tempUsers[j].username + ", ";
+                            }
+                            participants = participants.substring(0, participants.length - 2);
+
+                            // Update UI
+                            if ($("#history #billOverview"+bill.id).length === 0) { // new bill
+                                $("#history").append('<div id="billOverview'+bill.id +'" class="billOverview"></div>');
+                                $("#history #billOverview"+bill.id).append('<div class="billOverviewDetails"></div>');
+                                $("#history #billOverview"+bill.id).append('<div class="billOverviewShare">Share link</div>');
+                                $("#history #billOverview"+bill.id+" .billOverviewDetails").click(function() {
+                                    alert("to do");
+                                });
+                                $("#history #billOverview"+bill.id+" .billOverviewShare").click(function() {
+                                    window.prompt("Link to share:", serverURL + "/bills/web/" + bill.link);
+                                });
+                            }
+                            $("#history #billOverview"+bill.id+" .billOverviewDetails").html(
+                                '<b>Bill name:</b> ' + bill.name + '<br><b>Restaurant:</b> ' + bill.restaurant +
+                                '<br><b>Address:</b> ' + bill.address + '<br><b>Date:</b> ' + timeObjectToHuman(bill.time) +
+                                '<br><b>Total:</b> $' + total.toFixed(2) + '<br><b>Participants:</b> ' + participants
+                            );
                         }
-                        bills.push(JSON.parse(http.responseText));
-                    }
-                };
-                http.send();
+                    };
+                })(httpBill);
+                httpBill.send();
             }
         }
     };
-    http.send();
+    httpBillsIDs.send();
 }
 
 $(document).ready(function() { // Executes secondly
@@ -263,8 +301,10 @@ window.onload = function(){ // Executes first
     configureNavigationBar();
     $(".screen").hide();
     $('#' + currentScreen).show();
-    if (currentScreen == "identification") {
+    if (currentScreen === "identification") {
         configureIdentificationScreen();
+    } else if (currentScreen === "history") {
+        populateHistory();
     }
 };
 

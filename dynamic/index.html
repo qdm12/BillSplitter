@@ -268,6 +268,13 @@ http.onreadystatechange = function() { // callback function
         usersPerItem[data.consumers[i].item_id] += 1;
     }
 
+    // Update the item prices including the tax
+    for (i = 0; i < data.items.length; i += 1) {
+        data.items[i].amount *= (1 + data.tax / 100);
+    }
+        
+
+
     var userOwn, UIusername;
     for(i = 0; i < data.users.length; i += 1) {
         $("#users").append('<div id="user'+ data.users[i].id +'" class="user"></div>');
@@ -286,7 +293,6 @@ http.onreadystatechange = function() { // callback function
                 }
             }
         }
-        userOwn *= 1 + data.tax / 100;
         userOwn += data.tip / (data.users.length + data.tempUsers.length);
         $("#users #user"+data.users[i].id).append('<div class="userown">$' + userOwn.toFixed(2) + '</div>');
     }
@@ -307,18 +313,15 @@ http.onreadystatechange = function() { // callback function
                 }
             }
         }
-        userOwn *= 1 + data.tax / 100;
         userOwn += data.tip / (data.users.length + data.tempUsers.length);
         $("#users #tempUser"+data.tempUsers[i].id).append('<div class="userown">$' + userOwn.toFixed(2) + '</div>');
     }
 
     var itemPaid = false;
-    var amount = 0;
     for(i = 0; i < data.items.length; i += 1) {
         $("#items").append('<div id="item'+ data.items[i].id +'" class="item"></div>');
         $("#items #item"+data.items[i].id).append('<div class="itemname">' + data.items[i].name + '</div>');
-        amount = data.items[i].amount * (1 + data.tax / 100);
-        $("#items #item"+data.items[i].id).append('<div class="itemprice">$' + amount.toFixed(2) + '</div>');
+        $("#items #item"+data.items[i].id).append('<div class="itemprice">$' + data.items[i].amount.toFixed(2) + '</div>');
         itemPaid = true;
         for(j = 0; j < data.consumers.length; j += 1) {
             if (data.consumers[j].item_id === data.items[i].id) {
@@ -466,7 +469,6 @@ http.onreadystatechange = function() { // callback function
                             }
                         }
                     }
-                    userOwn *= 1 + data.tax / 100;
                     userOwn += data.tip / (data.users.length + data.tempUsers.length);
                     var userOwnElement = $("#users #user"+data.users[i].id + " .userown");
                     if (userOwnElement.text() != "$" + userOwn.toFixed(2)) {
@@ -485,7 +487,6 @@ http.onreadystatechange = function() { // callback function
                             }
                         }
                     }
-                    userOwn *= 1 + data.tax / 100;
                     userOwn += data.tip / (data.users.length + data.tempUsers.length);
                     var userOwnElement = $("#users #tempUser"+data.tempUsers[i].id + " .userown");
                     if (userOwnElement.text() != "$" + userOwn.toFixed(2)) {
