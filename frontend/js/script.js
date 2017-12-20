@@ -376,6 +376,7 @@ function loadBillDynamic(billID) {
         }
 
         var userOwn, UIusername;
+        $("#dynamicBill #users").find(".user").remove();
         for(i = 0; i < bill.users.length; i += 1) {
             $("#dynamicBill #users").append('<div id="user'+ bill.users[i].id +'" class="user"></div>');
             UIusername = bill.users[i].username;
@@ -416,8 +417,9 @@ function loadBillDynamic(billID) {
             userOwn += bill.tip / (bill.users.length + bill.tempUsers.length);
             $("#dynamicBill #users #tempUser"+bill.tempUsers[i].id).append('<div class="userown">$' + userOwn.toFixed(2) + '</div>');
         }
-    
+
         var itemPaid = false;
+        $("#dynamicBill #items").find(".item").remove();
         for(i = 0; i < bill.items.length; i += 1) {
             $("#dynamicBill #items").append('<div id="item'+ bill.items[i].id +'" class="item"></div>');
             $("#dynamicBill #items #item"+bill.items[i].id).append('<div class="itemname">' + bill.items[i].name + '</div>');
@@ -515,8 +517,8 @@ function loadBillDynamic(billID) {
             }
             http.send(JSON.stringify(body));
         });
-    
-    
+
+
         $('#dynamicBill #users .user').draggable({
             helper:"clone"
         });
