@@ -561,8 +561,8 @@ app.get('/bills/:billID', function (req, res) {
                               "SELECT items_consumers.* FROM items_consumers, items WHERE items.bill_id = ? AND items.id = items_consumers.item_id",
                               [billID],
                               function (error, results) {
+                                connection.release();
                                 if (error) {
-                                  connection.release();
                                   console.warn("The items_consumers table can't be searched:", error, "\n");
                                   return res.status(500).send("Our database is having troubles");
                                 }
